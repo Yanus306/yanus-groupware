@@ -1,0 +1,51 @@
+.time-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 13, 26, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.time-input-field {
+  width: 44px;
+  padding: 10px 8px 10px 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  text-align: center;
+}
+
+.time-input-field:focus {
+  outline: none;
+}
+
+.time-input-arrows {
+  display: flex;
+  flex-direction: column;
+  padding-right: 4px;
+}
+
+.time-input-arrows button {
+  padding: 2px;
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.time-input-arrows button:hover {
+  color: var(--text-primary);
+}
+
+.time-input-sep {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
