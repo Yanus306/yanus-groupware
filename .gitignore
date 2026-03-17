@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json
+.claude/todos/
