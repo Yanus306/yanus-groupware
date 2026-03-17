@@ -1,0 +1,27 @@
+.settings-page {
+  max-width: 600px;
+}
+
+.settings-page h1 {
+  margin-bottom: 24px;
+}
+
+.settings-card {
+  padding: 24px;
+}
+
+.settings-card h3 {
+  margin-bottom: 20px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}

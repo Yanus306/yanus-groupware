@@ -1,0 +1,306 @@
+.dashboard {
+  max-width: 1200px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+/* Clock-In: top-left */
+.clock-card {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+}
+
+.clock-card-link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clock-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.2);
+}
+
+.clock-outer {
+  width: 170px;
+  height: 170px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock-ring-svg {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0 24px rgba(124, 58, 237, 0.35));
+}
+
+.clock-inner {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(13, 13, 20, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.clock-time {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.clock-time-start {
+  font-size: 1.4rem;
+  color: var(--success);
+}
+
+.clock-time-leave {
+  font-size: 1.4rem;
+  color: var(--error);
+}
+
+.clock-label {
+  margin-top: 14px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.card {
+  padding: 24px;
+}
+
+.schedule-card h3,
+.chat-preview h3,
+.stats-card h3,
+.members-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.schedule-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.schedule-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.schedule-item.purple {
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.3) 0%, transparent 100%);
+}
+
+.schedule-item.blue {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.25) 0%, transparent 100%);
+}
+
+.schedule-item.grey {
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.schedule-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.schedule-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.schedule-time {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.schedule-title {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* Team Chat: bottom-left */
+.chat-preview {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.chat-preview ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chat-preview li {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.chat-preview li:last-of-type {
+  border-bottom: none;
+}
+
+.chat-msg-content {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chat-msg-content strong {
+  margin-right: 4px;
+}
+
+.msg-text {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.ts {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gradient-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.view-all {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  color: var(--accent-purple-light);
+  font-size: 0.9rem;
+}
+
+/* Attendance Rate: bottom-center */
+.stats-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+
+.big-stat {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stats-card .big-stat {
+  margin-bottom: 12px;
+}
+
+.stat-tabs {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-tabs span {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.stat-tabs span.active {
+  color: var(--accent-purple-light);
+  font-weight: 600;
+}
+
+.attendance-progress {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-purple) 0%, var(--accent-blue) 92%, transparent 92%);
+}
+
+/* Active Members: bottom-right right */
+.members-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.schedule-card {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
+
+.members-card {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.members-card .up {
+  color: var(--success);
+  font-size: 0.9rem;
+  margin-left: 4px;
+}
+
+.members-card .increase {
+  font-size: 0.85rem;
+  color: var(--success);
+  margin-left: 2px;
+}
+
+.members-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.members-card .total {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .schedule-card,
+  .clock-card,
+  .chat-preview,
+  .stats-card,
+  .members-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
