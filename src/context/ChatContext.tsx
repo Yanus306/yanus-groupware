@@ -1,23 +1,9 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from './AppContext'
+import type { ChatMessage, Channel } from '../entities/message/model/types'
 
-export interface ChatMessage {
-  id: string
-  channelId: string
-  userId: string
-  userName: string
-  content?: string
-  type: 'text' | 'file'
-  files?: { name: string; url: string; type: string }[]
-  timestamp: Date
-}
-
-export interface Channel {
-  id: string
-  name: string
-  lastMessage?: string
-}
+export type { ChatMessage, Channel } from '../entities/message/model/types'
 
 const STORAGE_KEY = 'yanus-chat-messages'
 
