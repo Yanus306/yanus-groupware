@@ -1,16 +1,9 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from './AppContext'
+import type { CalendarEvent } from '../entities/event/model/types'
 
-export interface CalendarEvent {
-  id: string
-  title: string
-  startDate: string // YYYY-MM-DD
-  startTime: string // HH:mm
-  endDate: string // YYYY-MM-DD
-  endTime: string // HH:mm
-  createdBy: string
-}
+export type { CalendarEvent } from '../entities/event/model/types'
 
 type EventsContextValue = {
   events: CalendarEvent[]

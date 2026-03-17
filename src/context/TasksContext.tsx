@@ -1,20 +1,9 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from './AppContext'
+import type { Task } from '../entities/task/model/types'
 
-export type TaskPriority = 'high' | 'medium' | 'low'
-
-export interface Task {
-  id: string
-  title: string
-  time: string
-  date: string // YYYY-MM-DD
-  priority: TaskPriority
-  done: boolean
-  assigneeId?: string
-  assigneeName?: string
-  createdBy: string // current user id
-}
+export type { Task, TaskPriority } from '../entities/task/model/types'
 
 type TasksContextValue = {
   tasks: Task[]
