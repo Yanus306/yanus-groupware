@@ -1,0 +1,115 @@
+.set-work-days-personal h3 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.set-work-days-personal .desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.member-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gradient-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.days-toggles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-name {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(148, 163, 184, 0.3);
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.toggle.on {
+  background: var(--accent-purple);
+}
+
+.toggle.on::after {
+  transform: translateX(18px);
+}
+
+.time-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.time-field label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.time-field input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: rgba(15, 15, 26, 0.5);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.save-btn {
+  margin-top: 24px;
+  padding: 12px 32px;
+  background: var(--gradient-purple);
+  color: var(--text-primary);
+  border-radius: 10px;
+  font-weight: 600;
+}

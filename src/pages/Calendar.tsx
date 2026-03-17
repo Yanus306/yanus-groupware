@@ -1,0 +1,1101 @@
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { Pencil, Trash2, User, X, Plus, ListTodo, CalendarDays } from 'lucide-react'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
+import koLocale from '@fullcalendar/core/locales/ko'
+import type { EventClickArg, EventDropArg, EventInput } from '@fullcalendar/core'
+import type { DateClickArg, EventResizeDoneArg } from '@fullcalendar/interaction'
+import { TimeInput } from '../components/TimeInput'
+import { useApp } from '../context/AppContext'
+import { useTasks, type Task, type TaskPriority } from '../context/TasksContext'
+import { useEvents, type CalendarEvent } from '../context/EventsContext'
+import { formatDateDisplay, getTodayStr } from '../context/TasksContext'
+import './Calendar.css'
+
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  high: '높음',
+  medium: '보통',
+  low: '낮음',
+}
+
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
+  { value: 'high', label: '높음' },
+  { value: 'medium', label: '보통' },
+  { value: 'low', label: '낮음' },
+]
+
+function formatTimeForDisplay(time24: string) {
+  if (!time24) return '--:--'
+  const [h, m] = time24.split(':').map(Number)
+  const period = h >= 12 ? '오후' : '오전'
+  const h12 = h % 12 || 12
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`
+}
+
+function getCurrentTimeStr() {
+  const n = new Date()
+  return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`
+}
+
+function formatEventRange(e: Pick<CalendarEvent, 'startDate' | 'startTime' | 'endDate' | 'endTime'>) {
+  const fmt = (d: string, t: string) => {
+    const [, m, day] = d.split('-').map(Number)
+    const [h, min] = t.split(':').map(Number)
+    const period = h >= 12 ? '오후' : '오전'
+    const h12 = h % 12 || 12
+    return `${m}월 ${day}일 ${period} ${h12}:${String(min).padStart(2, '0')}`
+  }
+  return `${fmt(e.startDate, e.startTime)} ~ ${fmt(e.endDate, e.endTime)}`
+}
+
+function parseDisplayTimeTo24(displayTime: string): string {
+  if (!displayTime || displayTime === '--:--') return '09:00'
+  const parts = displayTime.trim().split(' ')
+  const [timePart, period] = parts.length >= 2 ? [parts[0], parts[1]] : [parts[0], '']
+  const [h12, m] = timePart.split(':').map(Number)
+  if (isNaN(h12)) return '09:00'
+  let h24: number
+  if (period === '오전') h24 = h12 === 12 ? 0 : h12
+  else if (period === '오후') h24 = h12 === 12 ? 12 : h12 + 12
+  else return `${String(h12).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}`
+  return `${String(h24).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}`
+}
+
+function toOurEventFormat(e: CalendarEvent): EventInput {
+  return {
+    id: e.id,
+    title: e.title,
+    start: `${e.startDate}T${e.startTime}:00`,
+    end: `${e.endDate}T${e.endTime}:00`,
+    allDay: false,
+    extendedProps: { rawEvent: e, isTask: false },
+  }
+}
+
+function taskToEventFormat(t: Task): EventInput {
+  const time24 = parseDisplayTimeTo24(t.time)
+  const [h, m] = time24.split(':').map(Number)
+  const endDate = new Date(`${t.date}T12:00:00`)
+  endDate.setHours(h + 1, m, 0, 0)
+  const endStr = `${t.date}T${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}:00`
+  return {
+    id: `task-${t.id}`,
+    title: t.title,
+    start: `${t.date}T${time24}:00`,
+    end: endStr,
+    allDay: false,
+    extendedProps: { rawTask: t, isTask: true },
+    className: `fc-event-task fc-event-priority-${t.priority}`,
+    durationEditable: false,
+  }
+}
+
+function parseDateToStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function parseDateToTime(d: Date): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+export function Calendar() {
+  const { state } = useApp()
+  const {
+    tasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    toggleTaskDone,
+  } = useTasks()
+  const {
+    events,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+  } = useEvents()
+
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(() => getTodayStr())
+  const [activeTab, setActiveTab] = useState<'my' | 'team' | 'schedule'>('my')
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskTime, setNewTaskTime] = useState(() => getCurrentTimeStr())
+  const [newTaskDate, setNewTaskDate] = useState(getTodayStr())
+  const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium')
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState<string>('')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [contextMenuModalOpen, setContextMenuModalOpen] = useState(false)
+  const [pendingSelectRange, setPendingSelectRange] = useState<{ start: Date; end: Date } | null>(null)
+  const [addTaskModalOpen, setAddTaskModalOpen] = useState(false)
+  const [addEventModalOpen, setAddEventModalOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [eventDetailEditMode, setEventDetailEditMode] = useState(false)
+  const [editEventForm, setEditEventForm] = useState({
+    title: '',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+  })
+  const [newEventTitle, setNewEventTitle] = useState('')
+  const [newEventStartDate, setNewEventStartDate] = useState(getTodayStr())
+  const [newEventStartTime, setNewEventStartTime] = useState(() => getCurrentTimeStr())
+  const [newEventEndDate, setNewEventEndDate] = useState(getTodayStr())
+  const [newEventEndTime, setNewEventEndTime] = useState(() => {
+    const n = new Date()
+    n.setHours(n.getHours() + 1)
+    return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`
+  })
+  const editInputRef = useRef<HTMLInputElement>(null)
+  const addTaskInputRef = useRef<HTMLInputElement>(null)
+  const addTaskModalInputRef = useRef<HTMLInputElement>(null)
+  const addEventModalInputRef = useRef<HTMLInputElement>(null)
+  const calendarRef = useRef<FullCalendar | null>(null)
+  const prevViewKeyRef = useRef<string>('')
+  const [isMonthTransitioning, setIsMonthTransitioning] = useState(false)
+  const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next')
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null)
+  const [editTaskAssigneeId, setEditTaskAssigneeId] = useState('')
+  const [editTaskPriority, setEditTaskPriority] = useState<TaskPriority>('medium')
+
+  const todayStr = getTodayStr()
+
+  const DELETE_ANIM_DURATION = 320
+
+  const handleAddTask = (closeModal?: boolean) => {
+    const title = newTaskTitle.trim()
+    if (!title) return
+    const timeStr = newTaskTime ? formatTimeForDisplay(newTaskTime) : '--:--'
+    let assigneeId: string | undefined
+    let assigneeName: string | undefined
+    if (activeTab === 'team' && newTaskAssigneeId) {
+      if (newTaskAssigneeId === 'all') {
+        assigneeId = 'all'
+        assigneeName = '팀원 전체'
+      } else {
+        const assignee = state.users.find((u) => u.id === newTaskAssigneeId)
+        assigneeId = newTaskAssigneeId
+        assigneeName = assignee?.name
+      }
+    }
+    addTask({
+      title,
+      time: timeStr,
+      date: newTaskDate,
+      priority: newTaskPriority,
+      done: false,
+      assigneeId,
+      assigneeName,
+    })
+    setNewTaskTitle('')
+    setNewTaskTime(getCurrentTimeStr())
+    setNewTaskDate(getTodayStr())
+    setNewTaskPriority('medium')
+    setNewTaskAssigneeId('')
+    if (closeModal) setAddTaskModalOpen(false)
+  }
+
+  const openAddTaskModal = (type: 'my' | 'team' = 'my') => {
+    setActiveTab(type)
+    setNewTaskTitle('')
+    setNewTaskTime(getCurrentTimeStr())
+    setNewTaskDate(selectedDateStr || getTodayStr())
+    setNewTaskPriority('medium')
+    setNewTaskAssigneeId('')
+    setContextMenuModalOpen(false)
+    setAddTaskModalOpen(true)
+  }
+
+  const openAddEventModal = (start?: Date, end?: Date) => {
+    const range = start && end ? { start, end } : pendingSelectRange
+    const date = selectedDateStr || getTodayStr()
+    setNewEventTitle('')
+    if (range) {
+      setNewEventStartDate(parseDateToStr(range.start))
+      setNewEventStartTime(parseDateToTime(range.start))
+      setNewEventEndDate(parseDateToStr(range.end))
+      setNewEventEndTime(parseDateToTime(range.end))
+      setPendingSelectRange(null)
+    } else {
+      setNewEventStartDate(date)
+      setNewEventStartTime(getCurrentTimeStr())
+      setNewEventEndDate(date)
+      const n = new Date()
+      n.setHours(n.getHours() + 1)
+      setNewEventEndTime(`${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`)
+    }
+    setContextMenuModalOpen(false)
+    setAddEventModalOpen(true)
+  }
+
+  const handleAddEvent = (closeModal?: boolean) => {
+    const title = newEventTitle.trim()
+    if (!title) return
+    addEvent({
+      title,
+      startDate: newEventStartDate,
+      startTime: newEventStartTime,
+      endDate: newEventEndDate,
+      endTime: newEventEndTime,
+    })
+    setNewEventTitle('')
+    setNewEventStartDate(getTodayStr())
+    setNewEventStartTime(getCurrentTimeStr())
+    setNewEventEndDate(getTodayStr())
+    const n = new Date()
+    n.setHours(n.getHours() + 1)
+    setNewEventEndTime(`${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`)
+    if (closeModal) setAddEventModalOpen(false)
+  }
+
+  const openEventDetail = (event: CalendarEvent) => {
+    setSelectedEvent(event)
+    setEventDetailEditMode(false)
+    setEditEventForm({
+      title: event.title,
+      startDate: event.startDate,
+      startTime: event.startTime,
+      endDate: event.endDate,
+      endTime: event.endTime,
+    })
+  }
+
+  const handleUpdateEvent = () => {
+    if (!selectedEvent) return
+    const title = editEventForm.title.trim()
+    if (!title) return
+    updateEvent(selectedEvent.id, {
+      title,
+      startDate: editEventForm.startDate,
+      startTime: editEventForm.startTime,
+      endDate: editEventForm.endDate,
+      endTime: editEventForm.endTime,
+    })
+    setSelectedEvent(null)
+    setEventDetailEditMode(false)
+  }
+
+  const handleDeleteTaskWithAnimation = (taskId: string) => {
+    setDeletingTaskId(taskId)
+    setTimeout(() => {
+      deleteTask(taskId)
+      setDeletingTaskId(null)
+    }, DELETE_ANIM_DURATION)
+  }
+
+  const handleDeleteEventWithAnimation = (eventId: string) => {
+    setSelectedEvent(null)
+    setEventDetailEditMode(false)
+    setDeletingEventId(eventId)
+    setTimeout(() => {
+      deleteEvent(eventId)
+      setDeletingEventId(null)
+    }, DELETE_ANIM_DURATION)
+  }
+
+  const handleUpdateTask = () => {
+    if (!editingTask) return
+    const title = editInputRef.current?.value?.trim()
+    if (!title) return
+    let assigneeId: string | undefined
+    let assigneeName: string | undefined
+    if (editTaskAssigneeId) {
+      if (editTaskAssigneeId === 'all') {
+        assigneeId = 'all'
+        assigneeName = '팀원 전체'
+      } else {
+        const assignee = state.users.find((u) => u.id === editTaskAssigneeId)
+        assigneeId = editTaskAssigneeId
+        assigneeName = assignee?.name
+      }
+    } else {
+      assigneeId = undefined
+      assigneeName = undefined
+    }
+    updateTask(editingTask.id, { title, assigneeId, assigneeName, priority: editTaskPriority })
+    setEditingTask(null)
+  }
+
+  const handleDateClick = useCallback(
+    (arg: DateClickArg) => {
+      const dateStr = arg.dateStr.split('T')[0].slice(0, 10)
+      setSelectedDateStr(dateStr)
+      setNewTaskDate(dateStr)
+      setNewEventStartDate(dateStr)
+      setNewEventEndDate(dateStr)
+      setPendingSelectRange(null)
+      setContextMenuModalOpen(true)
+    },
+    []
+  )
+
+  const handleSelect = useCallback(
+    (arg: { start: Date; end: Date }) => {
+      setSelectedDateStr(parseDateToStr(arg.start))
+      setNewTaskDate(parseDateToStr(arg.start))
+      setPendingSelectRange({ start: arg.start, end: arg.end })
+      setContextMenuModalOpen(true)
+    },
+    []
+  )
+
+  const handleEventClick = useCallback((arg: EventClickArg) => {
+    arg.jsEvent.preventDefault()
+    const ext = arg.event.extendedProps as { rawEvent?: CalendarEvent; rawTask?: Task; isTask?: boolean }
+    if (ext?.isTask && ext.rawTask) {
+      setEditingTask(ext.rawTask)
+    } else if (ext?.rawEvent) {
+      openEventDetail(ext.rawEvent)
+    }
+  }, [])
+
+  const handleEventDrop = useCallback(
+    (arg: EventDropArg) => {
+      const id = arg.event.id
+      if (!id) return
+      const ext = arg.event.extendedProps as { isTask?: boolean }
+      const start = arg.event.start!
+      const end = arg.event.end!
+
+      if (ext?.isTask && id.startsWith('task-')) {
+        const taskId = id.replace(/^task-/, '')
+        const time24 = parseDateToTime(start)
+        const timeStr = formatTimeForDisplay(time24)
+        updateTask(taskId, {
+          date: parseDateToStr(start),
+          time: timeStr,
+        })
+      } else {
+        updateEvent(id, {
+          startDate: parseDateToStr(start),
+          startTime: parseDateToTime(start),
+          endDate: parseDateToStr(end),
+          endTime: parseDateToTime(end),
+        })
+      }
+    },
+    [updateEvent, updateTask]
+  )
+
+  const handleDatesSet = useCallback((arg: { start: Date; end: Date; view: { type: string } }) => {
+    const key = `${arg.view.type}-${arg.start.getFullYear()}-${arg.start.getMonth()}`
+    if (prevViewKeyRef.current && prevViewKeyRef.current !== key) {
+      const [, prevY, prevM] = prevViewKeyRef.current.split('-').map(Number)
+      const prevDate = new Date(prevY, prevM, 1).getTime()
+      const currDate = arg.start.getTime()
+      setTransitionDirection(currDate > prevDate ? 'next' : 'prev')
+      setIsMonthTransitioning(true)
+      setTimeout(() => setIsMonthTransitioning(false), 320)
+    }
+    prevViewKeyRef.current = key
+  }, [])
+
+  const handleEventResize = useCallback(
+    (arg: EventResizeDoneArg) => {
+      const id = arg.event.id
+      if (!id) return
+      const ext = arg.event.extendedProps as { isTask?: boolean }
+      if (ext?.isTask && id.startsWith('task-')) return
+      const start = arg.event.start!
+      const end = arg.event.end!
+      updateEvent(id, {
+        startDate: parseDateToStr(start),
+        startTime: parseDateToTime(start),
+        endDate: parseDateToStr(end),
+        endTime: parseDateToTime(end),
+      })
+    },
+    [updateEvent]
+  )
+
+  useEffect(() => {
+    if (editingTask) {
+      setEditTaskAssigneeId(editingTask.assigneeId || '')
+      setEditTaskPriority(editingTask.priority)
+      editInputRef.current?.focus()
+    }
+  }, [editingTask])
+
+  useEffect(() => {
+    if (addTaskModalOpen) addTaskModalInputRef.current?.focus()
+  }, [addTaskModalOpen])
+
+  useEffect(() => {
+    if (addEventModalOpen) addEventModalInputRef.current?.focus()
+  }, [addEventModalOpen])
+
+  const myTasksFilter = (t: Task) =>
+    t.assigneeId === state.currentUser.id ||
+    t.createdBy === state.currentUser.id ||
+    !t.assigneeId
+
+  const filteredTasks = useMemo(() => {
+    return activeTab === 'my' ? tasks.filter(myTasksFilter) : tasks
+  }, [tasks, activeTab, state.currentUser.id])
+
+  const fullCalendarEvents = useMemo(
+    () => [
+      ...events.map(toOurEventFormat),
+      ...filteredTasks.filter((t) => !t.done).map(taskToEventFormat),
+    ],
+    [events, filteredTasks]
+  )
+
+  const todayTasks = useMemo(
+    () => filteredTasks.filter((t) => t.date === todayStr).sort((a, b) => a.time.localeCompare(b.time)),
+    [filteredTasks, todayStr]
+  )
+
+  const upcomingEventsGrouped = useMemo(() => {
+    const future = events
+      .filter((e) => e.endDate >= todayStr)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime))
+    const byDate = new Map<string, typeof events>()
+    future.forEach((e) => {
+      const list = byDate.get(e.startDate) || []
+      list.push(e)
+      byDate.set(e.startDate, list)
+    })
+    return Array.from(byDate.entries()).map(([date, items]) => ({
+      date: formatDateDisplay(date, new Date()),
+      dateStr: date,
+      items,
+    }))
+  }, [events, todayStr])
+
+  const upcomingTasksGrouped = useMemo(() => {
+    const future = filteredTasks
+      .filter((t) => t.date > todayStr && !t.done)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+    const byDate = new Map<string, Task[]>()
+    future.forEach((t) => {
+      const list = byDate.get(t.date) || []
+      list.push(t)
+      byDate.set(t.date, list)
+    })
+    return Array.from(byDate.entries()).map(([date, items]) => ({
+      date: formatDateDisplay(date, new Date()),
+      dateStr: date,
+      items,
+    }))
+  }, [filteredTasks, todayStr])
+
+  const TaskItemRow = ({ t, showCheckbox = true, showAssignee = true }: { t: Task; showCheckbox?: boolean; showAssignee?: boolean }) => (
+    <div key={t.id} className={`task-item ${t.done ? 'done' : ''} ${deletingTaskId === t.id ? 'deleting' : ''}`}>
+      {showCheckbox && (
+        <span
+          className="task-checkbox"
+          onClick={() => toggleTaskDone(t.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && toggleTaskDone(t.id)}
+        >
+          {t.done ? '✓' : ''}
+        </span>
+      )}
+      <div className="task-info">
+        <span className="task-title">{t.title}</span>
+        <span className="task-meta">
+          {t.time} · <span className={`priority-dot ${t.priority}`}>{PRIORITY_LABELS[t.priority]}</span>
+        </span>
+      </div>
+      <div className="task-actions">
+        {showAssignee && t.assigneeName && (
+          <span className="assignee" title={t.assigneeName}>
+            <User size={14} />
+          </span>
+        )}
+        <button onClick={() => setEditingTask(t)} aria-label="수정">
+          <Pencil size={14} />
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); handleDeleteTaskWithAnimation(t.id); }} aria-label="삭제">
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="calendar-page">
+      <div className="calendar-main">
+        <div className={`fullcalendar-wrapper ${isMonthTransitioning ? 'fc-transitioning' : ''} ${isMonthTransitioning ? `fc-direction-${transitionDirection}` : ''}`}>
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+            }}
+            buttonText={{
+              today: '오늘',
+              month: '월',
+              week: '주',
+              day: '일',
+              list: '목록',
+            }}
+            locale={koLocale}
+            firstDay={0}
+            selectable
+            selectMirror
+            editable
+            dayMaxEvents={3}
+            events={fullCalendarEvents}
+            dateClick={handleDateClick}
+            select={handleSelect}
+            eventClick={handleEventClick}
+            eventDrop={handleEventDrop}
+            eventResize={handleEventResize}
+            datesSet={handleDatesSet}
+          />
+        </div>
+      </div>
+
+      <aside className="tasks-sidebar">
+        <div className="tasks-tabs">
+          <span className={activeTab === 'my' ? 'active' : ''} onClick={() => setActiveTab('my')}>
+            내 할일
+          </span>
+          <span className={activeTab === 'team' ? 'active' : ''} onClick={() => setActiveTab('team')}>
+            팀 할일
+          </span>
+          <span className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>
+            일정
+          </span>
+        </div>
+
+        {activeTab !== 'schedule' && (
+        <div className="add-task-inline add-task-vertical">
+          <div className="add-task-row">
+            <label>할일</label>
+            <input
+              ref={addTaskInputRef}
+              className="add-task-title"
+              placeholder="할일 제목"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+            />
+          </div>
+          <div className="add-task-row">
+            <label>마감 시간</label>
+            <TimeInput value={newTaskTime} onChange={setNewTaskTime} />
+          </div>
+          <div className="add-task-row">
+            <label>마감 날짜</label>
+            <input
+              type="date"
+              className="add-task-date"
+              value={newTaskDate}
+              onChange={(e) => setNewTaskDate(e.target.value)}
+            />
+          </div>
+          <div className="add-task-row">
+            <label>중요도</label>
+            <select
+              className="add-task-priority"
+              value={newTaskPriority}
+              onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
+            >
+              {PRIORITY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {activeTab === 'team' && (
+            <div className="add-task-row">
+              <label>담당자</label>
+              <select
+                className="add-task-assignee"
+                value={newTaskAssigneeId}
+                onChange={(e) => setNewTaskAssigneeId(e.target.value)}
+              >
+                <option value="">담당자 없음</option>
+                <option value="all">팀원 전체</option>
+                {state.users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="add-task-row">
+            <button className="add-task-inline-btn" onClick={() => handleAddTask()}>
+              <Plus size={18} />
+              할일 추가
+            </button>
+          </div>
+        </div>
+        )}
+
+        {activeTab === 'schedule' && (
+        <div className="add-task-inline add-task-vertical">
+          <div className="add-task-row">
+            <label>제목</label>
+            <input
+              className="add-task-title"
+              placeholder="일정 제목"
+              value={newEventTitle}
+              onChange={(e) => setNewEventTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddEvent()}
+            />
+          </div>
+          <div className="add-task-row">
+            <label>시작 (날짜 · 시간)</label>
+            <div className="add-event-datetime">
+              <input
+                type="date"
+                className="add-task-date"
+                value={newEventStartDate}
+                onChange={(e) => setNewEventStartDate(e.target.value)}
+              />
+              <TimeInput value={newEventStartTime} onChange={setNewEventStartTime} />
+            </div>
+          </div>
+          <div className="add-task-row">
+            <label>종료 (날짜 · 시간)</label>
+            <div className="add-event-datetime">
+              <input
+                type="date"
+                className="add-task-date"
+                value={newEventEndDate}
+                onChange={(e) => setNewEventEndDate(e.target.value)}
+              />
+              <TimeInput value={newEventEndTime} onChange={setNewEventEndTime} />
+            </div>
+          </div>
+          <div className="add-task-row">
+            <button className="add-task-inline-btn" onClick={() => handleAddEvent()}>
+              추가
+            </button>
+          </div>
+        </div>
+        )}
+
+        {activeTab !== 'schedule' && (
+        <>
+        <section className="today-tasks">
+          <h4>오늘의 할일</h4>
+          {todayTasks.length === 0 ? (
+            <p className="empty-hint">오늘 예정된 태스크가 없습니다</p>
+          ) : (
+            todayTasks.map((t) => <TaskItemRow key={t.id} t={t} showAssignee={activeTab === 'team'} />)
+          )}
+        </section>
+
+        <section className="upcoming-tasks">
+          <h4>예정</h4>
+          {upcomingTasksGrouped.length === 0 ? (
+            <p className="empty-hint">예정된 태스크가 없습니다</p>
+          ) : (
+            upcomingTasksGrouped.map(({ date, items }) => (
+              <div key={date} className="upcoming-group">
+                <div className="upcoming-date">{date}</div>
+                {items.map((t) => (
+                  <TaskItemRow key={t.id} t={t} showAssignee={activeTab === 'team'} />
+                ))}
+              </div>
+            ))
+          )}
+        </section>
+        </>
+        )}
+
+        {activeTab === 'schedule' && (
+        <section className="upcoming-tasks">
+          <h4>예정 일정</h4>
+          {upcomingEventsGrouped.length === 0 ? (
+            <p className="empty-hint">예정된 일정이 없습니다</p>
+          ) : (
+            upcomingEventsGrouped.map(({ date, dateStr, items }) => (
+              <div key={dateStr} className="upcoming-group">
+                <div className="upcoming-date">{date}</div>
+                {items.map((e) => (
+                  <div
+                    key={e.id}
+                    className={`event-item ${deletingEventId === e.id ? 'deleting' : ''}`}
+                    onClick={() => openEventDetail(e)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(ev) => ev.key === 'Enter' && openEventDetail(e)}
+                  >
+                    <div className="event-item-info">
+                      <span className="event-item-title">{e.title}</span>
+                      <span className="event-item-meta">{formatEventRange(e)}</span>
+                    </div>
+                    <button
+                      className="event-item-delete"
+                      onClick={(ev) => {
+                        ev.stopPropagation()
+                        handleDeleteEventWithAnimation(e.id)
+                      }}
+                      aria-label="삭제"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ))
+          )}
+        </section>
+        )}
+      </aside>
+
+      {editingTask && (
+        <div className="edit-task-modal-overlay" onClick={() => setEditingTask(null)}>
+          <div className="edit-task-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-task-header">
+              <div className="edit-task-header-title">
+                <h4>태스크 수정</h4>
+                <span className={`task-type-badge ${editingTask.assigneeId && editingTask.assigneeId !== state.currentUser.id ? 'team' : 'my'}`}>
+                  {!editingTask.assigneeId || editingTask.assigneeId === state.currentUser.id
+                    ? '내 할일'
+                    : editingTask.assigneeId === 'all'
+                      ? '팀 할일 · 팀원 전체'
+                      : `팀 할일 · ${editingTask.assigneeName || '담당자'}`}
+                </span>
+              </div>
+              <button className="edit-task-close" onClick={() => setEditingTask(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <input
+              ref={editInputRef}
+              className="edit-task-title"
+              defaultValue={editingTask.title}
+              placeholder="할일 제목"
+            />
+            <div className="add-task-row" style={{ marginTop: 12 }}>
+              <label>중요도</label>
+              <select
+                className="add-task-priority"
+                value={editTaskPriority}
+                onChange={(e) => setEditTaskPriority(e.target.value as TaskPriority)}
+              >
+                {PRIORITY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="add-task-row">
+              <label>담당자</label>
+              <select
+                className="add-task-assignee"
+                value={editTaskAssigneeId}
+                onChange={(e) => setEditTaskAssigneeId(e.target.value)}
+              >
+                <option value="">담당자 없음 (내 할일)</option>
+                <option value="all">팀원 전체</option>
+                {state.users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="edit-task-actions">
+              <button className="cancel-btn" onClick={() => setEditingTask(null)}>
+                취소
+              </button>
+              <button className="add-btn" onClick={handleUpdateTask}>
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contextMenuModalOpen && (
+        <div className="edit-task-modal-overlay" onClick={() => { setContextMenuModalOpen(false); setPendingSelectRange(null); }}>
+          <div className="edit-task-modal context-menu-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-task-header">
+              <h4>추가하기</h4>
+              <button className="edit-task-close" onClick={() => { setContextMenuModalOpen(false); setPendingSelectRange(null); }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="context-menu-options">
+              <button className="context-menu-option" onClick={() => openAddTaskModal('my')}>
+                <ListTodo size={20} />
+                <span>내 할일 추가</span>
+              </button>
+              <button className="context-menu-option" onClick={() => openAddTaskModal('team')}>
+                <ListTodo size={20} />
+                <span>팀 할일 추가</span>
+              </button>
+              <button className="context-menu-option" onClick={() => openAddEventModal()}>
+                <CalendarDays size={20} />
+                <span>일정 추가</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addTaskModalOpen && (
+        <div className="edit-task-modal-overlay" onClick={() => setAddTaskModalOpen(false)}>
+          <div className="edit-task-modal add-task-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-task-header">
+              <div className="edit-task-header-title">
+                <h4>할일 추가</h4>
+                <span className={`task-type-badge ${activeTab === 'team' ? 'team' : 'my'}`}>
+                  {activeTab === 'team' ? '팀 할일' : '내 할일'}
+                </span>
+              </div>
+              <button className="edit-task-close" onClick={() => setAddTaskModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="add-task-inline add-task-vertical">
+              <div className="add-task-row">
+                <label>할일</label>
+                <input
+                  ref={addTaskModalInputRef}
+                  className="add-task-title"
+                  placeholder="할일 제목"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddTask(true)}
+                />
+              </div>
+              <div className="add-task-row">
+                <label>마감 시간</label>
+                <TimeInput value={newTaskTime} onChange={setNewTaskTime} />
+              </div>
+              <div className="add-task-row">
+                <label>마감 날짜</label>
+                <input
+                  type="date"
+                  className="add-task-date"
+                  value={newTaskDate}
+                  onChange={(e) => setNewTaskDate(e.target.value)}
+                />
+              </div>
+              <div className="add-task-row">
+                <label>중요도</label>
+                <select
+                  className="add-task-priority"
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
+                >
+                  {PRIORITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {activeTab === 'team' && (
+                <div className="add-task-row">
+                  <label>담당자</label>
+                  <select
+                    className="add-task-assignee"
+                    value={newTaskAssigneeId}
+                    onChange={(e) => setNewTaskAssigneeId(e.target.value)}
+                  >
+                    <option value="">담당자 없음</option>
+                    <option value="all">팀원 전체</option>
+                    {state.users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="edit-task-actions add-task-modal-actions">
+                <button className="cancel-btn" onClick={() => setAddTaskModalOpen(false)}>
+                  취소
+                </button>
+                <button className="add-btn" onClick={() => handleAddTask(true)}>
+                  <Plus size={18} />
+                  추가
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addEventModalOpen && (
+        <div className="edit-task-modal-overlay" onClick={() => setAddEventModalOpen(false)}>
+          <div className="edit-task-modal add-task-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-task-header">
+              <h4>일정 추가</h4>
+              <button className="edit-task-close" onClick={() => setAddEventModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="add-task-inline add-task-vertical">
+              <div className="add-task-row">
+                <label>제목</label>
+                <input
+                  ref={addEventModalInputRef}
+                  className="add-task-title"
+                  placeholder="일정 제목"
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddEvent(true)}
+                />
+              </div>
+              <div className="add-task-row">
+                <label>시작 (날짜 · 시간)</label>
+                <div className="add-event-datetime">
+                  <input
+                    type="date"
+                    className="add-task-date"
+                    value={newEventStartDate}
+                    onChange={(e) => setNewEventStartDate(e.target.value)}
+                  />
+                  <TimeInput value={newEventStartTime} onChange={setNewEventStartTime} />
+                </div>
+              </div>
+              <div className="add-task-row">
+                <label>종료 (날짜 · 시간)</label>
+                <div className="add-event-datetime">
+                  <input
+                    type="date"
+                    className="add-task-date"
+                    value={newEventEndDate}
+                    onChange={(e) => setNewEventEndDate(e.target.value)}
+                  />
+                  <TimeInput value={newEventEndTime} onChange={setNewEventEndTime} />
+                </div>
+              </div>
+              <div className="edit-task-actions add-task-modal-actions">
+                <button className="cancel-btn" onClick={() => setAddEventModalOpen(false)}>
+                  취소
+                </button>
+                <button className="add-btn" onClick={() => handleAddEvent(true)}>
+                  추가
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedEvent && (
+        <div
+          className="edit-task-modal-overlay"
+          onClick={() => {
+            setSelectedEvent(null)
+            setEventDetailEditMode(false)
+          }}
+        >
+          <div className="edit-task-modal add-task-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-task-header">
+              <h4>{eventDetailEditMode ? '일정 수정' : '일정 상세'}</h4>
+              <button
+                className="edit-task-close"
+                onClick={() => {
+                  setSelectedEvent(null)
+                  setEventDetailEditMode(false)
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {eventDetailEditMode ? (
+              <div className="add-task-inline add-task-vertical">
+                <div className="add-task-row">
+                  <label>제목</label>
+                  <input
+                    className="add-task-title"
+                    placeholder="일정 제목"
+                    value={editEventForm.title}
+                    onChange={(e) => setEditEventForm((f) => ({ ...f, title: e.target.value }))}
+                  />
+                </div>
+                <div className="add-task-row">
+                  <label>시작 (날짜 · 시간)</label>
+                  <div className="add-event-datetime">
+                    <input
+                      type="date"
+                      className="add-task-date"
+                      value={editEventForm.startDate}
+                      onChange={(e) => setEditEventForm((f) => ({ ...f, startDate: e.target.value }))}
+                    />
+                    <TimeInput
+                      value={editEventForm.startTime}
+                      onChange={(t) => setEditEventForm((f) => ({ ...f, startTime: t }))}
+                    />
+                  </div>
+                </div>
+                <div className="add-task-row">
+                  <label>종료 (날짜 · 시간)</label>
+                  <div className="add-event-datetime">
+                    <input
+                      type="date"
+                      className="add-task-date"
+                      value={editEventForm.endDate}
+                      onChange={(e) => setEditEventForm((f) => ({ ...f, endDate: e.target.value }))}
+                    />
+                    <TimeInput
+                      value={editEventForm.endTime}
+                      onChange={(t) => setEditEventForm((f) => ({ ...f, endTime: t }))}
+                    />
+                  </div>
+                </div>
+                <div className="edit-task-actions add-task-modal-actions">
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setEventDetailEditMode(false)}
+                  >
+                    취소
+                  </button>
+                  <button className="add-btn" onClick={handleUpdateEvent}>
+                    저장
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="event-detail-view">
+                  <div className="event-detail-title">{selectedEvent.title}</div>
+                  <div className="event-detail-meta">{formatEventRange(selectedEvent)}</div>
+                </div>
+                <div className="edit-task-actions add-task-modal-actions">
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setEventDetailEditMode(true)}
+                  >
+                    수정
+                  </button>
+                  <button
+                    className="cancel-btn delete-btn"
+                    onClick={() => handleDeleteEventWithAnimation(selectedEvent.id)}
+                  >
+                    삭제
+                  </button>
+                  <button
+                    className="add-btn"
+                    onClick={() => {
+                      setSelectedEvent(null)
+                      setEventDetailEditMode(false)
+                    }}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

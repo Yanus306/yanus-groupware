@@ -1,0 +1,92 @@
+:root {
+  --bg-dark: #0d0d14;
+  --bg-darker: #08080c;
+  --bg-card: rgba(20, 18, 32, 0.85);
+  --bg-card-solid: rgba(25, 23, 40, 0.95);
+  --bg-sidebar: rgba(15, 13, 28, 0.98);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-purple: #7c3aed;
+  --accent-purple-light: #a78bfa;
+  --accent-purple-dark: #5b21b6;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-pink: #ec4899;
+  --gradient-purple: linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #ec4899 100%);
+  --gradient-purple-blue: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+  --border-color: rgba(148, 163, 184, 0.12);
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+  --sidebar-width: 240px;
+  --sidebar-narrow: 64px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    linear-gradient(180deg, rgba(30, 25, 55, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 58, 237, 0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.12), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+a {
+  color: var(--accent-purple-light);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+/* 아이콘/SVG - 흰색 배경 제거, 다크 테마 */
+svg,
+.lucide,
+[class*="lucide"],
+.lucide-react {
+  background: transparent !important;
+}
+
+button,
+button svg,
+a svg,
+.nav-item svg,
+.nav-arrow svg,
+[class*="icon"] svg {
+  background: transparent !important;
+}
+
+/* Glassmorphism - matches reference */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
