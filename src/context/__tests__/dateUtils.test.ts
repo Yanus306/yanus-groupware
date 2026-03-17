@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateDisplay, getTodayStr } from '../TasksContext'
+import { formatDateDisplay, getTodayStr } from '../../shared/lib/date'
 
 describe('getTodayStr', () => {
   it('오늘 날짜를 YYYY-MM-DD 형식으로 반환한다', () => {
