@@ -1,0 +1,117 @@
+.drive-page {
+  max-width: 1000px;
+}
+
+.drive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.drive-header h1 {
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+.upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.drive-content {
+  padding: 24px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.breadcrumb button {
+  background: none;
+  color: var(--text-primary);
+}
+
+.breadcrumb button:hover {
+  color: var(--accent-purple-light);
+}
+
+.folders-section,
+.recent-section {
+  margin-bottom: 32px;
+}
+
+.folders-section h3,
+.recent-section h3 {
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
+}
+
+.folder-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.folder-card:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.folder-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.file-row:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.file-icon {
+  color: var(--text-secondary);
+}
+
+.file-name {
+  flex: 1;
+}
+
+.file-time {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}

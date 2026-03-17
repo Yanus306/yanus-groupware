@@ -1,0 +1,60 @@
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { Providers } from '../providers'
+import { useApp } from '../../features/auth/model'
+import { useTasks } from '../../features/tasks/model'
+import { useEvents } from '../../features/calendar/model'
+import { useChat } from '../../features/chat/model'
+
+function AppConsumer() {
+  const { state } = useApp()
+  const { tasks } = useTasks()
+  const { events } = useEvents()
+  const { channels } = useChat()
+  return (
+    <div>
+      <span data-testid="user">{state.currentUser.name}</span>
+      <span data-testid="tasks">{tasks.length}</span>
+      <span data-testid="events">{events.length}</span>
+      <span data-testid="channels">{channels.length}</span>
+    </div>
+  )
+}
+
+describe('Providers', () => {
+  it('AppProvider 컨텍스트를 제공한다', () => {
+    render(
+      <Providers>
+        <AppConsumer />
+      </Providers>,
+    )
+    expect(screen.getByTestId('user').textContent).toBe('Alex Johnson')
+  })
+
+  it('TasksProvider 컨텍스트를 제공한다', () => {
+    render(
+      <Providers>
+        <AppConsumer />
+      </Providers>,
+    )
+    expect(Number(screen.getByTestId('tasks').textContent)).toBeGreaterThanOrEqual(0)
+  })
+
+  it('EventsProvider 컨텍스트를 제공한다', () => {
+    render(
+      <Providers>
+        <AppConsumer />
+      </Providers>,
+    )
+    expect(Number(screen.getByTestId('events').textContent)).toBeGreaterThanOrEqual(0)
+  })
+
+  it('ChatProvider 컨텍스트를 제공한다', () => {
+    render(
+      <Providers>
+        <AppConsumer />
+      </Providers>,
+    )
+    expect(Number(screen.getByTestId('channels').textContent)).toBeGreaterThan(0)
+  })
+})
