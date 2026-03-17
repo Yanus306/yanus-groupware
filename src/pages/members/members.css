@@ -1,0 +1,344 @@
+.members-page {
+  max-width: 1400px;
+}
+
+.members-header {
+  margin-bottom: 24px;
+}
+
+.members-header h1 {
+  font-size: 1.75rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  background: var(--error);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.no-access {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.filters-row {
+  margin-bottom: 24px;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  max-width: 320px;
+  margin-bottom: 16px;
+}
+
+.search-wrap input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+}
+
+.search-wrap input::placeholder {
+  color: var(--text-secondary);
+}
+
+.filter-group {
+  margin-bottom: 12px;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-right: 12px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.filter-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-btns button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.filter-btns button.active {
+  background: rgba(124, 58, 237, 0.3);
+  color: var(--accent-purple-light);
+}
+
+.total-members {
+  margin-top: 16px;
+  padding: 12px 16px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.members-content {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+}
+
+.table-section {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.table-section h3 {
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th,
+.members-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.members-table th {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.members-table .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-purple);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  margin-right: 12px;
+  vertical-align: middle;
+}
+
+.team-tag {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.team-tag.design {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
+}
+
+.team-tag.dev {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--success);
+}
+
+.team-tag.marketing {
+  background: rgba(249, 115, 22, 0.2);
+  color: #f97316;
+}
+
+.team-tag.product {
+  background: rgba(236, 72, 153, 0.2);
+  color: var(--accent-pink);
+}
+
+.role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.role-tag.leader {
+  background: rgba(234, 179, 8, 0.2);
+  color: var(--warning);
+}
+
+.role-tag.team_lead {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple-light);
+}
+
+.role-tag.member {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--accent-purple-light);
+  border-radius: 6px;
+}
+
+.stats-sidebar {
+  padding: 24px;
+  height: fit-content;
+}
+
+.stats-sidebar h3 {
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 140px;
+  margin-bottom: 24px;
+}
+
+.bar {
+  flex: 1;
+  background: var(--gradient-purple);
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 8px;
+  font-size: 0.7rem;
+}
+
+.pie-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+}
+
+.pie-legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.team-composition {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Change Role Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.change-role-modal {
+  padding: 28px;
+  max-width: 420px;
+  width: 90%;
+}
+
+.change-role-modal h3 {
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.role-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.role-option p {
+  margin: 6px 0 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.role-option.selected .role-pill {
+  border-color: var(--accent-purple);
+}
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.role-pill.member {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+.role-pill.team-lead {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple-light);
+}
+
+.role-pill.leader {
+  background: rgba(234, 179, 8, 0.2);
+  color: var(--warning);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+  border-radius: 8px;
+}
+
+.confirm-btn {
+  padding: 10px 24px;
+  background: var(--gradient-purple);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .members-content {
+    grid-template-columns: 1fr;
+  }
+}

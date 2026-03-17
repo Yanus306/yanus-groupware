@@ -1,0 +1,796 @@
+.calendar-page {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 48px);
+  margin: -24px;
+  background: var(--bg-dark);
+}
+
+.calendar-main {
+  flex: 1;
+  padding: 36px 40px 48px;
+  position: relative;
+  overflow: auto;
+}
+
+.fullcalendar-wrapper {
+  max-width: 85%;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* 월/뷰 전환 - wrapper 자체에 애니메이션 (확실히 적용) */
+.fullcalendar-wrapper.fc-transitioning {
+  animation: fc-wrapper-transition 0.35s ease-out;
+}
+
+.fullcalendar-wrapper.fc-transitioning .fc-view-harness,
+.fullcalendar-wrapper.fc-transitioning .fc-scrollgrid {
+  animation-duration: 0.35s;
+  animation-timing-function: ease-out;
+}
+
+.fullcalendar-wrapper.fc-transitioning.fc-direction-next .fc-view-harness,
+.fullcalendar-wrapper.fc-transitioning.fc-direction-next .fc-scrollgrid {
+  animation-name: fc-month-transition-next;
+}
+
+.fullcalendar-wrapper.fc-transitioning.fc-direction-prev .fc-view-harness,
+.fullcalendar-wrapper.fc-transitioning.fc-direction-prev .fc-scrollgrid {
+  animation-name: fc-month-transition-prev;
+}
+
+@keyframes fc-wrapper-transition {
+  0% { opacity: 0.85; }
+  100% { opacity: 1; }
+}
+
+@keyframes fc-month-transition-next {
+  0% {
+    opacity: 0.6;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fc-month-transition-prev {
+  0% {
+    opacity: 0.6;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* FullCalendar dark theme */
+.fullcalendar-wrapper .fc {
+  --fc-border-color: rgba(148, 163, 184, 0.12);
+  --fc-button-bg-color: rgba(124, 58, 237, 0.3);
+  --fc-button-border-color: rgba(124, 58, 237, 0.5);
+  --fc-button-hover-bg-color: rgba(124, 58, 237, 0.5);
+  --fc-button-hover-border-color: rgba(124, 58, 237, 0.7);
+  --fc-button-active-bg-color: var(--accent-purple);
+  --fc-today-bg-color: rgba(124, 58, 237, 0.08);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--bg-dark);
+  --fc-list-event-hover-bg-color: rgba(124, 58, 237, 0.15);
+}
+
+.fullcalendar-wrapper .fc-theme-standard td,
+.fullcalendar-wrapper .fc-theme-standard th {
+  border-color: var(--fc-border-color);
+}
+
+.fullcalendar-wrapper .fc-scrollgrid {
+  border-color: var(--fc-border-color);
+}
+
+.fullcalendar-wrapper .fc-col-header-cell {
+  background: rgba(18, 16, 28, 0.6);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.fullcalendar-wrapper .fc-daygrid-day-number {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.fullcalendar-wrapper .fc-daygrid-day.fc-day-today {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.fullcalendar-wrapper .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.fullcalendar-wrapper .fc-event {
+  background: rgba(236, 72, 153, 0.35);
+  border-color: rgba(236, 72, 153, 0.5);
+}
+
+.fullcalendar-wrapper .fc-event {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.fullcalendar-wrapper .fc-event:hover {
+  background: rgba(236, 72, 153, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.25);
+}
+
+/* 할일(태스크) - 일정과 구분, 중요도별 색상 */
+.fullcalendar-wrapper .fc-event-task {
+  border-width: 1px;
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-high {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-high:hover {
+  background: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-medium {
+  background: rgba(234, 179, 8, 0.35);
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-medium:hover {
+  background: rgba(234, 179, 8, 0.5);
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.25);
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-low {
+  background: rgba(34, 197, 94, 0.35);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.fullcalendar-wrapper .fc-event-task.fc-event-priority-low:hover {
+  background: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
+.fullcalendar-wrapper .fc-daygrid-day {
+  transition: background 0.2s ease;
+}
+
+.fullcalendar-wrapper .fc-daygrid-day:hover {
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.fullcalendar-wrapper .fc-toolbar .fc-button {
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.fullcalendar-wrapper .fc-toolbar .fc-button:hover {
+  transform: scale(1.02);
+}
+
+.fullcalendar-wrapper .fc-toolbar .fc-button:active {
+  transform: scale(0.98);
+}
+
+.fullcalendar-wrapper .fc-button {
+  color: var(--text-primary);
+  text-transform: none;
+}
+
+.fullcalendar-wrapper .fc-toolbar-title {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+/* Event popup - translucent dark purple, below date */
+.event-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  padding: 10px 14px;
+  min-width: 180px;
+  background: rgba(55, 48, 80, 0.95);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.event-popup .event-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.event-links {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.event-links span,
+.event-links a {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-links a {
+  color: var(--accent-purple-light);
+  text-decoration: none;
+}
+
+.event-popup-item {
+  margin-bottom: 8px;
+}
+
+.event-popup-item:last-child {
+  margin-bottom: 0;
+}
+
+/* FullCalendar 더보기 팝오버 - 배경 및 가독성 */
+.fc-popover,
+.fc .fc-popover,
+.fc-more-popover {
+  background: rgba(25, 23, 40, 0.98) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.fc-popover .fc-popover-header,
+.fc .fc-popover-header {
+  background: rgba(30, 28, 40, 0.98) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 10px 14px;
+}
+
+.fc-popover .fc-popover-title,
+.fc .fc-popover-title {
+  color: var(--text-primary) !important;
+}
+
+.fc-popover .fc-popover-close,
+.fc .fc-popover-close {
+  color: var(--text-secondary) !important;
+}
+
+.fc-popover .fc-popover-body,
+.fc .fc-popover-body {
+  background: rgba(25, 23, 40, 0.98) !important;
+  color: var(--text-primary) !important;
+  padding: 12px;
+}
+
+.fc-popover .fc-event,
+.fc-popover .fc-event-main {
+  color: var(--text-primary) !important;
+}
+
+/* Edit Task Modal */
+.edit-task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.edit-task-modal {
+  background: rgba(30, 28, 40, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 320px;
+}
+
+.add-task-modal {
+  min-width: 360px;
+}
+
+.add-task-modal .add-task-inline {
+  margin-bottom: 0;
+}
+
+.add-task-modal-actions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Context menu modal (할일/일정 선택) */
+.context-menu-modal {
+  min-width: 280px;
+}
+
+.context-menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.context-menu-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.context-menu-option:hover {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.context-menu-option svg {
+  color: var(--accent-purple-light);
+  flex-shrink: 0;
+}
+
+.add-event-datetime {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.add-event-datetime .add-task-date {
+  flex: 0 0 140px;
+}
+
+.add-event-datetime .add-task-date + * {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.edit-task-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-task-header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.task-type-badge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.task-type-badge.my {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple-light);
+}
+
+.task-type-badge.team {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
+}
+
+.edit-task-close {
+  padding: 4px;
+  color: var(--text-secondary);
+}
+
+.edit-task-title {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 13, 26, 0.5);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.edit-task-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.edit-task-actions .cancel-btn {
+  padding: 8px 18px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
+  border-radius: 8px;
+}
+
+.edit-task-actions .add-btn {
+  padding: 8px 20px;
+  background: var(--accent-purple);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.empty-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 8px 0;
+}
+
+/* Tasks Sidebar - dark grey, integrated - 사진처럼 뚜렷한 세로 구분선 */
+.tasks-sidebar {
+  width: 340px;
+  padding: 24px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  background: rgba(18, 16, 28, 0.95);
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.tasks-tabs {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+.tasks-tabs span {
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.tasks-tabs span.active {
+  color: var(--accent-purple-light);
+  font-weight: 600;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent-purple);
+}
+
+.add-task-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-task-vertical .add-task-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-task-vertical .add-task-row label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.add-task-vertical .add-task-row input,
+.add-task-vertical .add-task-row select {
+  width: 100%;
+}
+
+.add-task-vertical .add-task-inline-btn {
+  width: 100%;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-task-title {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 13, 26, 0.5);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.add-task-title::placeholder {
+  color: var(--text-muted);
+}
+
+.add-task-date,
+.add-task-time,
+.add-task-priority,
+.add-task-assignee {
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 13, 26, 0.5);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.add-task-time::-webkit-calendar-picker-indicator,
+.add-task-date::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
+.add-task-priority,
+.add-task-assignee {
+  cursor: pointer;
+}
+
+.add-task-inline-btn {
+  padding: 12px 16px;
+  background: var(--accent-purple);
+  color: var(--text-primary);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-task-inline-btn:hover {
+  background: var(--accent-purple-dark);
+}
+
+.today-tasks h4,
+.upcoming-tasks h4 {
+  font-size: 0.82rem;
+  margin-bottom: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  max-height: 120px;
+  transition: max-height 0.32s ease-out, opacity 0.28s ease-out, padding 0.32s ease-out,
+    margin 0.32s ease-out, transform 0.32s ease-out, border-color 0.2s;
+  overflow: hidden;
+}
+
+.task-item.deleting {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: -14px;
+  margin-bottom: 0;
+  border-bottom-color: transparent;
+  transform: scaleY(0.6) translateY(-12px);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.task-item.done .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.task-item.done .task-checkbox {
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--text-primary);
+}
+
+.task-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.task-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.priority-dot.high {
+  color: var(--error);
+}
+
+.priority-dot.medium {
+  color: var(--warning);
+}
+
+.priority-dot.low {
+  color: var(--success);
+}
+
+.priority-dot.done {
+  color: var(--success);
+}
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.task-actions button {
+  padding: 4px;
+  color: var(--text-secondary);
+  background: transparent !important;
+}
+
+.task-actions button svg {
+  background: transparent !important;
+}
+
+.task-actions button:hover {
+  color: var(--text-primary);
+}
+
+.assignee {
+  color: var(--text-secondary);
+}
+
+.assignee svg {
+  background: transparent !important;
+}
+
+.add-task-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent-purple);
+  color: var(--text-primary);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 14px;
+}
+
+.event-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  cursor: pointer;
+  max-height: 120px;
+  transition: max-height 0.32s ease-out, opacity 0.28s ease-out, padding 0.32s ease-out,
+    margin 0.32s ease-out, transform 0.32s ease-out, border-color 0.2s;
+  overflow: hidden;
+}
+
+.event-item.deleting {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: -14px;
+  margin-bottom: 0;
+  border-bottom-color: transparent;
+  transform: scaleY(0.6) translateY(-12px);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.event-item:hover {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.event-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-item-title {
+  display: block;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+.event-item-meta {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.event-item-delete {
+  padding: 4px;
+  color: var(--text-secondary);
+  background: transparent !important;
+  flex-shrink: 0;
+}
+
+.event-item-delete:hover {
+  color: var(--error);
+}
+
+.event-detail-view {
+  padding: 12px 0;
+}
+
+.event-detail-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.event-detail-meta {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.add-task-modal-actions .delete-btn {
+  color: var(--error);
+}
+
+.add-task-modal-actions .delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
+}
+
+.upcoming-group {
+  margin-bottom: 20px;
+}
+
+.upcoming-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .calendar-page {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .tasks-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+}

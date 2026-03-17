@@ -1,0 +1,133 @@
+.ai-chat-page {
+  margin: -24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-header {
+  text-align: center;
+  padding: 16px 24px;
+  flex-shrink: 0;
+}
+
+.ai-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ai-title h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.ai-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.ai-chat-area {
+  padding: 0 24px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+  margin-bottom: 20px;
+}
+
+.msg-bubble {
+  display: flex;
+  gap: 12px;
+  max-width: 85%;
+  margin-bottom: 16px;
+}
+
+.msg-bubble.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.msg-bubble.user span {
+  background: var(--accent-purple);
+  color: var(--text-primary);
+  padding: 12px 18px;
+  border-radius: 16px;
+}
+
+.msg-bubble.ai span {
+  background: rgba(148, 163, 184, 0.15);
+  padding: 12px 18px;
+  border-radius: 16px;
+}
+
+.msg-icon {
+  color: var(--accent-purple-light);
+  flex-shrink: 0;
+}
+
+.suggestions {
+  margin-bottom: 20px;
+}
+
+.suggestions p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.suggestions button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  text-align: left;
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--accent-purple-light);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.suggestions button:hover {
+  background: rgba(124, 58, 237, 0.25);
+}
+
+.input-area {
+  display: flex;
+  gap: 12px;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: rgba(15, 15, 26, 0.6);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.input-area input::placeholder {
+  color: var(--text-secondary);
+}
+
+.input-area .send-btn {
+  padding: 14px 20px;
+  background: var(--gradient-purple);
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .ai-chat-page {
+    margin: -16px;
+  }
+}
