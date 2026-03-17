@@ -35,7 +35,9 @@ describe('StickyChatWidget', () => {
 
     const input = screen.getByPlaceholderText('Ask about your files...')
     fireEvent.change(input, { target: { value: '안녕하세요' } })
-    fireEvent.click(screen.getByRole('button', { name: '' }))
+
+    const sendBtn = document.querySelector('.send-btn') as HTMLButtonElement
+    fireEvent.click(sendBtn)
 
     expect(screen.getByText('안녕하세요')).toBeInTheDocument()
   })
@@ -59,7 +61,7 @@ describe('StickyChatWidget', () => {
     fireEvent.change(input, { target: { value: '  ' } })
     fireEvent.keyDown(input, { key: 'Enter' })
 
-    expect(screen.queryAllByRole('article')).toHaveLength(0)
-    expect(screen.getByText(/yANUs Assistant/)).toBeInTheDocument()
+    expect(document.querySelectorAll('.chat-msg')).toHaveLength(0)
+    expect(screen.getByText('yANUs Assistant')).toBeInTheDocument()
   })
 })
