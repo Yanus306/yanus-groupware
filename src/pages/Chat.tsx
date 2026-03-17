@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X } from 'lucide-react'
-import { useApp } from '../context/AppContext'
-import { useChat } from '../context/ChatContext'
-import type { ChatMessage } from '../context/ChatContext'
+import { useApp } from '../features/auth/model'
+import { useChat } from '../features/chat/model'
+import type { ChatMessage } from '../features/chat/model'
 import './Chat.css'
 
 const EMOJIS = ['😊', '👍', '❤️', '😂', '😢', '😍', '🔥', '✨', '🎉', '🙏', '👋', '💯', '✅', '❌', '⭐', '💪']
