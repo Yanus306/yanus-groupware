@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot } from 'lucide-react'
+import { sendChatMessage } from '../../features/ai-chat/api/aiClient'
 import './ai-chat.css'
 
 interface Message {
@@ -22,61 +23,6 @@ export function AIChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const callAI = async (userText: string) => {
-    if (!AI_API_URL) {
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'ai',
-          text: 'AI 서버 URL이 설정되지 않았습니다. `.env`에 VITE_AI_API_URL, VITE_AI_API_MODEL을 설정해 주세요.',
-        },
-      ])
-      return
-    }
-
-    try {
-      const body = {
-        model: AI_API_MODEL,
-        stream: false,
-        messages: [
-          ...messages.map((msg) => ({
-            role: msg.role === 'ai' ? 'assistant' : 'user',
-            content: msg.text,
-          })),
-          { role: 'user', content: userText },
-        ],
-      }
-
-      const res = await fetch(`${AI_API_URL.replace(/\/$/, '')}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      })
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
-
-      const data = await res.json()
-      const aiText =
-        data?.message?.content ??
-        data?.choices?.[0]?.message?.content ??
-        'AI 응답을 불러오는 중 문제가 발생했습니다.'
-
-      setMessages((m) => [...m, { role: 'ai', text: aiText }])
-    } catch (e) {
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'ai',
-          text: 'AI 서버와 통신할 수 없습니다. 서버 주소, 실행 상태, CORS 설정 등을 확인해 주세요.',
-        },
-      ])
-    }
-  }
-
   const handleSend = async () => {
     if (!input.trim()) return
     if (loading) return
@@ -85,7 +31,9 @@ export function AIChat() {
     setMessages((m) => [...m, { role: 'user', text }])
     setInput('')
     setLoading(true)
-    await callAI(text)
+
+    const aiText = await sendChatMessage(messages, text, AI_API_URL, AI_API_MODEL)
+    setMessages((m) => [...m, { role: 'ai', text: aiText }])
     setLoading(false)
   }
 
