@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search, Crown, ChevronDown } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../features/auth/model'
 import './Members.css'
 
 const teams = ['All Teams', 'Design Team', 'Dev Team', 'Marketing', 'Product Team']

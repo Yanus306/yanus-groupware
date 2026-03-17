@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useApp } from '../context/AppContext'
-import { SetWorkDaysPersonal } from '../components/SetWorkDaysPersonal'
+import { useApp } from '../features/auth/model'
+import { SetWorkDaysPersonal } from '../features/attendance/ui'
 import './Attendance.css'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']

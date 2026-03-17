@@ -30,3 +30,5 @@ CLAUDE.md
 .claude/worktrees/
 .claude/settings.local.json
 .claude/todos/
+.vercel
+.env*.local
