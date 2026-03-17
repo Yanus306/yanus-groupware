@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from './AppContext'
-import type { Task, TaskPriority } from '../entities/task/model/types'
+import type { Task } from '../entities/task/model/types'
 
 export type { Task, TaskPriority } from '../entities/task/model/types'
 
