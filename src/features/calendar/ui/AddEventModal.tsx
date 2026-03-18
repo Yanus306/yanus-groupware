@@ -9,7 +9,7 @@ interface Props {
   startTime: string
   endDate: string
   endTime: string
-  inputRef: RefObject<HTMLInputElement>
+  inputRef: RefObject<HTMLInputElement | null>
   onTitleChange: (v: string) => void
   onStartDateChange: (v: string) => void
   onStartTimeChange: (v: string) => void

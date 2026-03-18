@@ -19,7 +19,7 @@ interface Props {
   priority: TaskPriority
   assigneeId: string
   users: User[]
-  inputRef: RefObject<HTMLInputElement>
+  inputRef: RefObject<HTMLInputElement | null>
   onTitleChange: (v: string) => void
   onTimeChange: (v: string) => void
   onDateChange: (v: string) => void

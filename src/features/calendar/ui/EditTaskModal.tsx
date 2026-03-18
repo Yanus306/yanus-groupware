@@ -1,5 +1,4 @@
 import { X } from 'lucide-react'
-import { useRef, useEffect } from 'react'
 import type { Task, TaskPriority } from '../../tasks/model'
 import type { User } from '../../../entities/user/model/types'
 
@@ -19,7 +18,7 @@ interface Props {
   onPriorityChange: (p: TaskPriority) => void
   onSave: () => void
   onClose: () => void
-  editInputRef: React.RefObject<HTMLInputElement>
+  editInputRef: React.RefObject<HTMLInputElement | null>
 }
 
 export function EditTaskModal({
