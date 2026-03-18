@@ -10,7 +10,7 @@ jobs:
   deploy:
     name: Vercel 배포
     runs-on: ubuntu-latest
-    if: ${{ secrets.VERCEL_TOKEN != '' }}
+    if: "${{ secrets.VERCEL_TOKEN != '' }}"
     steps:
       - uses: actions/checkout@v4
 

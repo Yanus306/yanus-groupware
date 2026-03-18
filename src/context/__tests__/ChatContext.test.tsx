@@ -1,8 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { setupServer } from 'msw/node'
+import { chatHandlers } from '../../shared/api/mock/handlers/chat'
 import { AppProvider } from '../AppContext'
 import { ChatProvider, useChat } from '../ChatContext'
+
+const server = setupServer(...chatHandlers)
+
+beforeAll(() => server.listen())
+afterEach(() => { server.resetHandlers(); localStorage.clear() })
+afterAll(() => server.close())
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
@@ -16,9 +24,9 @@ describe('ChatContext', () => {
   })
 
   describe('초기 상태', () => {
-    it('채널 목록이 존재한다', () => {
+    it('채널 목록이 존재한다', async () => {
       const { result } = renderHook(() => useChat(), { wrapper })
-      expect(result.current.channels.length).toBeGreaterThan(0)
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
     })
 
     it('초기 활성 채널 ID가 설정되어 있다', () => {
@@ -26,9 +34,9 @@ describe('ChatContext', () => {
       expect(result.current.activeChannelId).toBeTruthy()
     })
 
-    it('초기 메시지가 존재한다', () => {
+    it('초기 메시지가 존재한다', async () => {
       const { result } = renderHook(() => useChat(), { wrapper })
-      expect(result.current.messages.length).toBeGreaterThan(0)
+      await waitFor(() => expect(result.current.messages.length).toBeGreaterThan(0))
     })
   })
 
@@ -36,9 +44,9 @@ describe('ChatContext', () => {
     it('활성 채널을 변경할 수 있다', () => {
       const { result } = renderHook(() => useChat(), { wrapper })
       act(() => {
-        result.current.setActiveChannelId('1')
+        result.current.setActiveChannelId('2')
       })
-      expect(result.current.activeChannelId).toBe('1')
+      expect(result.current.activeChannelId).toBe('2')
     })
   })
 
@@ -74,14 +82,13 @@ describe('ChatContext', () => {
       expect(added?.files).toHaveLength(1)
     })
 
-    it('추가한 메시지가 localStorage에 저장된다', () => {
+    it('추가한 메시지가 상태에 반영된다', () => {
       const { result } = renderHook(() => useChat(), { wrapper })
+      const before = result.current.messages.length
       act(() => {
         result.current.addMessage('1', '저장 테스트')
       })
-      const stored = localStorage.getItem('yanus-chat-messages')
-      expect(stored).not.toBeNull()
-      expect(stored).toContain('저장 테스트')
+      expect(result.current.messages.length).toBe(before + 1)
     })
   })
 
@@ -96,9 +103,10 @@ describe('ChatContext', () => {
       expect(channelAMessages.every((m) => m.channelId === 'channel-a')).toBe(true)
     })
 
-    it('메시지가 시간순으로 정렬된다', () => {
+    it('메시지가 시간순으로 정렬된다', async () => {
       const { result } = renderHook(() => useChat(), { wrapper })
-      const messages = result.current.getMessagesByChannel('2')
+      await waitFor(() => expect(result.current.messages.length).toBeGreaterThan(0))
+      const messages = result.current.getMessagesByChannel('1')
       for (let i = 1; i < messages.length; i++) {
         expect(messages[i].timestamp.getTime()).toBeGreaterThanOrEqual(
           messages[i - 1].timestamp.getTime()

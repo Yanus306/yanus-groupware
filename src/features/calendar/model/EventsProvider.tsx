@@ -1,7 +1,13 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import type { CalendarEvent } from '../../../entities/event/model/types'
+import {
+  getEvents as apiGetEvents,
+  createEvent as apiCreateEvent,
+  updateEvent as apiUpdateEvent,
+  deleteEvent as apiDeleteEvent,
+} from '../../../shared/api/calendarApi'
 
 export type { CalendarEvent } from '../../../entities/event/model/types'
 
@@ -16,82 +22,58 @@ type EventsContextValue = {
 
 const EventsContext = createContext<EventsContextValue | null>(null)
 
-const STORAGE_KEY = 'yanus-events'
-
-function loadEvents(): CalendarEvent[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return (Array.isArray(parsed) ? parsed : []).map((e: unknown) => {
-      const ev = e as Record<string, unknown>
-      if (ev.startDate && ev.endDate) return ev as unknown as CalendarEvent
-      if (ev.date) {
-        return { ...ev, startDate: ev.date, endDate: ev.date } as unknown as CalendarEvent
-      }
-      return ev as unknown as CalendarEvent
-    })
-  } catch {}
-  return []
-}
-
-function saveEvents(events: CalendarEvent[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
-  } catch {}
-}
-
 export function EventsProvider({ children }: { children: ReactNode }) {
   const { state } = useApp()
-  const [events, setEvents] = useState<CalendarEvent[]>(loadEvents)
+  const [events, setEvents] = useState<CalendarEvent[]>([])
 
-  const addEvent = useCallback((event: Omit<CalendarEvent, 'id' | 'createdBy'>) => {
-    const newEvent: CalendarEvent = {
-      ...event,
-      id: `event-${Date.now()}`,
-      createdBy: state.currentUser.id,
-    }
-    setEvents((prev) => {
-      const next = [...prev, newEvent]
-      saveEvents(next)
-      return next
-    })
-  }, [state.currentUser.id])
+  useEffect(() => {
+    apiGetEvents()
+      .then((data) => setEvents(data as CalendarEvent[]))
+      .catch(() => {})
+  }, [])
+
+  const addEvent = useCallback(
+    (event: Omit<CalendarEvent, 'id' | 'createdBy'>) => {
+      const optimistic: CalendarEvent = {
+        ...event,
+        id: `event-${Date.now()}`,
+        createdBy: state.currentUser?.id ?? '',
+      }
+      setEvents((prev) => [...prev, optimistic])
+      apiCreateEvent(event)
+        .then((serverEvent) =>
+          setEvents((prev) =>
+            prev.map((e) => (e.id === optimistic.id ? (serverEvent as CalendarEvent) : e))
+          )
+        )
+        .catch(() => {})
+    },
+    [state.currentUser?.id]
+  )
 
   const updateEvent = useCallback((id: string, updates: Partial<CalendarEvent>) => {
-    setEvents((prev) => {
-      const next = prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      saveEvents(next)
-      return next
-    })
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)))
+    apiUpdateEvent(id, updates).catch(() => {})
   }, [])
 
   const deleteEvent = useCallback((id: string) => {
-    setEvents((prev) => {
-      const next = prev.filter((e) => e.id !== id)
-      saveEvents(next)
-      return next
-    })
+    setEvents((prev) => prev.filter((e) => e.id !== id))
+    apiDeleteEvent(id).catch(() => {})
   }, [])
 
-  const getEventsByDate = useCallback((date: string) => {
-    return events.filter((e) => e.startDate <= date && date <= e.endDate)
-  }, [events])
+  const getEventsByDate = useCallback(
+    (date: string) => events.filter((e) => e.startDate <= date && date <= e.endDate),
+    [events]
+  )
 
-  const getEventsForDateRange = useCallback((start: string, end: string) => {
-    return events.filter((e) => e.startDate <= end && e.endDate >= start)
-  }, [events])
+  const getEventsForDateRange = useCallback(
+    (start: string, end: string) => events.filter((e) => e.startDate <= end && e.endDate >= start),
+    [events]
+  )
 
   return (
     <EventsContext.Provider
-      value={{
-        events,
-        addEvent,
-        updateEvent,
-        deleteEvent,
-        getEventsByDate,
-        getEventsForDateRange,
-      }}
+      value={{ events, addEvent, updateEvent, deleteEvent, getEventsByDate, getEventsForDateRange }}
     >
       {children}
     </EventsContext.Provider>

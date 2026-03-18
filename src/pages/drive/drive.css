@@ -115,3 +115,20 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  margin-left: auto;
+}
+.delete-btn:hover { color: #ef4444; }
+.file-size { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
+.empty-msg { color: var(--text-secondary); font-size: 14px; padding: 20px 0; }
+

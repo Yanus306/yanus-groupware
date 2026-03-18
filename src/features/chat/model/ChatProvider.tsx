@@ -1,81 +1,23 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import type { ChatMessage, Channel } from '../../../entities/message/model/types'
+import { getChannels, getMessages, sendMessage as apiSendMessage } from '../../../shared/api/chatApi'
+import type { ApiChannel, ApiMessage } from '../../../shared/api/chatApi'
 
 export type { ChatMessage, Channel } from '../../../entities/message/model/types'
 
-const STORAGE_KEY = 'yanus-chat-messages'
-
-function loadMessages(): ChatMessage[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      return parsed.map((m: ChatMessage) => {
-        const msg = { ...m, timestamp: new Date(m.timestamp) }
-        if (msg.files) {
-          msg.files = msg.files.map((f) => ({
-            ...f,
-            url: f.url?.startsWith('blob:') ? '' : f.url,
-          }))
-        }
-        return msg
-      })
-    }
-  } catch {}
-  return []
+function apiMsgToChatMsg(m: ApiMessage): ChatMessage {
+  return {
+    id: m.id,
+    channelId: m.channelId,
+    userId: m.userId,
+    userName: m.userName,
+    content: m.content,
+    type: m.type as 'text' | 'file',
+    timestamp: new Date(m.timestamp),
+  }
 }
-
-function saveMessages(messages: ChatMessage[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
-  } catch {}
-}
-
-const channels: Channel[] = [
-  { id: '1', name: 'General', lastMessage: 'Last message of General...' },
-  { id: '2', name: 'Design Team', lastMessage: 'Hey recommen best desig...' },
-]
-
-const initialMessages: ChatMessage[] = [
-  {
-    id: 'm1',
-    channelId: '2',
-    userId: '1',
-    userName: 'Alex Johnson',
-    content: 'Hey. Here are the next mockups for the dashboard. Please provide your design feedback.',
-    type: 'text',
-    timestamp: new Date(Date.now() - 3600000),
-  },
-  {
-    id: 'm2',
-    channelId: '2',
-    userId: '1',
-    userName: 'Alex Johnson',
-    type: 'file',
-    files: [{ name: 'Project_Brief_v3.pdf', url: '', type: 'application/pdf' }],
-    timestamp: new Date(Date.now() - 3500000),
-  },
-  {
-    id: 'm3',
-    channelId: '2',
-    userId: '1',
-    userName: 'Alex Johnson',
-    content: 'func class Example() { name: "example.com"; return "code"; }',
-    type: 'text',
-    timestamp: new Date(Date.now() - 3400000),
-  },
-  {
-    id: 'm4',
-    channelId: '2',
-    userId: '4',
-    userName: 'Sarah Lee',
-    content: 'Here are the latest mockups for the dashboard. Let me know what you think!',
-    type: 'text',
-    timestamp: new Date(Date.now() - 3300000),
-  },
-]
 
 type ChatContextValue = {
   channels: Channel[]
@@ -90,33 +32,50 @@ const ChatContext = createContext<ChatContextValue | null>(null)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { state } = useApp()
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const stored = loadMessages()
-    return stored.length > 0 ? stored : initialMessages
-  })
-  const [activeChannelId, setActiveChannelId] = useState('2')
+  const [channels, setChannels] = useState<Channel[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [activeChannelId, setActiveChannelId] = useState('1')
+
+  useEffect(() => {
+    getChannels()
+      .then((data: ApiChannel[]) => {
+        setChannels(data)
+        if (data.length > 0) setActiveChannelId(data[0].id)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!activeChannelId) return
+    getMessages(activeChannelId)
+      .then((data: ApiMessage[]) => {
+        setMessages((prev) => [
+          ...prev.filter((m) => m.channelId !== activeChannelId),
+          ...data.map(apiMsgToChatMsg),
+        ])
+      })
+      .catch(() => {})
+  }, [activeChannelId])
 
   const addMessage = useCallback(
     (channelId: string, content?: string, files?: { name: string; url: string; type: string }[]) => {
       const hasFiles = !!files?.length
       const hasContent = !!content?.trim()
-      const msg: ChatMessage = {
+      const type = hasFiles ? 'file' : 'text'
+      const optimistic: ChatMessage = {
         id: `m${Date.now()}`,
         channelId,
-        userId: state.currentUser.id,
-        userName: state.currentUser.name,
+        userId: state.currentUser?.id ?? '',
+        userName: state.currentUser?.name ?? '알 수 없음',
         content: hasContent ? content!.trim() : undefined,
-        type: hasFiles ? 'file' : 'text',
+        type,
         files: hasFiles ? files : undefined,
         timestamp: new Date(),
       }
-      setMessages((prev) => {
-        const next = [...prev, msg]
-        saveMessages(next)
-        return next
-      })
+      setMessages((prev) => [...prev, optimistic])
+      apiSendMessage(channelId, content ?? '', type).catch(() => {})
     },
-    [state.currentUser.id, state.currentUser.name]
+    [state.currentUser?.id, state.currentUser?.name]
   )
 
   const getMessagesByChannel = useCallback(

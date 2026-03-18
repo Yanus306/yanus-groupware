@@ -1,23 +1,23 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { AppProvider, useApp } from '../AppProvider'
 import type { PersonalWorkSchedule } from '../AppProvider'
+import type { User } from '../../../../entities/user/model/types'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>{children}</AppProvider>
 )
 
 describe('AppProvider', () => {
-  describe('초기 상태', () => {
-    it('기본 사용자는 Alex Johnson이다', () => {
-      const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.state.currentUser.name).toBe('Alex Johnson')
-    })
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
-    it('기본 사용자 목록은 5명이다', () => {
+  describe('초기 상태', () => {
+    it('초기 currentUser는 null이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.state.users).toHaveLength(5)
+      expect(result.current.state.currentUser).toBeNull()
     })
 
     it('기본 근무 스케줄 출근 시간은 09:00이다', () => {
@@ -38,9 +38,61 @@ describe('AppProvider', () => {
   })
 
   describe('isAdmin', () => {
-    it('기본 사용자(leader 역할)는 관리자이다', () => {
+    it('currentUser가 없으면 isAdmin은 false이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
+      expect(result.current.isAdmin).toBe(false)
+    })
+
+    it('loadUser로 leader 역할을 로드하면 isAdmin은 true이다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const leaderUser: User = { id: '1', name: '홍길동', team: 'dev', role: 'leader', online: true }
+      act(() => {
+        result.current.loadUser(leaderUser)
+      })
       expect(result.current.isAdmin).toBe(true)
+    })
+
+    it('loadUser로 member 역할을 로드하면 isAdmin은 false이다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const memberUser: User = { id: '2', name: '김철수', team: 'dev', role: 'member', online: true }
+      act(() => {
+        result.current.loadUser(memberUser)
+      })
+      expect(result.current.isAdmin).toBe(false)
+    })
+  })
+
+  describe('loadUser', () => {
+    it('loadUser 호출 시 currentUser가 업데이트된다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const user: User = { id: '99', name: '테스트 유저', team: 'design', role: 'member', online: true }
+      act(() => {
+        result.current.loadUser(user)
+      })
+      expect(result.current.state.currentUser?.name).toBe('테스트 유저')
+    })
+  })
+
+  describe('logout', () => {
+    it('logout 호출 시 accessToken이 제거된다', () => {
+      localStorage.setItem('accessToken', 'test-token')
+      const { result } = renderHook(() => useApp(), { wrapper })
+      act(() => {
+        result.current.logout()
+      })
+      expect(localStorage.getItem('accessToken')).toBeNull()
+    })
+
+    it('logout 호출 시 currentUser가 null로 초기화된다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const user: User = { id: '1', name: '홍길동', team: 'dev', role: 'leader', online: true }
+      act(() => {
+        result.current.loadUser(user)
+      })
+      act(() => {
+        result.current.logout()
+      })
+      expect(result.current.state.currentUser).toBeNull()
     })
   })
 
