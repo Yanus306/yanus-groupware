@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { login } from '../../features/auth/api/authClient'
 import logoSrc from '../../assets/logo.png'
@@ -75,7 +75,7 @@ export function Login() {
           <div className="form-group">
             <label htmlFor="email">이메일</label>
             <div className="input-wrap">
-              <Mail size={17} />
+              <Mail size={16} className="input-icon" />
               <input
                 id="email"
                 type="email"
@@ -92,7 +92,7 @@ export function Login() {
           <div className="form-group">
             <label htmlFor="password">비밀번호</label>
             <div className="input-wrap">
-              <Lock size={17} />
+              <Lock size={16} className="input-icon" />
               <input
                 id="password"
                 type={showPw ? 'text' : 'password'}
@@ -121,6 +121,10 @@ export function Login() {
             </span>
           </button>
         </form>
+
+        <div className="login-footer">
+          아직 계정이 없으신가요? <Link to="/register">회원가입</Link>
+        </div>
       </div>
     </div>
   )
