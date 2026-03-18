@@ -35,7 +35,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    throw new ApiError(res.status, `요청 실패: ${res.status}`)
+    let message = `요청 실패: ${res.status}`
+    try {
+      const data = await res.json() as { message?: string }
+      if (data.message) {
+        message = data.message
+      }
+    } catch {
+      // Ignore non-JSON error bodies and keep the fallback message.
+    }
+    throw new ApiError(res.status, message)
   }
 
   return res.json() as Promise<T>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { login, getMe } from '../authClient'
+import { login, register, getMe } from '../authClient'
 
 describe('authClient.login', () => {
   beforeEach(() => {
@@ -92,5 +92,57 @@ describe('authClient.getMe', () => {
       }),
     )
     await expect(getMe()).rejects.toThrow()
+  })
+})
+
+describe('authClient.register', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    localStorage.clear()
+  })
+
+  it('성공 시 accessToken을 반환한다', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({ accessToken: 'registered-token' }),
+      }),
+    )
+    const token = await register({
+      name: '홍길동',
+      email: 'new@test.com',
+      password: 'password123',
+      team: 'dev',
+    })
+    expect(token).toBe('registered-token')
+  })
+
+  it('올바른 URL과 body로 fetch를 호출한다', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ accessToken: 'registered-token' }),
+    })
+    vi.stubGlobal('fetch', mockFetch)
+    await register({
+      name: '홍길동',
+      email: 'new@test.com',
+      password: 'password123',
+      team: 'dev',
+    })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/register'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: '홍길동',
+          email: 'new@test.com',
+          password: 'password123',
+          team: 'dev',
+        }),
+      }),
+    )
   })
 })
