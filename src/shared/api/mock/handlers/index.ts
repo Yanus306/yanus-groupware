@@ -3,6 +3,7 @@ import { attendanceHandlers } from './attendance'
 import { chatHandlers } from './chat'
 import { calendarHandlers } from './calendar'
 import { driveHandlers } from './drive'
+import { membersHandlers } from './members'
 
 export const handlers = [
   ...authHandlers,
@@ -10,4 +11,5 @@ export const handlers = [
   ...chatHandlers,
   ...calendarHandlers,
   ...driveHandlers,
+  ...membersHandlers,
 ]

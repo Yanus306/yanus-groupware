@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { WorkStatus } from '../ui/AnimatedClockRing'
+import { clockIn as apiClockIn, clockOut as apiClockOut } from '../../../shared/api/attendanceApi'
 
 const STORAGE_KEY = 'yanus-work-session'
 
@@ -34,9 +35,11 @@ export function useWorkSession() {
       setClockIn(new Date())
       setClockOut(null)
       setStatus('working')
+      apiClockIn().catch(() => {})
     } else if (status === 'working') {
       setClockOut(new Date())
       setStatus('done')
+      apiClockOut().catch(() => {})
     } else {
       setClockIn(null)
       setClockOut(null)

@@ -21,6 +21,7 @@ const AppContext = createContext<{
   setPersonalSchedule: (s: PersonalWorkSchedule) => void
   isAdmin: boolean
   loadUser: (user: User) => void
+  loadMembers: (users: User[]) => void
   logout: () => void
 } | null>(null)
 
@@ -38,6 +39,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, currentUser: user }))
   }
 
+  function loadMembers(users: User[]) {
+    setState((prev) => ({ ...prev, users }))
+  }
+
   function logout() {
     localStorage.removeItem('accessToken')
     setState({ currentUser: null, users: [] })
@@ -45,7 +50,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider
-      value={{ state, personalSchedule, setPersonalSchedule, isAdmin: !!isAdmin, loadUser, logout }}
+      value={{ state, personalSchedule, setPersonalSchedule, isAdmin: !!isAdmin, loadUser, loadMembers, logout }}
     >
       {children}
     </AppContext.Provider>
