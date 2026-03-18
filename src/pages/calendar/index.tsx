@@ -430,13 +430,13 @@ export function Calendar() {
   }, [addEventModalOpen])
 
   const myTasksFilter = (t: Task) =>
-    t.assigneeId === state.currentUser.id ||
-    t.createdBy === state.currentUser.id ||
+    t.assigneeId === state.currentUser?.id ||
+    t.createdBy === state.currentUser?.id ||
     !t.assigneeId
 
   const filteredTasks = useMemo(() => {
     return activeTab === 'my' ? tasks.filter(myTasksFilter) : tasks
-  }, [tasks, activeTab, state.currentUser.id])
+  }, [tasks, activeTab, state.currentUser?.id])
 
   const fullCalendarEvents = useMemo(
     () => [
@@ -757,8 +757,8 @@ export function Calendar() {
             <div className="edit-task-header">
               <div className="edit-task-header-title">
                 <h4>태스크 수정</h4>
-                <span className={`task-type-badge ${editingTask.assigneeId && editingTask.assigneeId !== state.currentUser.id ? 'team' : 'my'}`}>
-                  {!editingTask.assigneeId || editingTask.assigneeId === state.currentUser.id
+                <span className={`task-type-badge ${editingTask.assigneeId && editingTask.assigneeId !== state.currentUser?.id ? 'team' : 'my'}`}>
+                  {!editingTask.assigneeId || editingTask.assigneeId === state.currentUser?.id
                     ? '내 할일'
                     : editingTask.assigneeId === 'all'
                       ? '팀 할일 · 팀원 전체'

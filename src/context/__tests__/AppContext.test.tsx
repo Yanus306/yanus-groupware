@@ -1,23 +1,28 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { AppProvider, useApp } from '../AppContext'
 import type { PersonalWorkSchedule } from '../AppContext'
+import type { User } from '../../entities/user/model/types'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>{children}</AppProvider>
 )
 
 describe('AppContext', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   describe('초기 상태', () => {
-    it('기본 사용자는 Alex Johnson이다', () => {
+    it('초기 currentUser는 null이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.state.currentUser.name).toBe('Alex Johnson')
+      expect(result.current.state.currentUser).toBeNull()
     })
 
-    it('기본 사용자 목록은 5명이다', () => {
+    it('초기 users는 빈 배열이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.state.users).toHaveLength(5)
+      expect(result.current.state.users).toHaveLength(0)
     })
 
     it('기본 근무 스케줄 출근 시간은 09:00이다', () => {
@@ -38,8 +43,17 @@ describe('AppContext', () => {
   })
 
   describe('isAdmin', () => {
-    it('기본 사용자(leader 역할)는 관리자이다', () => {
+    it('로그인 전 isAdmin은 false이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
+      expect(result.current.isAdmin).toBe(false)
+    })
+
+    it('leader 역할 사용자 로드 시 isAdmin은 true이다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const leaderUser: User = { id: '1', name: '홍길동', team: 'dev', role: 'leader', online: true }
+      act(() => {
+        result.current.loadUser(leaderUser)
+      })
       expect(result.current.isAdmin).toBe(true)
     })
   })

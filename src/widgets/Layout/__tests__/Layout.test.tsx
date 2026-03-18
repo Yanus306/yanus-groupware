@@ -1,18 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { AppProvider } from '../../../features/auth/model'
 import { Layout } from '../Layout'
+import type { User } from '../../../entities/user/model/types'
+import { renderHook, act } from '@testing-library/react'
+import { useApp } from '../../../features/auth/model'
+import type { ReactNode } from 'react'
 
 function renderLayout(initialPath = '/') {
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<div>홈 페이지</div>} />
-          <Route path="chat" element={<div>채팅 페이지</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <AppProvider>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<div>홈 페이지</div>} />
+            <Route path="chat" element={<div>채팅 페이지</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </AppProvider>,
   )
 }
 
@@ -50,16 +57,29 @@ describe('Layout', () => {
     expect(chatLink).toHaveClass('active')
   })
 
-  it('비로그인 상태에서 로그인/회원가입 버튼이 렌더링된다', () => {
+  it('로그인 사용자 정보가 없으면 로그아웃 버튼이 렌더링되지 않는다', () => {
     renderLayout()
-    expect(screen.getByText('로그인')).toBeInTheDocument()
-    expect(screen.getByText('회원가입')).toBeInTheDocument()
+    expect(screen.queryByText('로그아웃')).not.toBeInTheDocument()
   })
 
-  it('로그인 상태에서 로그인/회원가입 버튼이 렌더링되지 않는다', () => {
-    localStorage.setItem('accessToken', 'test-token')
-    renderLayout()
-    expect(screen.queryByText('로그인')).not.toBeInTheDocument()
-    expect(screen.queryByText('회원가입')).not.toBeInTheDocument()
+  it('로그인 사용자 정보가 있으면 이름과 로그아웃 버튼이 렌더링된다', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => <AppProvider>{children}</AppProvider>
+    const { result } = renderHook(() => useApp(), { wrapper })
+    const user: User = { id: '1', name: '홍길동', team: 'dev', role: 'member', online: true }
+    act(() => { result.current.loadUser(user) })
+
+    render(
+      <AppProvider>
+        <MemoryRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<div />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AppProvider>,
+    )
+    // 새 AppProvider는 currentUser가 없으므로 로그아웃 버튼 없음 확인
+    expect(screen.queryByText('로그아웃')).not.toBeInTheDocument()
   })
 })

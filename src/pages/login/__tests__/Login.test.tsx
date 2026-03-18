@@ -2,14 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { AppProvider } from '../../../features/auth/model'
 import { Login } from '../index'
 
 vi.mock('../../../features/auth/api/authClient', () => ({
   login: vi.fn(),
+  getMe: vi.fn(),
 }))
 
-import { login } from '../../../features/auth/api/authClient'
+import { login, getMe } from '../../../features/auth/api/authClient'
 const mockLogin = vi.mocked(login)
+const mockGetMe = vi.mocked(getMe)
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -19,9 +22,11 @@ vi.mock('react-router-dom', async () => {
 
 function renderLogin() {
   return render(
-    <MemoryRouter>
-      <Login />
-    </MemoryRouter>,
+    <AppProvider>
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    </AppProvider>,
   )
 }
 
@@ -29,6 +34,7 @@ describe('Login 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+    mockGetMe.mockResolvedValue({ id: '1', name: '홍길동', team: 'dev', role: 'member', online: true })
   })
 
   it('이메일, 비밀번호 입력 필드와 로그인 버튼이 렌더링된다', () => {

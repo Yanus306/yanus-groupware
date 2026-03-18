@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { login } from '../../features/auth/api/authClient'
+import { login, getMe } from '../../features/auth/api/authClient'
+import { useApp } from '../../features/auth/model'
 import logoSrc from '../../assets/logo.png'
 import './login.css'
 
@@ -25,6 +26,7 @@ function validate(email: string, password: string): FormErrors {
 
 export function Login() {
   const navigate = useNavigate()
+  const { loadUser } = useApp()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -47,6 +49,8 @@ export function Login() {
     try {
       const token = await login(email, password)
       localStorage.setItem('accessToken', token)
+      const user = await getMe()
+      loadUser(user)
       navigate('/')
     } catch (err) {
       setServerError(err instanceof Error ? err.message : '로그인에 실패했습니다')

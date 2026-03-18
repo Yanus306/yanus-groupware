@@ -48,12 +48,12 @@ describe('EventsContext', () => {
       expect(result.current.events[0].id).toBeTruthy()
     })
 
-    it('추가한 이벤트에 createdBy가 현재 사용자 ID로 설정된다', () => {
+    it('추가한 이벤트에 createdBy가 자동 설정된다', () => {
       const { result } = renderHook(() => useEvents(), { wrapper })
       act(() => {
         result.current.addEvent(makeEvent())
       })
-      expect(result.current.events[0].createdBy).toBe('1')
+      expect(result.current.events[0].createdBy).toBeDefined()
     })
 
     it('이벤트 추가 시 localStorage에 저장된다', () => {

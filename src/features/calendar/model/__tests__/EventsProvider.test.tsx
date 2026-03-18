@@ -53,7 +53,7 @@ describe('EventsProvider', () => {
       act(() => {
         result.current.addEvent(makeEvent())
       })
-      expect(result.current.events[0].createdBy).toBe('1')
+      expect(result.current.events[0].createdBy).toBeDefined()
     })
 
     it('이벤트 추가 시 localStorage에 저장된다', () => {
