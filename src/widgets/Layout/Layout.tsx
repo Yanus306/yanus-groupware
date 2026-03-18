@@ -1,5 +1,6 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useApp } from '../../features/auth/model'
 import logoImg from '../../assets/logo.png'
 import './Layout.css'
 
@@ -15,6 +16,15 @@ const navItems = [
 ]
 
 export function Layout() {
+  const navigate = useNavigate()
+  const { state, logout } = useApp()
+  const { currentUser } = state
+
+  function handleLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -34,6 +44,23 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        {currentUser && (
+          <div className="sidebar-bottom">
+            <div className="sidebar-user">
+              <div className="sidebar-user-avatar">
+                {currentUser.name.charAt(0)}
+              </div>
+              <div className="sidebar-user-info">
+                <span className="sidebar-user-name">{currentUser.name}</span>
+                <span className="sidebar-user-role">{currentUser.role}</span>
+              </div>
+            </div>
+            <button className="sidebar-auth-btn logout-btn" onClick={handleLogout}>
+              <LogOut size={16} />
+              <span>로그아웃</span>
+            </button>
+          </div>
+        )}
       </aside>
       <main className="main-content">
         <Outlet />

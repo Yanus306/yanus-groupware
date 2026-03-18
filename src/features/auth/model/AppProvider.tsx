@@ -5,17 +5,9 @@ import type { User, PersonalWorkSchedule } from '../../../entities/user/model/ty
 export type { UserRole, Team, User, PersonalWorkSchedule } from '../../../entities/user/model/types'
 
 export interface AppState {
-  currentUser: User
+  currentUser: User | null
   users: User[]
 }
-
-const mockUsers: User[] = [
-  { id: '1', name: 'Alex Johnson', team: 'design', role: 'leader', online: true },
-  { id: '2', name: 'Maria Garcia', team: 'design', role: 'member', online: true },
-  { id: '3', name: 'David Chen', team: 'dev', role: 'team_lead', online: false },
-  { id: '4', name: 'Sarah Lee', team: 'marketing', role: 'member', online: false },
-  { id: '5', name: 'Mike Davis', team: 'product', role: 'member', online: true },
-]
 
 const defaultSchedule: PersonalWorkSchedule = {
   workDays: [true, true, true, true, true, false, false],
@@ -28,18 +20,38 @@ const AppContext = createContext<{
   personalSchedule: PersonalWorkSchedule
   setPersonalSchedule: (s: PersonalWorkSchedule) => void
   isAdmin: boolean
+  loadUser: (user: User) => void
+  loadMembers: (users: User[]) => void
+  logout: () => void
 } | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state] = useState<AppState>({
-    currentUser: mockUsers[0],
-    users: mockUsers,
+  const [state, setState] = useState<AppState>({
+    currentUser: null,
+    users: [],
   })
   const [personalSchedule, setPersonalSchedule] = useState<PersonalWorkSchedule>(defaultSchedule)
-  const isAdmin = state.currentUser.role === 'leader' || state.currentUser.role === 'team_lead'
+
+  const isAdmin =
+    state.currentUser?.role === 'leader' || state.currentUser?.role === 'team_lead'
+
+  function loadUser(user: User) {
+    setState((prev) => ({ ...prev, currentUser: user }))
+  }
+
+  function loadMembers(users: User[]) {
+    setState((prev) => ({ ...prev, users }))
+  }
+
+  function logout() {
+    localStorage.removeItem('accessToken')
+    setState({ currentUser: null, users: [] })
+  }
 
   return (
-    <AppContext.Provider value={{ state, personalSchedule, setPersonalSchedule, isAdmin }}>
+    <AppContext.Provider
+      value={{ state, personalSchedule, setPersonalSchedule, isAdmin: !!isAdmin, loadUser, loadMembers, logout }}
+    >
       {children}
     </AppContext.Provider>
   )

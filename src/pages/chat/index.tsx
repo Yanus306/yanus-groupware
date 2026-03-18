@@ -202,7 +202,7 @@ export function Chat() {
     })
   }
 
-  const currentUserId = state.currentUser.id
+  const currentUserId = state.currentUser?.id ?? ''
 
   return (
     <div className="chat-page">
@@ -272,7 +272,7 @@ export function Chat() {
           )}
           {message.trim() && (
             <div className="input-preview msg own">
-              <span className="msg-avatar">{state.currentUser.name[0]}</span>
+              <span className="msg-avatar">{state.currentUser?.name[0] ?? '?'}</span>
               <div className="msg-content input-preview-content">
                 <MessageContent content={message} />
               </div>

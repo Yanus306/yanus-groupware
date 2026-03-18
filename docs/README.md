@@ -1,0 +1,14 @@
+# yANUs 개발 문서
+
+이 디렉토리는 yANUs 그룹웨어 프론트엔드의 개발 문서를 담고 있습니다.
+
+## 목차
+
+| 문서 | 설명 |
+|------|------|
+| [아키텍처 — FSD](./architecture/fsd.md) | Feature-Sliced Design 구조 설명 |
+| [아키텍처 — 결정 기록](./architecture/decisions.md) | 주요 기술 결정 이유 (ADR) |
+| [기여 가이드](./guides/contributing.md) | 브랜치 전략, 커밋 컨벤션, PR 규칙 |
+| [테스트 가이드](./guides/testing.md) | TDD 흐름, 테스트 작성 방법 |
+| [API 개요](./api/overview.md) | 백엔드 API 엔드포인트 목록 |
+| [트러블슈팅](./troubleshooting/README.md) | 자주 발생하는 문제와 해결법 |

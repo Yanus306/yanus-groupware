@@ -54,14 +54,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const newTask: Task = {
       ...task,
       id: `task-${Date.now()}`,
-      createdBy: state.currentUser.id,
+      createdBy: state.currentUser?.id ?? '',
     }
     setTasks((prev) => {
       const next = [...prev, newTask]
       saveTasks(next)
       return next
     })
-  }, [state.currentUser.id])
+  }, [state.currentUser?.id])
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
     setTasks((prev) => {

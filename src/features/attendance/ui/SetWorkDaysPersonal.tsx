@@ -17,8 +17,8 @@ export function SetWorkDaysPersonal() {
       <h3>Set Work Days</h3>
       <p className="desc">Customize your personal schedule. Set your own work days and check-in/out times.</p>
       <div className="member-row">
-        <span className="member-avatar">{state.currentUser.name[0]}</span>
-        <span className="member-name">{state.currentUser.name}</span>
+        <span className="member-avatar">{state.currentUser?.name[0] ?? '?'}</span>
+        <span className="member-name">{state.currentUser?.name ?? ''}</span>
         <div className="days-toggles">
           {DAYS.map((day, i) => (
             <div key={day} className="day-cell">

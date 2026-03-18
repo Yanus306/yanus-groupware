@@ -1,10 +1,18 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { setupServer } from 'msw/node'
+import { chatHandlers } from '../../shared/api/mock/handlers/chat'
 import { Providers } from '../providers'
 import { useApp } from '../../features/auth/model'
 import { useTasks } from '../../features/tasks/model'
 import { useEvents } from '../../features/calendar/model'
 import { useChat } from '../../features/chat/model'
+
+const server = setupServer(...chatHandlers)
+
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 function AppConsumer() {
   const { state } = useApp()
@@ -13,7 +21,7 @@ function AppConsumer() {
   const { channels } = useChat()
   return (
     <div>
-      <span data-testid="user">{state.currentUser.name}</span>
+      <span data-testid="user">{state.currentUser?.name ?? '비로그인'}</span>
       <span data-testid="tasks">{tasks.length}</span>
       <span data-testid="events">{events.length}</span>
       <span data-testid="channels">{channels.length}</span>
@@ -28,7 +36,7 @@ describe('Providers', () => {
         <AppConsumer />
       </Providers>,
     )
-    expect(screen.getByTestId('user').textContent).toBe('Alex Johnson')
+    expect(screen.getByTestId('user')).toBeInTheDocument()
   })
 
   it('TasksProvider 컨텍스트를 제공한다', () => {
@@ -49,12 +57,14 @@ describe('Providers', () => {
     expect(Number(screen.getByTestId('events').textContent)).toBeGreaterThanOrEqual(0)
   })
 
-  it('ChatProvider 컨텍스트를 제공한다', () => {
+  it('ChatProvider 컨텍스트를 제공한다', async () => {
     render(
       <Providers>
         <AppConsumer />
       </Providers>,
     )
-    expect(Number(screen.getByTestId('channels').textContent)).toBeGreaterThan(0)
+    await waitFor(() =>
+      expect(Number(screen.getByTestId('channels').textContent)).toBeGreaterThan(0)
+    )
   })
 })
