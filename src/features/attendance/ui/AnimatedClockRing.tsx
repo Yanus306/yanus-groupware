@@ -63,18 +63,19 @@ export function AnimatedClockRing({ status, clockIn, clockOut, now, variant = 'd
 
   const shouldRotate = variant === 'default' && status !== 'done'
 
+  // 로고 색상 기반: 파랑 #72b8e8, 보라 #9680cc, 핑크 #d44a99
   const [c0, c1, c2] = isStart
-    ? ['#22c55e', '#4ade80', '#bbf7d0'] // 출근 버튼 - 그린 톤
+    ? ['#3db87a', '#5ed4a0', '#3db87a'] // 출근 - 그린
     : isLeave
-    ? ['#f97373', '#fb7185', '#fecaca'] // 퇴근 버튼 - 레드 톤
-    : ['#9B5CFF', '#4DA3FF', '#6C7CFF'] // 기본 퍼플-블루 그라데이션
+    ? ['#e05050', '#e87070', '#e05050'] // 퇴근 - 레드
+    : ['#9680cc', '#72b8e8', '#9680cc'] // 기본 - 로고 보라→파랑
 
   const workingStops =
     variant === 'default' && status === 'working'
       ? {
-          s0: ['#9B5CFF', '#4DA3FF', '#6C7CFF', '#9B5CFF'],
-          s1: ['#4DA3FF', '#6C7CFF', '#9B5CFF', '#4DA3FF'],
-          s2: ['#6C7CFF', '#9B5CFF', '#4DA3FF', '#6C7CFF'],
+          s0: ['#9680cc', '#72b8e8', '#d44a99', '#9680cc'],
+          s1: ['#72b8e8', '#d44a99', '#9680cc', '#72b8e8'],
+          s2: ['#d44a99', '#9680cc', '#72b8e8', '#d44a99'],
         }
       : null
 

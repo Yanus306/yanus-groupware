@@ -1,26 +1,38 @@
 :root {
-  --bg-dark: #0d0d14;
-  --bg-darker: #08080c;
-  --bg-card: rgba(20, 18, 32, 0.85);
-  --bg-card-solid: rgba(25, 23, 40, 0.95);
-  --bg-sidebar: rgba(15, 13, 28, 0.98);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-purple: #7c3aed;
-  --accent-purple-light: #a78bfa;
-  --accent-purple-dark: #5b21b6;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-pink: #ec4899;
-  --gradient-purple: linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #ec4899 100%);
-  --gradient-purple-blue: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
-  --border-color: rgba(148, 163, 184, 0.12);
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
-  --sidebar-width: 240px;
-  --sidebar-narrow: 64px;
+  /* 로고 기반 핵심 색상: 하늘파랑 → 보라 → 핑크 */
+  --blue: #72b8e8;
+  --purple: #9680cc;
+  --pink: #d44a99;
+
+  /* 배경 */
+  --bg-dark: #111118;
+  --bg-card: rgba(22, 20, 34, 0.82);
+  --bg-sidebar: #0e0d16;
+
+  /* 텍스트 */
+  --text-primary: #eef0f6;
+  --text-secondary: #8e97b2;
+  --text-muted: #5a6280;
+
+  /* 액센트 (구버전 이름 호환) */
+  --accent-purple: var(--purple);
+  --accent-purple-light: #b09de0;
+  --accent-purple-dark: #7056a8;
+  --accent-blue: var(--blue);
+  --accent-cyan: #60c8e0;
+  --accent-pink: var(--pink);
+
+  /* 그라데이션 - 로고색 기반, 최소화 */
+  --gradient-logo: linear-gradient(135deg, var(--blue) 0%, var(--purple) 50%, var(--pink) 100%);
+  --gradient-purple: var(--gradient-logo);
+  --gradient-purple-blue: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+
+  /* 기타 */
+  --border-color: rgba(150, 160, 200, 0.1);
+  --success: #3db87a;
+  --warning: #d4a020;
+  --error: #e05050;
+  --sidebar-width: 200px;
 }
 
 * {
@@ -40,10 +52,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: 
-    linear-gradient(180deg, rgba(30, 25, 55, 0.6) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 58, 237, 0.18), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.12), transparent);
+  background: radial-gradient(ellipse 70% 40% at 50% -10%, rgba(150, 128, 204, 0.1), transparent);
   pointer-events: none;
   z-index: 0;
 }

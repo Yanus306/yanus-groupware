@@ -1,18 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Layout } from '../components/Layout'
-import { Dashboard } from '../pages/Dashboard'
-import { Chat } from '../pages/Chat'
-import { Calendar } from '../pages/Calendar'
-import { Attendance } from '../pages/Attendance'
-import { Drive } from '../pages/Drive'
-import { AIChat } from '../pages/AIChat'
-import { Members } from '../pages/Members'
-import { Settings } from '../pages/Settings'
+import { Layout } from '../widgets/Layout'
+import { Login } from '../pages/login'
+import { Dashboard } from '../pages/dashboard'
+import { Chat } from '../pages/chat'
+import { Calendar } from '../pages/calendar'
+import { Attendance } from '../pages/attendance'
+import { Drive } from '../pages/drive'
+import { AIChat } from '../pages/ai-chat'
+import { Members } from '../pages/members'
+import { Settings } from '../pages/settings'
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="chat" element={<Chat />} />

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from '../Layout'
@@ -17,6 +17,10 @@ function renderLayout(initialPath = '/') {
 }
 
 describe('Layout', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   it('사이드바가 렌더링된다', () => {
     renderLayout()
     expect(document.querySelector('.sidebar')).toBeInTheDocument()
@@ -44,5 +48,18 @@ describe('Layout', () => {
     renderLayout('/chat')
     const chatLink = screen.getByTitle('채팅')
     expect(chatLink).toHaveClass('active')
+  })
+
+  it('비로그인 상태에서 로그인/회원가입 버튼이 렌더링된다', () => {
+    renderLayout()
+    expect(screen.getByText('로그인')).toBeInTheDocument()
+    expect(screen.getByText('회원가입')).toBeInTheDocument()
+  })
+
+  it('로그인 상태에서 로그인/회원가입 버튼이 렌더링되지 않는다', () => {
+    localStorage.setItem('accessToken', 'test-token')
+    renderLayout()
+    expect(screen.queryByText('로그인')).not.toBeInTheDocument()
+    expect(screen.queryByText('회원가입')).not.toBeInTheDocument()
   })
 })

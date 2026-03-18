@@ -1,5 +1,6 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogIn, UserPlus } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import logoImg from '../../assets/logo.png'
 import './Layout.css'
 
@@ -15,6 +16,9 @@ const navItems = [
 ]
 
 export function Layout() {
+  const navigate = useNavigate()
+  const [isLoggedIn] = useState(() => !!localStorage.getItem('accessToken'))
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -34,6 +38,18 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        {!isLoggedIn && (
+          <div className="sidebar-auth">
+            <button className="sidebar-auth-btn login" onClick={() => navigate('/login')}>
+              <LogIn size={16} />
+              <span>로그인</span>
+            </button>
+            <button className="sidebar-auth-btn register" onClick={() => navigate('/register')}>
+              <UserPlus size={16} />
+              <span>회원가입</span>
+            </button>
+          </div>
+        )}
       </aside>
       <main className="main-content">
         <Outlet />
