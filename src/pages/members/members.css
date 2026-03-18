@@ -342,3 +342,88 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Invite button */
+.members-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.invite-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  color: var(--purple, #9680cc);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Invite modal */
+.invite-modal {
+  padding: 28px;
+  border-radius: 16px;
+  min-width: 360px;
+  max-width: 480px;
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.close-btn:hover { color: var(--text-primary); }
+
+.setting-field { margin-bottom: 16px; }
+.setting-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.setting-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.setting-input:focus { border-color: var(--purple, #9680cc); }
+
+.role-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.role-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.role-btn.active {
+  border-color: var(--purple, #9680cc);
+  color: var(--purple, #9680cc);
+  background: rgba(150, 128, 204, 0.15);
+}

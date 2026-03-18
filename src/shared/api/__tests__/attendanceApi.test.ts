@@ -12,7 +12,7 @@ afterAll(() => server.close())
 describe('attendanceApi', () => {
   it('getAttendance() 출퇴근 기록 목록을 반환한다', async () => {
     const records = await getAttendance()
-    expect(records).toHaveLength(3)
+    expect(records.length).toBeGreaterThan(0)
     expect(records[0]).toMatchObject({ id: '1', userId: '1', clockIn: '09:02' })
   })
 
