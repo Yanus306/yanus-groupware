@@ -103,8 +103,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const msg: ChatMessage = {
         id: `m${Date.now()}`,
         channelId,
-        userId: state.currentUser.id,
-        userName: state.currentUser.name,
+        userId: state.currentUser?.id ?? '',
+        userName: state.currentUser?.name ?? '알 수 없음',
         content: hasContent ? content!.trim() : undefined,
         type: hasFiles ? 'file' : 'text',
         files: hasFiles ? files : undefined,
@@ -116,7 +116,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return next
       })
     },
-    [state.currentUser.id, state.currentUser.name]
+    [state.currentUser?.id, state.currentUser?.name]
   )
 
   const getMessagesByChannel = useCallback(

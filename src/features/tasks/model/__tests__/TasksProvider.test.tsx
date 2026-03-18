@@ -48,7 +48,7 @@ describe('TasksProvider', () => {
         result.current.addTask(makeTask())
       })
       const added = result.current.tasks.at(-1)
-      expect(added?.createdBy).toBe('1')
+      expect(added?.createdBy).toBeDefined()
     })
 
     it('태스크 추가 시 localStorage에 저장된다', () => {

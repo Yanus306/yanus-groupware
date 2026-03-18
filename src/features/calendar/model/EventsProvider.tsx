@@ -49,14 +49,14 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     const newEvent: CalendarEvent = {
       ...event,
       id: `event-${Date.now()}`,
-      createdBy: state.currentUser.id,
+      createdBy: state.currentUser?.id ?? '',
     }
     setEvents((prev) => {
       const next = [...prev, newEvent]
       saveEvents(next)
       return next
     })
-  }, [state.currentUser.id])
+  }, [state.currentUser?.id])
 
   const updateEvent = useCallback((id: string, updates: Partial<CalendarEvent>) => {
     setEvents((prev) => {

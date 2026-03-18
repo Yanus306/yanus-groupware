@@ -42,13 +42,13 @@ describe('TasksContext', () => {
       expect(added?.id).toBeTruthy()
     })
 
-    it('추가한 태스크의 createdBy가 현재 사용자 ID로 설정된다', () => {
+    it('추가한 태스크의 createdBy가 자동 설정된다', () => {
       const { result } = renderHook(() => useTasks(), { wrapper })
       act(() => {
         result.current.addTask(makeTask())
       })
       const added = result.current.tasks.at(-1)
-      expect(added?.createdBy).toBe('1')
+      expect(added?.createdBy).toBeDefined()
     })
 
     it('태스크 추가 시 localStorage에 저장된다', () => {

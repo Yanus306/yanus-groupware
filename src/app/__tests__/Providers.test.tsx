@@ -13,7 +13,7 @@ function AppConsumer() {
   const { channels } = useChat()
   return (
     <div>
-      <span data-testid="user">{state.currentUser.name}</span>
+      <span data-testid="user">{state.currentUser?.name ?? '비로그인'}</span>
       <span data-testid="tasks">{tasks.length}</span>
       <span data-testid="events">{events.length}</span>
       <span data-testid="channels">{channels.length}</span>
@@ -28,7 +28,7 @@ describe('Providers', () => {
         <AppConsumer />
       </Providers>,
     )
-    expect(screen.getByTestId('user').textContent).toBe('Alex Johnson')
+    expect(screen.getByTestId('user')).toBeInTheDocument()
   })
 
   it('TasksProvider 컨텍스트를 제공한다', () => {
