@@ -28,7 +28,7 @@
 
 .clock-card-link:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 24px rgba(150, 128, 204, 0.15);
 }
 
 .clock-outer {
@@ -43,7 +43,6 @@
 .clock-ring-svg {
   position: absolute;
   inset: 0;
-  filter: drop-shadow(0 0 24px rgba(124, 58, 237, 0.35));
 }
 
 .clock-inner {
@@ -110,15 +109,18 @@
 }
 
 .schedule-item.purple {
-  background: linear-gradient(90deg, rgba(124, 58, 237, 0.3) 0%, transparent 100%);
+  background: rgba(150, 128, 204, 0.12);
+  border-left: 3px solid var(--purple);
 }
 
 .schedule-item.blue {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.25) 0%, transparent 100%);
+  background: rgba(114, 184, 232, 0.1);
+  border-left: 3px solid var(--blue);
 }
 
 .schedule-item.grey {
-  background: rgba(148, 163, 184, 0.06);
+  background: rgba(150, 160, 200, 0.05);
+  border-left: 3px solid var(--border-color);
 }
 
 .schedule-icon {
@@ -194,12 +196,13 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--gradient-purple);
+  background: var(--purple);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 600;
+  color: #fff;
   flex-shrink: 0;
 }
 
@@ -245,9 +248,19 @@
 
 .attendance-progress {
   margin-top: 12px;
-  height: 6px;
+  height: 5px;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent-purple) 0%, var(--accent-blue) 92%, transparent 92%);
+  background: rgba(150, 160, 200, 0.1);
+  overflow: hidden;
+}
+
+.attendance-progress::after {
+  content: '';
+  display: block;
+  width: 92%;
+  height: 100%;
+  background: var(--purple);
+  border-radius: 3px;
 }
 
 /* Active Members: bottom-right right */

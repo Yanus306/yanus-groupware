@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
 export type UserRole = 'member' | 'team_lead' | 'leader'
@@ -43,6 +43,9 @@ const AppContext = createContext<{
   personalSchedule: PersonalWorkSchedule
   setPersonalSchedule: (s: PersonalWorkSchedule) => void
   isAdmin: boolean
+  isLoggedIn: boolean
+  login: (email: string, password: string) => boolean
+  logout: () => void
 } | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -51,10 +54,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     users: mockUsers,
   })
   const [personalSchedule, setPersonalSchedule] = useState<PersonalWorkSchedule>(defaultSchedule)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('yanus-logged-in') === 'true'
+  })
   const isAdmin = state.currentUser.role === 'leader' || state.currentUser.role === 'team_lead'
 
+  useEffect(() => {
+    localStorage.setItem('yanus-logged-in', String(isLoggedIn))
+  }, [isLoggedIn])
+
+  const login = (_email: string, _password: string): boolean => {
+    setIsLoggedIn(true)
+    return true
+  }
+
+  const logout = () => {
+    setIsLoggedIn(false)
+  }
+
   return (
-    <AppContext.Provider value={{ state, personalSchedule, setPersonalSchedule, isAdmin }}>
+    <AppContext.Provider value={{ state, personalSchedule, setPersonalSchedule, isAdmin, isLoggedIn, login, logout }}>
       {children}
     </AppContext.Provider>
   )
