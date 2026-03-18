@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Crown, ChevronDown } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
+import { getMembers } from '../../shared/api/membersApi'
 import './members.css'
 
 const teams = ['All Teams', 'Design Team', 'Dev Team', 'Marketing', 'Product Team']
@@ -20,11 +21,18 @@ const teamLabels: Record<string, string> = {
 }
 
 export function Members() {
-  const { state, isAdmin } = useApp()
+  const { state, isAdmin, loadMembers } = useApp()
   const [search, setSearch] = useState('')
   const [teamFilter, setTeamFilter] = useState('All Teams')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [changeRoleFor, setChangeRoleFor] = useState<{ id: string; name: string } | null>(null)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    getMembers()
+      .then(loadMembers)
+      .catch(() => {})
+  }, [isAdmin, loadMembers])
 
   if (!isAdmin) {
     return (
@@ -82,7 +90,7 @@ export function Members() {
             ))}
           </div>
         </div>
-        <div className="total-members glass">Total Members: 150</div>
+        <div className="total-members glass">Total Members: {state.users.length}</div>
       </div>
 
       <div className="members-content">
@@ -94,7 +102,6 @@ export function Members() {
                 <th>Profile</th>
                 <th>Current Team</th>
                 <th>Role</th>
-                <th>Join Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -106,15 +113,14 @@ export function Members() {
                     {u.name}
                   </td>
                   <td>
-                    <span className={`team-tag ${u.team}`}>{teamLabels[u.team]}</span>
+                    <span className={`team-tag ${u.team}`}>{teamLabels[u.team] ?? u.team}</span>
                   </td>
                   <td>
                     <span className={`role-tag ${u.role}`}>
                       {u.role === 'leader' && <Crown size={14} />}
-                      {roleLabels[u.role]}
+                      {roleLabels[u.role] ?? u.role}
                     </span>
                   </td>
-                  <td>Oct 15, 2023</td>
                   <td>
                     <div className="actions">
                       <button className="action-btn">Change Team <ChevronDown size={14} /></button>
@@ -132,20 +138,22 @@ export function Members() {
         <aside className="stats-sidebar glass">
           <h3>Members per Team</h3>
           <div className="bar-chart">
-            <div className="bar" style={{ height: '80%' }}><span>Design</span><span>40</span></div>
-            <div className="bar" style={{ height: '100%' }}><span>Dev</span><span>50</span></div>
-            <div className="bar" style={{ height: '60%' }}><span>Marketing</span><span>30</span></div>
-            <div className="bar" style={{ height: '40%' }}><span>Product</span><span>20</span></div>
-            <div className="bar" style={{ height: '20%' }}><span>Other</span><span>10</span></div>
+            {Object.entries(teamLabels).map(([key, label]) => {
+              const count = state.users.filter((u) => u.team === key).length
+              const max = Math.max(...Object.keys(teamLabels).map((k) => state.users.filter((u) => u.team === k).length), 1)
+              return (
+                <div key={key} className="bar" style={{ height: `${(count / max) * 100}%` }}>
+                  <span>{label.split(' ')[0]}</span>
+                  <span>{count}</span>
+                </div>
+              )
+            })}
           </div>
           <h3>Role Distribution</h3>
           <div className="pie-legend">
-            <span><i style={{ background: 'var(--accent-purple)' }} /> Leader 10%</span>
-            <span><i style={{ background: 'var(--accent-blue)' }} /> Team Lead 30%</span>
-            <span><i style={{ background: 'var(--text-secondary)' }} /> Member 60%</span>
-          </div>
-          <div className="team-composition">
-            Team Composition: 4 Active Teams, 30 Team Leads, 15 Leaders.
+            <span><i style={{ background: 'var(--accent-purple)' }} /> Leader {state.users.filter((u) => u.role === 'leader').length}</span>
+            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> Team Lead {state.users.filter((u) => u.role === 'team_lead').length}</span>
+            <span><i style={{ background: 'var(--text-secondary)' }} /> Member {state.users.filter((u) => u.role === 'member').length}</span>
           </div>
         </aside>
       </div>
