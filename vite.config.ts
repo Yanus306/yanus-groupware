@@ -15,13 +15,13 @@ export default defineConfig({
         name: 'yANUs - 동아리 그룹웨어',
         short_name: 'yANUs',
         description: '업무 채팅, 출퇴근, 파일 공유, AI 챗봇',
-        theme_color: '#7c3aed',
-        background_color: '#0f0f1a',
+        theme_color: '#9680cc',
+        background_color: '#111118',
         display: 'standalone',
         start_url: '/',
         icons: [
           {
-            src: '/vite.svg',
+            src: '/yanus-logo.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable'
