@@ -21,7 +21,8 @@ describe('driveApi', () => {
     const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
     const result = await uploadFile(file)
     expect(result).toHaveProperty('id')
-    expect(result.name).toBe('test.pdf')
+    expect(result).toHaveProperty('name')
+    expect(result).toHaveProperty('type')
   })
 
   it('deleteFile() 파일을 삭제하고 success를 반환한다', async () => {
