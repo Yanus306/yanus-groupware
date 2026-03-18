@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from '../index'
+import { resetAuthMockData } from '../auth'
 
 const server = setupServer(...handlers)
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetAuthMockData()
+})
 afterAll(() => server.close())
 
 describe('MSW 핸들러 — 인증', () => {
@@ -38,6 +42,36 @@ describe('MSW 핸들러 — 인증', () => {
     expect(data).toHaveProperty('id')
     expect(data).toHaveProperty('name')
     expect(data).toHaveProperty('role')
+  })
+
+  it('POST /auth/register 성공 시 accessToken을 반환한다', async () => {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: '새사용자',
+        email: 'new@yanus.kr',
+        password: 'password123',
+        team: 'dev',
+      }),
+    })
+    const data = await res.json()
+    expect(res.status).toBe(201)
+    expect(data.accessToken).toBeTruthy()
+  })
+
+  it('POST /auth/register 중복 이메일이면 409를 반환한다', async () => {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: '중복사용자',
+        email: 'admin@yanus.kr',
+        password: 'password123',
+        team: 'dev',
+      }),
+    })
+    expect(res.status).toBe(409)
   })
 })
 
