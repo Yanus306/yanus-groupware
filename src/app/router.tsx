@@ -3,6 +3,7 @@ import { Layout } from '../widgets/Layout'
 import { PrivateRoute } from '../shared/ui/PrivateRoute'
 import { AdminRoute } from '../shared/ui/AdminRoute'
 import { Login } from '../pages/login'
+import { Register } from '../pages/register'
 import { Dashboard } from '../pages/dashboard'
 import { Chat } from '../pages/chat'
 import { Calendar } from '../pages/calendar'
@@ -17,6 +18,7 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
