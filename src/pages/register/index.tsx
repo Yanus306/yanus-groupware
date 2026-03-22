@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, AlertCircle, Users } from 'lucide-react'
 import { getMe, login, register } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
+import { getTeams } from '../../shared/api/teamsApi'
+import type { TeamResponse } from '../../shared/api/teamsApi'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -14,13 +16,12 @@ interface FormErrors {
   team?: string
 }
 
-// teamId 매핑 — teamsApi 연동 후 동적으로 교체 예정
-const teams: Array<{ value: string; label: string; teamId: number }> = [
-  { value: 'BACKEND', label: '백엔드팀', teamId: 1 },
-  { value: 'FRONTEND', label: '프론트엔드팀', teamId: 2 },
-  { value: 'AI', label: 'AI팀', teamId: 3 },
-  { value: 'SECURITY', label: '보안팀', teamId: 4 },
-]
+const TEAM_LABELS: Record<string, string> = {
+  BACKEND: '백엔드팀',
+  FRONTEND: '프론트엔드팀',
+  AI: 'AI팀',
+  SECURITY: '보안팀',
+}
 
 function validate(name: string, email: string, password: string, confirmPassword: string, team: string): FormErrors {
   const errors: FormErrors = {}
@@ -61,6 +62,21 @@ export function Register() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [teamOptions, setTeamOptions] = useState<TeamResponse[]>([])
+
+  useEffect(() => {
+    getTeams()
+      .then(setTeamOptions)
+      .catch(() => {
+        // fallback: 정적 목록
+        setTeamOptions([
+          { id: 1, name: 'BACKEND' },
+          { id: 2, name: 'FRONTEND' },
+          { id: 3, name: 'AI' },
+          { id: 4, name: 'SECURITY' },
+        ])
+      })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,7 +91,7 @@ export function Register() {
 
     setLoading(true)
     try {
-      const teamId = teams.find((t) => t.value === team)?.teamId ?? 1
+      const teamId = teamOptions.find((t) => t.name === team)?.id ?? 1
       await register({ name, email, password, teamId })
       const token = await login(email, password)
       localStorage.setItem('accessToken', token)
@@ -151,9 +167,9 @@ export function Register() {
                 onChange={(e) => setTeam(e.target.value)}
               >
                 <option value="">팀을 선택해 주세요</option>
-                {teams.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
+                {teamOptions.map((item) => (
+                  <option key={item.id} value={item.name}>
+                    {TEAM_LABELS[item.name] ?? item.name}
                   </option>
                 ))}
               </select>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { WorkStatus } from '../ui/AnimatedClockRing'
-import { clockIn as apiClockIn, clockOut as apiClockOut } from '../../../shared/api/attendanceApi'
+import { clockIn as apiClockIn, clockOut as apiClockOut, getMyAttendance } from '../../../shared/api/attendanceApi'
 
 const STORAGE_KEY = 'yanus-work-session'
 
@@ -9,16 +9,47 @@ export function useWorkSession() {
   const [clockIn, setClockIn] = useState<Date | null>(null)
   const [clockOut, setClockOut] = useState<Date | null>(null)
 
+  // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { status: WorkStatus; clockIn?: string; clockOut?: string }
-        setStatus(parsed.status)
-        setClockIn(parsed.clockIn ? new Date(parsed.clockIn) : null)
-        setClockOut(parsed.clockOut ? new Date(parsed.clockOut) : null)
-      } catch {}
-    }
+    const todayStr = new Date().toISOString().slice(0, 10)
+    getMyAttendance()
+      .then((records) => {
+        const todayRecord = records.find((r) => r.workDate === todayStr)
+        if (todayRecord) {
+          if (todayRecord.status === 'LEFT') {
+            setStatus('done')
+            setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
+            setClockOut(todayRecord.checkOutTime ? new Date(todayRecord.checkOutTime) : null)
+          } else if (todayRecord.status === 'WORKING') {
+            setStatus('working')
+            setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
+            setClockOut(null)
+          }
+        } else {
+          // 서버 기록 없으면 localStorage fallback
+          const stored = localStorage.getItem(STORAGE_KEY)
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored) as { status: WorkStatus; clockIn?: string; clockOut?: string }
+              setStatus(parsed.status)
+              setClockIn(parsed.clockIn ? new Date(parsed.clockIn) : null)
+              setClockOut(parsed.clockOut ? new Date(parsed.clockOut) : null)
+            } catch {}
+          }
+        }
+      })
+      .catch(() => {
+        // 서버 오류 시 localStorage fallback
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as { status: WorkStatus; clockIn?: string; clockOut?: string }
+            setStatus(parsed.status)
+            setClockIn(parsed.clockIn ? new Date(parsed.clockIn) : null)
+            setClockOut(parsed.clockOut ? new Date(parsed.clockOut) : null)
+          } catch {}
+        }
+      })
   }, [])
 
   useEffect(() => {

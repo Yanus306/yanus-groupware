@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { User, Bell, Palette, Shield, Save } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
+import { updateMyProfile } from '../../shared/api/membersApi'
 import './settings.css'
 
 type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security'
@@ -17,9 +18,12 @@ export function Settings() {
   const [displayName, setDisplayName] = useState(state.currentUser?.name ?? '')
   const [saved, setSaved] = useState(false)
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    try {
+      await updateMyProfile({ name: displayName })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {}
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
