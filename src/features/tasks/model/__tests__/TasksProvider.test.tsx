@@ -82,7 +82,7 @@ describe('TasksProvider', () => {
     it('태스크를 추가할 수 있다', async () => {
       const { result } = await mountHook()
       await act(async () => {
-        await result.current.addTask({ title: '새 태스크', time: '10:00:00', date: '2025-06-01', priority: 'medium', done: false })
+        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false })
       })
       expect(result.current.tasks.length).toBeGreaterThan(0)
       expect(result.current.tasks.at(-1)?.title).toBe('새 태스크')
@@ -91,9 +91,33 @@ describe('TasksProvider', () => {
     it('추가한 태스크에 id가 자동 생성된다', async () => {
       const { result } = await mountHook()
       await act(async () => {
-        await result.current.addTask({ title: '새 태스크', time: '10:00:00', date: '2025-06-01', priority: 'medium', done: false })
+        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false })
       })
       expect(result.current.tasks.at(-1)?.id).toBeTruthy()
+    })
+
+    it('API에 전송하는 time은 HH:mm:ss 형식이다', async () => {
+      let capturedTime: string | undefined
+      server.use(
+        http.post('/api/v1/tasks', async ({ request }) => {
+          const body = await request.json() as Record<string, string>
+          capturedTime = body.time
+          const task = makeApiTask({ title: body.title as string })
+          TASKS.push(task)
+          return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: task }, { status: 201 })
+        }),
+      )
+      const { result } = await mountHook()
+      await act(async () => {
+        await result.current.addTask({ title: 'time 형식 테스트', time: '1:30 오후', date: '2025-06-01', priority: 'medium', done: false })
+      })
+      expect(capturedTime).toBe('13:30:00')
+    })
+
+    it('API에서 받은 time(HH:mm:ss)은 표시 형식(오전/오후)으로 변환된다', async () => {
+      TASKS.push({ ...makeApiTask(), time: '14:00:00' })
+      const { result } = await mountHook()
+      expect(result.current.tasks[0].time).toBe('2:00 오후')
     })
   })
 
