@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Crown, ChevronDown, UserPlus, X } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { getMembers, updateMemberRole, inviteMember } from '../../shared/api/membersApi'
+import { getMembers, updateMemberRole } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
 import './members.css'
 
@@ -78,7 +78,6 @@ export function Members() {
     if (!inviteEmail.trim()) return
     setSaving(true)
     try {
-      await inviteMember(inviteEmail.trim(), inviteRole)
       const updated = await getMembers()
       loadMembers(updated)
       setInviteEmail('')

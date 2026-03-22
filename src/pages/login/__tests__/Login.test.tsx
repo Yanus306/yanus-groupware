@@ -34,7 +34,7 @@ describe('Login 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    mockGetMe.mockResolvedValue({ id: '1', name: '홍길동', team: 'dev', role: 'member', online: true })
+    mockGetMe.mockResolvedValue({ id: '1', name: '홍길동', email: 'user@test.com', team: 'BACKEND', role: 'MEMBER', online: true })
   })
 
   it('이메일, 비밀번호 입력 필드와 로그인 버튼이 렌더링된다', () => {

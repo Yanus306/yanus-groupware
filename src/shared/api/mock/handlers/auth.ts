@@ -48,6 +48,7 @@ export const authHandlers = [
     const newUser: User = {
       id: newId,
       name: body.name,
+      email: body.email as string,
       team: body.team,
       role: 'MEMBER',
       online: true,

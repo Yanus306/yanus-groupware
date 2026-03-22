@@ -131,15 +131,15 @@ export function Attendance() {
             </div>
             <div className="stat-card glass">
               <span className="label">Present</span>
-              <span className="value green">{todayRecords.filter((r) => r.status === 'done').length}</span>
+              <span className="value green">{todayRecords.filter((r) => r.status === 'LEFT').length}</span>
             </div>
             <div className="stat-card glass">
               <span className="label">Working</span>
-              <span className="value yellow">{todayRecords.filter((r) => r.status === 'working').length}</span>
+              <span className="value yellow">{todayRecords.filter((r) => r.status === 'WORKING').length}</span>
             </div>
             <div className="stat-card glass">
               <span className="label">Absent</span>
-              <span className="value red">{todayRecords.filter((r) => r.status === 'absent').length}</span>
+              <span className="value red">{todayRecords.filter((r) => r.checkInTime === null).length}</span>
             </div>
           </div>
         )}

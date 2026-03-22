@@ -50,7 +50,7 @@ describe('AppContext', () => {
 
     it('ADMIN 역할 사용자 로드 시 isAdmin은 true이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      const leaderUser: User = { id: '1', name: '홍길동', team: 'BACKEND', role: 'ADMIN', online: true }
+      const leaderUser: User = { id: '1', name: '홍길동', email: 'admin@test.com', team: 'BACKEND', role: 'ADMIN', online: true }
       act(() => {
         result.current.loadUser(leaderUser)
       })

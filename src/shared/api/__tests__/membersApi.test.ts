@@ -14,8 +14,7 @@ const server = setupServer(
       ],
     }),
   ),
-  http.patch('/api/v1/members/:id/role', async ({ params, request }) => {
-    const body = await request.json() as { role: string }
+  http.patch('/api/v1/members/:id/role', async () => {
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
@@ -29,8 +28,7 @@ const server = setupServer(
       data: { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
     }),
   ),
-  http.put('/api/v1/members/me', async ({ request }) => {
-    const body = await request.json() as { name?: string; password?: string }
+  http.put('/api/v1/members/me', async () => {
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 )

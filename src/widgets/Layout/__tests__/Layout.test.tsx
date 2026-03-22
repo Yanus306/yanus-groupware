@@ -65,7 +65,7 @@ describe('Layout', () => {
   it('로그인 사용자 정보가 있으면 이름과 로그아웃 버튼이 렌더링된다', () => {
     const wrapper = ({ children }: { children: ReactNode }) => <AppProvider>{children}</AppProvider>
     const { result } = renderHook(() => useApp(), { wrapper })
-    const user: User = { id: '1', name: '홍길동', team: 'dev', role: 'member', online: true }
+    const user: User = { id: '1', name: '홍길동', email: 'user@test.com', team: 'BACKEND', role: 'MEMBER', online: true }
     act(() => { result.current.loadUser(user) })
 
     render(
