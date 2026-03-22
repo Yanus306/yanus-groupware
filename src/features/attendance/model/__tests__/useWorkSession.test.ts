@@ -112,7 +112,7 @@ describe('useWorkSession', () => {
   })
 
   describe('에러 처리', () => {
-    it('ATT_001: 이미 출근된 경우 working 상태 유지 — 에러 메시지 없음', async () => {
+    it('ATT_001: 이미 출근된 경우 working 상태 유지 및 info 메시지 설정', async () => {
       server.use(
         http.post('/api/v1/attendances/check-in', () =>
           HttpResponse.json(
@@ -124,10 +124,10 @@ describe('useWorkSession', () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() })
       expect(result.current.status).toBe('working')
-      expect(result.current.errorMessage).toBeNull()
+      expect(result.current.errorMessage).toBe('이미 출근 처리된 기록이 있습니다')
     })
 
-    it('ATT_003: 이미 퇴근된 경우 done 상태 유지 — 에러 메시지 없음', async () => {
+    it('ATT_003: 이미 퇴근된 경우 done 상태 유지 및 info 메시지 설정', async () => {
       server.use(
         http.post('/api/v1/attendances/check-out', () =>
           HttpResponse.json(
@@ -140,7 +140,7 @@ describe('useWorkSession', () => {
       await act(async () => { await result.current.handleClockClick() }) // idle -> working
       await act(async () => { await result.current.handleClockClick() }) // working -> done (ATT_003)
       expect(result.current.status).toBe('done')
-      expect(result.current.errorMessage).toBeNull()
+      expect(result.current.errorMessage).toBe('이미 퇴근 처리된 기록이 있습니다')
     })
 
     it('ATT_002: 출근 기록 없이 퇴근 시 idle로 복구 및 에러 메시지 설정', async () => {

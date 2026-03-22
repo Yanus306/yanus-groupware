@@ -1,15 +1,11 @@
-import { authHandlers } from './auth'
-import { attendanceHandlers } from './attendance'
 import { chatHandlers } from './chat'
 import { calendarHandlers } from './calendar'
 import { driveHandlers } from './drive'
-import { membersHandlers } from './members'
 
+// auth, attendance, members는 실제 백엔드(api.yanus.bond)로 직접 요청
+// chat, calendar, drive는 백엔드 미구현으로 MSW mock 유지
 export const handlers = [
-  ...authHandlers,
-  ...attendanceHandlers,
   ...chatHandlers,
   ...calendarHandlers,
   ...driveHandlers,
-  ...membersHandlers,
 ]
