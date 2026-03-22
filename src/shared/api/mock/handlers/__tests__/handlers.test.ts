@@ -13,19 +13,19 @@ afterEach(() => {
 afterAll(() => server.close())
 
 describe('MSW 핸들러 — 인증', () => {
-  it('POST /auth/login 성공 시 accessToken을 반환한다', async () => {
-    const res = await fetch('/auth/login', {
+  it('POST /api/v1/auth/login 성공 시 accessToken을 반환한다', async () => {
+    const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'admin@yanus.kr', password: 'password' }),
     })
-    const data = await res.json()
+    const data = await res.json() as { data: { accessToken: string } }
     expect(res.status).toBe(200)
-    expect(data.accessToken).toBeTruthy()
+    expect(data.data.accessToken).toBeTruthy()
   })
 
-  it('POST /auth/login 잘못된 자격증명 시 401을 반환한다', async () => {
-    const res = await fetch('/auth/login', {
+  it('POST /api/v1/auth/login 잘못된 자격증명 시 401을 반환한다', async () => {
+    const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'wrong@test.com', password: 'wrong' }),
@@ -33,42 +33,40 @@ describe('MSW 핸들러 — 인증', () => {
     expect(res.status).toBe(401)
   })
 
-  it('GET /auth/me 성공 시 User 객체를 반환한다', async () => {
-    const res = await fetch('/auth/me', {
-      headers: { Authorization: 'Bearer mock-token' },
+  it('GET /api/v1/auth/me 성공 시 User 객체를 반환한다', async () => {
+    const res = await fetch('/api/v1/auth/me', {
+      headers: { Authorization: 'Bearer mock-token-1' },
     })
-    const data = await res.json()
+    const data = await res.json() as { data: { id: string; name: string; role: string } }
     expect(res.status).toBe(200)
-    expect(data).toHaveProperty('id')
-    expect(data).toHaveProperty('name')
-    expect(data).toHaveProperty('role')
+    expect(data.data).toHaveProperty('id')
+    expect(data.data).toHaveProperty('name')
+    expect(data.data).toHaveProperty('role')
   })
 
-  it('POST /auth/register 성공 시 accessToken을 반환한다', async () => {
-    const res = await fetch('/auth/register', {
+  it('POST /api/v1/auth/register 성공 시 201을 반환한다', async () => {
+    const res = await fetch('/api/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: '새사용자',
         email: 'new@yanus.kr',
         password: 'password123',
-        team: 'dev',
+        teamId: 1,
       }),
     })
-    const data = await res.json()
     expect(res.status).toBe(201)
-    expect(data.accessToken).toBeTruthy()
   })
 
-  it('POST /auth/register 중복 이메일이면 409를 반환한다', async () => {
-    const res = await fetch('/auth/register', {
+  it('POST /api/v1/auth/register 중복 이메일이면 409를 반환한다', async () => {
+    const res = await fetch('/api/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: '중복사용자',
         email: 'admin@yanus.kr',
         password: 'password123',
-        team: 'dev',
+        teamId: 1,
       }),
     })
     expect(res.status).toBe(409)

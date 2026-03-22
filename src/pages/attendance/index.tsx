@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { SetWorkDaysPersonal } from '../../features/attendance/ui'
-import { getAttendanceByDate } from '../../shared/api/attendanceApi'
+import { getAttendanceByDate, getMyAttendance } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import './attendance.css'
@@ -13,20 +13,38 @@ export function Attendance() {
   const { isAdmin } = useApp()
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
   const [page, setPage] = useState(1)
+  const [dateInput, setDateInput] = useState('')
   const PAGE_SIZE = 10
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
+  // 관리자: 날짜별 전체 기록
   useEffect(() => {
+    if (!isAdmin) return
     getAttendanceByDate(todayStr)
       .then(setRecords)
       .catch(() => {})
-  }, [todayStr])
+  }, [isAdmin, todayStr])
+
+  // 일반 사용자: 내 출퇴근 기록 전체 이력
+  useEffect(() => {
+    getMyAttendance()
+      .then(setMyRecords)
+      .catch(() => {})
+  }, [])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
   const pageRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const handleDateFilter = () => {
+    if (!dateInput) return
+    getAttendanceByDate(dateInput)
+      .then(setRecords)
+      .catch(() => {})
+  }
 
   const handleExport = () => {
     exportAttendanceToCsv(
@@ -66,6 +84,17 @@ export function Attendance() {
               Custom
             </button>
           </div>
+          {filter === 'custom' && (
+            <div className="custom-date-filter">
+              <input
+                type="date"
+                value={dateInput}
+                onChange={(e) => setDateInput(e.target.value)}
+                className="date-input"
+              />
+              <button className="filter-apply-btn" onClick={handleDateFilter}>조회</button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -122,6 +151,41 @@ export function Attendance() {
             </section>
           )}
         </div>
+
+        {/* 내 출퇴근 이력 — 모든 유저 */}
+        <section className="my-history-section glass">
+          <h3>내 출퇴근 이력</h3>
+          <div className="records-table-wrap">
+            <table className="records-table">
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>출근</th>
+                  <th>퇴근</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myRecords.length === 0 ? (
+                  <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px' }}>기록이 없습니다</td></tr>
+                ) : (
+                  myRecords.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.workDate}</td>
+                      <td>{r.checkInTime?.slice(11, 16) ?? '-'}</td>
+                      <td>{r.checkOutTime?.slice(11, 16) ?? '-'}</td>
+                      <td>
+                        <span className={`status-badge ${r.status === 'LEFT' ? 'present' : 'late'}`}>
+                          {r.status === 'LEFT' ? 'Present' : 'Working'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {isAdmin && (
           <div className="summary-stats">

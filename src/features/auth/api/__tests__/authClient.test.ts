@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { login, register, getMe } from '../authClient'
+import { login, register, getMe, logout } from '../authClient'
 
 const server = setupServer(
   http.post('/api/v1/auth/login', async ({ request }) => {
@@ -34,6 +34,9 @@ const server = setupServer(
       message: 'ok',
       data: { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
     }),
+  ),
+  http.post('/api/v1/auth/logout', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
   ),
 )
 
@@ -77,6 +80,12 @@ describe('authClient', () => {
         role: 'ADMIN',
         team: 'BACKEND',
       })
+    })
+  })
+
+  describe('logout()', () => {
+    it('로그아웃 요청이 성공한다', async () => {
+      await expect(logout()).resolves.not.toThrow()
     })
   })
 })

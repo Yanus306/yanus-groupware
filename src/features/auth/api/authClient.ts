@@ -23,3 +23,7 @@ export async function register(payload: RegisterPayload): Promise<void> {
 export async function getMe(): Promise<User> {
   return baseClient.get<User>('/api/v1/auth/me')
 }
+
+export async function logout(): Promise<void> {
+  await baseClient.post<null>('/api/v1/auth/logout', {})
+}

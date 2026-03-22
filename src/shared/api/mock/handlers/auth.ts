@@ -23,33 +23,38 @@ export function resetAuthMockData() {
 }
 
 export const authHandlers = [
-  http.post('/auth/login', async ({ request }) => {
+  http.post('/api/v1/auth/login', async ({ request }) => {
     const body = await request.json() as { email: string; password: string }
     const match = validCredentials[body.email]
     if (!match || body.password !== match.password) {
       return HttpResponse.json(
-        { message: '이메일 또는 비밀번호가 올바르지 않습니다' },
+        { code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다', data: null },
         { status: 401 },
       )
     }
-    return HttpResponse.json({ accessToken: `mock-token-${match.userId}` })
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { accessToken: `mock-token-${match.userId}`, refreshToken: `refresh-${match.userId}`, tokenType: 'Bearer' },
+    })
   }),
 
-  http.post('/auth/register', async ({ request }) => {
-    const body = await request.json() as { name: string; email: string; password: string; team: User['team'] }
+  http.post('/api/v1/auth/register', async ({ request }) => {
+    const body = await request.json() as { name: string; email: string; password: string; teamId: number }
     if (validCredentials[body.email]) {
       return HttpResponse.json(
-        { message: '이미 가입된 이메일입니다' },
+        { code: 'CONFLICT', message: '이미 가입된 이메일입니다', data: null },
         { status: 409 },
       )
     }
 
+    const teamMap: Record<number, User['team']> = { 1: 'BACKEND', 2: 'FRONTEND', 3: 'AI', 4: 'SECURITY' }
     const newId = String(mockUsers.length + 1)
     const newUser: User = {
       id: newId,
       name: body.name,
-      email: body.email as string,
-      team: body.team,
+      email: body.email,
+      team: teamMap[body.teamId] ?? 'BACKEND',
       role: 'MEMBER',
       online: true,
     }
@@ -60,13 +65,17 @@ export const authHandlers = [
       [body.email]: { userId: newId, password: body.password },
     }
 
-    return HttpResponse.json({ accessToken: `mock-token-${newId}` }, { status: 201 })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'created', data: null }, { status: 201 })
   }),
 
-  http.get('/auth/me', ({ request }) => {
+  http.get('/api/v1/auth/me', ({ request }) => {
     const auth = request.headers.get('Authorization') ?? ''
     const userId = auth.replace('Bearer mock-token-', '') || '1'
     const user = mockUsers.find((u) => u.id === userId) ?? mockUsers[0]
-    return HttpResponse.json(user)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: user })
   }),
+
+  http.post('/api/v1/auth/logout', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
 ]

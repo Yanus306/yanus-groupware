@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Crown, ChevronDown, UserPlus, X } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { getMembers, updateMemberRole } from '../../shared/api/membersApi'
+import { getMembers, updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
 import './members.css'
 
@@ -72,6 +72,26 @@ export function Members() {
     } catch {}
     setSaving(false)
     setChangeRoleFor(null)
+  }
+
+  const handleDeactivate = async (id: string) => {
+    setSaving(true)
+    try {
+      await deactivateMember(id)
+      const updated = await getMembers()
+      loadMembers(updated)
+    } catch {}
+    setSaving(false)
+  }
+
+  const handleActivate = async (id: string) => {
+    setSaving(true)
+    try {
+      await activateMember(id)
+      const updated = await getMembers()
+      loadMembers(updated)
+    } catch {}
+    setSaving(false)
   }
 
   const handleInvite = async () => {
@@ -146,10 +166,19 @@ export function Members() {
                       {roleLabels[u.role] ?? u.role}
                     </span>
                   </td>
-                  <td>
+                  <td className="actions-cell">
                     <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
                       Change Role <ChevronDown size={14} />
                     </button>
+                    {'active' in u && !(u as { active?: boolean }).active ? (
+                      <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
+                        활성화
+                      </button>
+                    ) : (
+                      <button className="action-btn deactivate-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
+                        비활성화
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
