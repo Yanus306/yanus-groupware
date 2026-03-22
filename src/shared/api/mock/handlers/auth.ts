@@ -70,7 +70,13 @@ export const authHandlers = [
 
   http.get('/api/v1/auth/me', ({ request }) => {
     const auth = request.headers.get('Authorization') ?? ''
-    const userId = auth.replace('Bearer mock-token-', '') || '1'
+    if (!auth.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
+    const userId = auth.replace('Bearer mock-token-', '')
     const user = mockUsers.find((u) => u.id === userId) ?? mockUsers[0]
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: user })
   }),

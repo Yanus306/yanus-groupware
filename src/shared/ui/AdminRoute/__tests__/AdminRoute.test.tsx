@@ -29,6 +29,7 @@ describe('AdminRoute', () => {
   it('isAdmin이 true이면 자식 라우트를 렌더링한다', () => {
     mockUseApp.mockReturnValue({
       isAdmin: true,
+      isInitializing: false,
       state: { currentUser: null, users: [] },
       personalSchedule: { workDays: [], checkInTime: '', checkOutTime: '' },
       setPersonalSchedule: vi.fn(),
@@ -43,6 +44,7 @@ describe('AdminRoute', () => {
   it('isAdmin이 false이면 홈으로 리다이렉트한다', () => {
     mockUseApp.mockReturnValue({
       isAdmin: false,
+      isInitializing: false,
       state: { currentUser: null, users: [] },
       personalSchedule: { workDays: [], checkInTime: '', checkOutTime: '' },
       setPersonalSchedule: vi.fn(),
