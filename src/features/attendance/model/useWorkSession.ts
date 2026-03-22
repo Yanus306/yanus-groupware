@@ -76,8 +76,7 @@ export function useWorkSession() {
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.code === 'ATT_001') {
-            // 이미 출근 처리됨 — 서버 기록으로 상태 동기화
-            setErrorMessage(err.message)
+            // 이미 출근 처리됨 — 조용히 서버 기록으로 시각 보정 (에러 아님)
             getMyAttendance().then((records) => {
               const today = new Date().toISOString().slice(0, 10)
               const rec = records.find((r) => r.workDate === today)
@@ -106,9 +105,7 @@ export function useWorkSession() {
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.code === 'ATT_003') {
-            // 이미 퇴근 처리됨
-            setErrorMessage(err.message)
-            // status 'done' 유지
+            // 이미 퇴근 처리됨 — 조용히 done 유지 (에러 아님)
           } else if (err.code === 'ATT_002') {
             // 출근 기록 없음 — idle로 복구
             setStatus('idle')
