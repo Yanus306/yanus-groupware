@@ -1,90 +1,101 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
-import type { Task } from '../../../entities/task/model/types'
+import type { Task, TaskPriority } from '../../../entities/task/model/types'
+import {
+  getTasks as apiGetTasks,
+  createTask as apiCreateTask,
+  updateTask as apiUpdateTask,
+  deleteTask as apiDeleteTask,
+  toggleTaskDone as apiToggleTaskDone,
+} from '../../../shared/api/tasksApi'
+import type { ApiTask, ApiTaskPriority } from '../../../shared/api/tasksApi'
 
 export type { Task, TaskPriority } from '../../../entities/task/model/types'
 export { getTodayStr, formatDateDisplay } from '../../../shared/lib/date'
 
 type TasksContextValue = {
   tasks: Task[]
-  addTask: (task: Omit<Task, 'id' | 'createdBy'>) => void
-  updateTask: (id: string, updates: Partial<Task>) => void
-  deleteTask: (id: string) => void
-  toggleTaskDone: (id: string) => void
+  addTask: (task: Omit<Task, 'id' | 'createdBy'>) => Promise<void>
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>
+  deleteTask: (id: string) => Promise<void>
+  toggleTaskDone: (id: string) => Promise<void>
   getTasksByDate: (date: string) => Task[]
   getTasksForDateRange: (start: string, end: string) => Task[]
+  isLoading: boolean
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null)
 
-const STORAGE_KEY = 'yanus-tasks'
-
-function loadTasks(): Task[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return []
+const PRIORITY_TO_API: Record<TaskPriority, ApiTaskPriority> = {
+  high: 'HIGH',
+  medium: 'MEDIUM',
+  low: 'LOW',
 }
 
-function saveTasks(tasks: Task[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
-  } catch {}
+const PRIORITY_FROM_API: Record<ApiTaskPriority, TaskPriority> = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
 }
 
-const initialTasks: Task[] = [
-  { id: '1', title: '이벤트 계획 확정', time: '11:00 오전', date: '2024-02-26', priority: 'high', done: false, createdBy: '1' },
-  { id: '2', title: '예산 제안서 검토', time: '3:00 오후', date: '2024-02-26', priority: 'medium', done: false, assigneeId: '1', assigneeName: '팀 리드', createdBy: '1' },
-  { id: '3', title: '뉴스레터 발송', time: '9:30 오전', date: '2024-02-26', priority: 'low', done: true, createdBy: '1' },
-  { id: '4', title: '발표 자료 준비', time: '10:00 오전', date: '2024-02-27', priority: 'high', done: false, createdBy: '1' },
-  { id: '5', title: '팀 미팅', time: '2:00 오후', date: '2024-02-27', priority: 'high', done: false, createdBy: '1' },
-  { id: '6', title: '업체 후속 연락', time: '4:00 오후', date: '2024-02-28', priority: 'low', done: false, createdBy: '1' },
-]
+function toTask(api: ApiTask): Task {
+  return {
+    id: String(api.id),
+    title: api.title,
+    time: api.time,
+    date: api.date,
+    priority: PRIORITY_FROM_API[api.priority] ?? 'medium',
+    done: api.done,
+    assigneeId: api.assigneeId != null ? String(api.assigneeId) : undefined,
+    assigneeName: api.assigneeName ?? undefined,
+    createdBy: api.assigneeId != null ? String(api.assigneeId) : '',
+  }
+}
 
 export function TasksProvider({ children }: { children: ReactNode }) {
   const { state } = useApp()
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const stored = loadTasks()
-    return stored.length > 0 ? stored : initialTasks
-  })
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const addTask = useCallback((task: Omit<Task, 'id' | 'createdBy'>) => {
-    const newTask: Task = {
-      ...task,
-      id: `task-${Date.now()}`,
-      createdBy: state.currentUser?.id ?? '',
-    }
-    setTasks((prev) => {
-      const next = [...prev, newTask]
-      saveTasks(next)
-      return next
+  useEffect(() => {
+    setIsLoading(true)
+    apiGetTasks()
+      .then((apiTasks) => setTasks(apiTasks.map(toTask)))
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdBy'>) => {
+    const apiTask = await apiCreateTask({
+      title: task.title,
+      date: task.date,
+      time: task.time,
+      priority: PRIORITY_TO_API[task.priority] ?? 'MEDIUM',
+      isTeamTask: false,
+      assigneeId: task.assigneeId ? Number(task.assigneeId) : null,
     })
+    setTasks((prev) => [...prev, toTask(apiTask)])
   }, [state.currentUser?.id])
 
-  const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    setTasks((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      saveTasks(next)
-      return next
-    })
+  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    const apiUpdates: Parameters<typeof apiUpdateTask>[1] = {}
+    if (updates.title !== undefined) apiUpdates.title = updates.title
+    if (updates.date !== undefined) apiUpdates.date = updates.date
+    if (updates.time !== undefined) apiUpdates.time = updates.time
+    if (updates.priority !== undefined) apiUpdates.priority = PRIORITY_TO_API[updates.priority]
+    const apiTask = await apiUpdateTask(Number(id), apiUpdates)
+    setTasks((prev) => prev.map((t) => (t.id === id ? toTask(apiTask) : t)))
   }, [])
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => {
-      const next = prev.filter((t) => t.id !== id)
-      saveTasks(next)
-      return next
-    })
+  const deleteTask = useCallback(async (id: string) => {
+    await apiDeleteTask(Number(id))
+    setTasks((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const toggleTaskDone = useCallback((id: string) => {
-    setTasks((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-      saveTasks(next)
-      return next
-    })
+  const toggleTaskDone = useCallback(async (id: string) => {
+    const apiTask = await apiToggleTaskDone(Number(id))
+    setTasks((prev) => prev.map((t) => (t.id === id ? toTask(apiTask) : t)))
   }, [])
 
   const getTasksByDate = useCallback((date: string) => {
@@ -105,6 +116,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         toggleTaskDone,
         getTasksByDate,
         getTasksForDateRange,
+        isLoading,
       }}
     >
       {children}
