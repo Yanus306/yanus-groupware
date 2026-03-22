@@ -17,9 +17,9 @@ export function useWorkSession() {
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
     const todayStr = getTodayStr()
-    getMyAttendance()
+    getMyAttendance(todayStr)
       .then((records) => {
-        const todayRecord = records.find((r) => r.workDate === todayStr)
+        const todayRecord = records[0]
         if (todayRecord) {
           if (todayRecord.status === 'LEFT') {
             setStatus('done')
@@ -80,8 +80,8 @@ export function useWorkSession() {
             // 이미 출근 처리됨 — 서버 기록으로 동기화 후 working 전환
             setToastType('info')
             setErrorMessage('이미 출근 처리된 기록이 있습니다')
-            getMyAttendance().then((records) => {
-              const rec = records.find((r) => r.workDate === getTodayStr())
+            getMyAttendance(getTodayStr()).then((records) => {
+              const rec = records[0]
               if (rec) {
                 setClockIn(rec.checkInTime ? new Date(rec.checkInTime) : new Date())
                 setStatus('working')

@@ -10,8 +10,10 @@ export interface AttendanceRecord {
   status: 'WORKING' | 'LEFT'
 }
 
-export const getMyAttendance = () =>
-  baseClient.get<AttendanceRecord[]>('/api/v1/attendances/me')
+export const getMyAttendance = (date?: string) => {
+  const url = date ? `/api/v1/attendances/me?date=${date}` : '/api/v1/attendances/me'
+  return baseClient.get<AttendanceRecord[]>(url)
+}
 
 export const getAttendanceByDate = (date: string) =>
   baseClient.get<AttendanceRecord[]>(`/api/v1/attendances?date=${date}`)
