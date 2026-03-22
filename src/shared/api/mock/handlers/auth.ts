@@ -2,9 +2,9 @@ import { http, HttpResponse } from 'msw'
 import type { User } from '../../../../entities/user/model/types'
 
 const INITIAL_USERS: User[] = [
-  { id: '1', name: '김리더', team: 'dev', role: 'leader', online: true },
-  { id: '2', name: '박팀장', team: 'design', role: 'team_lead', online: true },
-  { id: '3', name: '이멤버', team: 'marketing', role: 'member', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false },
 ]
 
 let mockUsers = [...INITIAL_USERS]
@@ -48,8 +48,9 @@ export const authHandlers = [
     const newUser: User = {
       id: newId,
       name: body.name,
+      email: body.email as string,
       team: body.team,
-      role: 'member',
+      role: 'MEMBER',
       online: true,
     }
 

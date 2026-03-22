@@ -47,7 +47,17 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(res.status, message)
   }
 
-  return res.json() as Promise<T>
+  const body = await res.json() as unknown
+  // 백엔드 표준 응답 래퍼 { code, message, data } 자동 unwrap
+  if (
+    body !== null &&
+    typeof body === 'object' &&
+    'data' in body &&
+    'code' in body
+  ) {
+    return (body as { data: T }).data
+  }
+  return body as T
 }
 
 export const baseClient = {

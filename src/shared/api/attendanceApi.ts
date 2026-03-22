@@ -1,17 +1,23 @@
 import { baseClient } from './baseClient'
 
 export interface AttendanceRecord {
-  id: string
-  userId: string
-  userName?: string
-  date: string
-  clockIn: string
-  clockOut?: string
-  status: 'working' | 'done' | 'absent'
+  id: number
+  memberId: number
+  memberName: string
+  workDate: string
+  checkInTime: string
+  checkOutTime: string | null
+  status: 'WORKING' | 'LEFT'
 }
 
-export const getAttendance = () => baseClient.get<AttendanceRecord[]>('/attendance')
+export const getMyAttendance = () =>
+  baseClient.get<AttendanceRecord[]>('/api/v1/attendances/me')
 
-export const clockIn = () => baseClient.post<AttendanceRecord>('/attendance/clock-in', {})
+export const getAttendanceByDate = (date: string) =>
+  baseClient.get<AttendanceRecord[]>(`/api/v1/attendances?date=${date}`)
 
-export const clockOut = () => baseClient.post<Pick<AttendanceRecord, 'clockOut' | 'status'>>('/attendance/clock-out', {})
+export const clockIn = () =>
+  baseClient.post<AttendanceRecord>('/api/v1/attendances/check-in', {})
+
+export const clockOut = () =>
+  baseClient.post<AttendanceRecord>('/api/v1/attendances/check-out', {})
