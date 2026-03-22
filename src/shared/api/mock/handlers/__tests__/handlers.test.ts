@@ -1,106 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from '../index'
-import { resetAuthMockData } from '../auth'
 
+// auth, attendance, members는 실제 백엔드 사용 — mock 핸들러 테스트 제외
 const server = setupServer(...handlers)
 
 beforeAll(() => server.listen())
-afterEach(() => {
-  server.resetHandlers()
-  resetAuthMockData()
-})
+afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
-
-describe('MSW 핸들러 — 인증', () => {
-  it('POST /api/v1/auth/login 성공 시 accessToken을 반환한다', async () => {
-    const res = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@yanus.kr', password: 'password' }),
-    })
-    const data = await res.json() as { data: { accessToken: string } }
-    expect(res.status).toBe(200)
-    expect(data.data.accessToken).toBeTruthy()
-  })
-
-  it('POST /api/v1/auth/login 잘못된 자격증명 시 401을 반환한다', async () => {
-    const res = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'wrong@test.com', password: 'wrong' }),
-    })
-    expect(res.status).toBe(401)
-  })
-
-  it('GET /api/v1/auth/me 성공 시 User 객체를 반환한다', async () => {
-    const res = await fetch('/api/v1/auth/me', {
-      headers: { Authorization: 'Bearer mock-token-1' },
-    })
-    const data = await res.json() as { data: { id: string; name: string; role: string } }
-    expect(res.status).toBe(200)
-    expect(data.data).toHaveProperty('id')
-    expect(data.data).toHaveProperty('name')
-    expect(data.data).toHaveProperty('role')
-  })
-
-  it('POST /api/v1/auth/register 성공 시 201을 반환한다', async () => {
-    const res = await fetch('/api/v1/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: '새사용자',
-        email: 'new@yanus.kr',
-        password: 'password123',
-        teamId: 1,
-      }),
-    })
-    expect(res.status).toBe(201)
-  })
-
-  it('POST /api/v1/auth/register 중복 이메일이면 409를 반환한다', async () => {
-    const res = await fetch('/api/v1/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: '중복사용자',
-        email: 'admin@yanus.kr',
-        password: 'password123',
-        teamId: 1,
-      }),
-    })
-    expect(res.status).toBe(409)
-  })
-})
-
-describe('MSW 핸들러 — 출퇴근', () => {
-  it('GET /api/v1/attendances 성공 시 배열을 반환한다', async () => {
-    const res = await fetch('/api/v1/attendances?date=2026-03-22', {
-      headers: { Authorization: 'Bearer mock-token' },
-    })
-    const data = await res.json() as { data: unknown[] }
-    expect(res.status).toBe(200)
-    expect(Array.isArray(data.data)).toBe(true)
-  })
-
-  it('POST /api/v1/attendances/check-in 성공 시 200을 반환한다', async () => {
-    const res = await fetch('/api/v1/attendances/check-in', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mock-token' },
-      body: JSON.stringify({}),
-    })
-    expect(res.status).toBe(200)
-  })
-
-  it('POST /api/v1/attendances/check-out 성공 시 200을 반환한다', async () => {
-    const res = await fetch('/api/v1/attendances/check-out', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mock-token' },
-      body: JSON.stringify({}),
-    })
-    expect(res.status).toBe(200)
-  })
-})
 
 describe('MSW 핸들러 — 채팅', () => {
   it('GET /channels 성공 시 채널 배열을 반환한다', async () => {

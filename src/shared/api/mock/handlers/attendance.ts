@@ -1,52 +1,68 @@
 import { http, HttpResponse } from 'msw'
 
-const mockRecords = [
-  { id: 1, memberId: 1, memberName: '김리더', workDate: '2026-03-22', checkInTime: '2026-03-22T09:02:00', checkOutTime: '2026-03-22T18:15:00', status: 'LEFT' },
-  { id: 2, memberId: 2, memberName: '박팀장', workDate: '2026-03-22', checkInTime: '2026-03-22T09:45:00', checkOutTime: '2026-03-22T18:30:00', status: 'LEFT' },
-  { id: 3, memberId: 3, memberName: '이멤버', workDate: '2026-03-22', checkInTime: '2026-03-22T09:00:00', checkOutTime: null, status: 'WORKING' },
-]
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 로그인한 유저(memberId=1)의 오늘 출퇴근 기록 상태 (mock 런타임 내 유지)
+let myRecord: {
+  id: number; memberId: number; memberName: string
+  workDate: string; checkInTime: string; checkOutTime: string | null; status: 'WORKING' | 'LEFT'
+} | null = null
+
+export function resetAttendanceMockData() {
+  myRecord = null
+}
 
 export const attendanceHandlers = [
   http.get('/api/v1/attendances', ({ request }) => {
     const url = new URL(request.url)
-    const date = url.searchParams.get('date')
-    const filtered = date ? mockRecords.filter((r) => r.workDate === date) : mockRecords
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
+    const date = url.searchParams.get('date') ?? todayStr()
+    const records = myRecord && myRecord.workDate === date ? [myRecord] : []
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: records })
   }),
 
   http.get('/api/v1/attendances/me', () => {
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockRecords.slice(0, 1) })
+    const data = myRecord ? [myRecord] : []
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
   http.post('/api/v1/attendances/check-in', () => {
-    return HttpResponse.json({
-      code: 'SUCCESS',
-      message: 'ok',
-      data: {
-        id: Date.now(),
-        memberId: 1,
-        memberName: '김리더',
-        workDate: new Date().toISOString().slice(0, 10),
-        checkInTime: new Date().toISOString(),
-        checkOutTime: null,
-        status: 'WORKING',
-      },
-    })
+    const today = todayStr()
+    if (myRecord && myRecord.workDate === today) {
+      return HttpResponse.json(
+        { code: 'ATT_001', message: '이미 출근 처리되었습니다.', data: null },
+        { status: 400 },
+      )
+    }
+    myRecord = {
+      id: Date.now(),
+      memberId: 1,
+      memberName: '김리더',
+      workDate: today,
+      checkInTime: new Date().toISOString(),
+      checkOutTime: null,
+      status: 'WORKING',
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
   }),
 
   http.post('/api/v1/attendances/check-out', () => {
-    return HttpResponse.json({
-      code: 'SUCCESS',
-      message: 'ok',
-      data: {
-        id: Date.now(),
-        memberId: 1,
-        memberName: '김리더',
-        workDate: new Date().toISOString().slice(0, 10),
-        checkInTime: new Date().toISOString(),
-        checkOutTime: new Date().toISOString(),
-        status: 'LEFT',
-      },
-    })
+    const today = todayStr()
+    if (!myRecord || myRecord.workDate !== today) {
+      return HttpResponse.json(
+        { code: 'ATT_002', message: '출근 기록이 없습니다.', data: null },
+        { status: 400 },
+      )
+    }
+    if (myRecord.status === 'LEFT') {
+      return HttpResponse.json(
+        { code: 'ATT_003', message: '이미 퇴근 처리되었습니다.', data: null },
+        { status: 400 },
+      )
+    }
+    myRecord = { ...myRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
   }),
 ]
