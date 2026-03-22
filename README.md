@@ -39,7 +39,7 @@
 | **대시보드** | 오늘의 일정·채팅·출퇴근 현황을 한눈에 확인 |
 | **업무 채팅** | 실시간 채널 및 다이렉트 메시지 |
 | **캘린더** | FullCalendar 기반 일정 관리 |
-| **출퇴근** | 출근·퇴근 기록, 근무 시간 시각화, 개인 근무 요일 설정 |
+| **출퇴근** | 출근·퇴근 기록, 근무 시간 시각화, 요일별 출퇴근 시간 개별 설정 |
 | **파일 드라이브** | 팀 파일·폴더 공유 |
 | **AI 챗봇** | 파일 드라이브 기반 질의응답 (Ollama 호환 API) |
 | **Sticky 위젯** | 모든 화면 우측 하단에서 채팅·챗봇 바로 접근 |
@@ -127,8 +127,8 @@ src/
 │   ├── calendar/model/      # 캘린더 이벤트 상태 (EventsProvider)
 │   ├── tasks/model/         # 할일 상태 (TasksProvider)
 │   ├── attendance/
-│   │   ├── model/           # useWorkSession 훅 (출퇴근 로직)
-│   │   └── ui/              # AnimatedClockRing, ClockTimePicker 등
+│   │   ├── model/           # useWorkSession, useWorkSchedule 훅
+│   │   └── ui/              # AnimatedClockRing, SetWorkDaysPersonal 등
 │   └── ai-chat/api/         # aiClient (Ollama API 통신 추상화)
 │
 ├── entities/
@@ -178,19 +178,19 @@ npm run preview
 
 ```env
 # AI 챗봇 API 서버 주소 (Ollama 호환 서버)
-VITE_AI_API_URL=http://localhost:11434
+VITE_AI_API_URL=<your-ollama-api-url>
 
 # 사용할 AI 모델명
 VITE_AI_API_MODEL=llama3.1
 
-# 백엔드 API Base URL
-VITE_API_BASE_URL=http://localhost:8080
-
-# true 설정 시 Mock API 사용 (백엔드 없이 개발 가능)
+# true 설정 시 MSW Mock 핸들러 활성화 (chat, calendar, drive)
 VITE_USE_MOCK=true
 ```
 
 > `VITE_AI_API_URL`을 설정하지 않으면 AI 챗봇은 설정 안내 메시지를 표시합니다.
+>
+> `VITE_API_BASE_URL`은 Vercel 프로덕션 배포 환경에서만 주입합니다.
+> 로컬 개발은 `vite.config.ts`의 proxy 설정을 통해 백엔드와 통신합니다.
 
 ---
 
@@ -209,19 +209,22 @@ npm run test:run
 
 ### 테스트 커버리지
 
-- **117개** 테스트, **14개** 테스트 파일
+- **248개** 이상 테스트, **40개** 테스트 파일
 - 단위 테스트: 각 feature/shared 레이어 로직
 - 컴포넌트 테스트: React Testing Library
+- API 모킹: MSW `setupServer` 사용
 
 ```
 features/ai-chat/api/        — aiClient 통신 로직
-features/attendance/model/   — useWorkSession 훅
-features/auth/model/         — AppProvider 상태
+features/attendance/model/   — useWorkSession, useWorkSchedule 훅
+features/attendance/ui/      — SetWorkDaysPersonal 컴포넌트
+features/auth/model/         — AppProvider 상태, 회원가입 흐름
 features/chat/model/         — ChatProvider 상태
 features/calendar/model/     — EventsProvider 상태
 features/tasks/model/        — TasksProvider 상태
 widgets/Layout/              — 레이아웃 렌더링
 widgets/StickyChatWidget/    — Sticky 위젯 동작
+shared/api/                  — 출퇴근, 태스크, 캘린더 API 클라이언트
 shared/lib/                  — 날짜 유틸 함수
 app/                         — Provider 조합
 ```
