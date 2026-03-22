@@ -75,7 +75,7 @@ export function useWorkSession() {
         if (record.checkInTime) setClockIn(new Date(record.checkInTime))
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.code === 'ATT_001') {
+          if (err.code === 'ALREADY_CHECKED_IN') {
             // 이미 출근 처리됨 — 서버 기록으로 시각 보정, info 안내
             setToastType('info')
             setErrorMessage('이미 출근 처리된 기록이 있습니다')
@@ -105,17 +105,17 @@ export function useWorkSession() {
         if (record.checkOutTime) setClockOut(new Date(record.checkOutTime))
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.code === 'ATT_003') {
+          if (err.code === 'ALREADY_CHECKED_OUT') {
             // 이미 퇴근 처리됨 — info 안내
             setToastType('info')
             setErrorMessage('이미 퇴근 처리된 기록이 있습니다')
-          } else if (err.code === 'ATT_002') {
+          } else if (err.code === 'NOT_CHECKED_IN') {
             setStatus('idle')
             setClockIn(null)
             setClockOut(null)
             setToastType('error')
             setErrorMessage(err.message)
-          } else if (err.code === 'ATT_004') {
+          } else if (err.code === 'INVALID_CHECKOUT_TIME') {
             setStatus('working')
             setClockOut(null)
             setToastType('error')
