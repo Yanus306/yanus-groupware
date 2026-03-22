@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { SetWorkDaysPersonal } from '../../features/attendance/ui'
-import { getAttendance } from '../../shared/api/attendanceApi'
+import { getAttendanceByDate } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import './attendance.css'
@@ -16,20 +16,29 @@ export function Attendance() {
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 10
 
+  const todayStr = new Date().toISOString().slice(0, 10)
+
   useEffect(() => {
-    getAttendance()
+    getAttendanceByDate(todayStr)
       .then(setRecords)
       .catch(() => {})
-  }, [])
+  }, [todayStr])
 
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const todayRecords = records.filter((r) => r.date === todayStr)
+  const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
   const pageRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleExport = () => {
     exportAttendanceToCsv(
-      records.map((r) => ({ ...r, status: r.status as 'working' | 'done' })),
+      records.map((r) => ({
+        id: String(r.id),
+        userId: String(r.memberId),
+        userName: r.memberName,
+        date: r.workDate,
+        clockIn: r.checkInTime?.slice(11, 16) ?? '',
+        clockOut: r.checkOutTime?.slice(11, 16),
+        status: r.status === 'LEFT' ? 'done' : 'working',
+      })),
       todayStr
     )
   }
@@ -82,22 +91,22 @@ export function Attendance() {
                   </thead>
                   <tbody>
                     {pageRecords.map((r) => (
-                      <tr key={r.id} className={r.status === 'working' ? 'late' : ''}>
+                      <tr key={r.id} className={r.status === 'WORKING' ? 'late' : ''}>
                         <td>
-                          <span className="record-avatar">{(r.userName ?? r.userId)[0]}</span>
-                          {r.userName ?? `User ${r.userId}`}
+                          <span className="record-avatar">{r.memberName[0]}</span>
+                          {r.memberName}
                         </td>
                         <td>
                           {DAYS.map((_, i) => (
                             <span key={i} className={`dot ${i < 5 ? 'on' : ''}`} />
                           ))}
                         </td>
-                        <td>{r.clockIn}</td>
-                        <td>{r.clockOut ?? '-'}</td>
-                        <td>{r.date}</td>
+                        <td>{r.checkInTime?.slice(11, 16) ?? '-'}</td>
+                        <td>{r.checkOutTime?.slice(11, 16) ?? '-'}</td>
+                        <td>{r.workDate}</td>
                         <td>
-                          <span className={`status-badge ${r.status === 'done' ? 'present' : r.status === 'absent' ? 'absent' : 'late'}`}>
-                            {r.status === 'done' ? 'Present' : r.status === 'absent' ? 'Absent' : 'Working'}
+                          <span className={`status-badge ${r.status === 'LEFT' ? 'present' : 'late'}`}>
+                            {r.status === 'LEFT' ? 'Present' : 'Working'}
                           </span>
                         </td>
                       </tr>

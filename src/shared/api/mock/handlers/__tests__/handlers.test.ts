@@ -76,17 +76,17 @@ describe('MSW 핸들러 — 인증', () => {
 })
 
 describe('MSW 핸들러 — 출퇴근', () => {
-  it('GET /attendance 성공 시 배열을 반환한다', async () => {
-    const res = await fetch('/attendance', {
+  it('GET /api/v1/attendances 성공 시 배열을 반환한다', async () => {
+    const res = await fetch('/api/v1/attendances?date=2026-03-22', {
       headers: { Authorization: 'Bearer mock-token' },
     })
-    const data = await res.json()
+    const data = await res.json() as { data: unknown[] }
     expect(res.status).toBe(200)
-    expect(Array.isArray(data)).toBe(true)
+    expect(Array.isArray(data.data)).toBe(true)
   })
 
-  it('POST /attendance/clock-in 성공 시 200을 반환한다', async () => {
-    const res = await fetch('/attendance/clock-in', {
+  it('POST /api/v1/attendances/check-in 성공 시 200을 반환한다', async () => {
+    const res = await fetch('/api/v1/attendances/check-in', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mock-token' },
       body: JSON.stringify({}),
@@ -94,8 +94,8 @@ describe('MSW 핸들러 — 출퇴근', () => {
     expect(res.status).toBe(200)
   })
 
-  it('POST /attendance/clock-out 성공 시 200을 반환한다', async () => {
-    const res = await fetch('/attendance/clock-out', {
+  it('POST /api/v1/attendances/check-out 성공 시 200을 반환한다', async () => {
+    const res = await fetch('/api/v1/attendances/check-out', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mock-token' },
       body: JSON.stringify({}),
