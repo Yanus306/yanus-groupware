@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import './Toast.css'
 
 interface Props {
   message: string

@@ -5,6 +5,7 @@ import { SetWorkDaysPersonal } from '../../features/attendance/ui'
 import { getAttendanceByDate, getMyAttendance } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
+import { Toast } from '../../shared/ui/Toast'
 import './attendance.css'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -16,6 +17,7 @@ export function Attendance() {
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
   const [page, setPage] = useState(1)
   const [dateInput, setDateInput] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const PAGE_SIZE = 10
 
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -25,14 +27,14 @@ export function Attendance() {
     if (!isAdmin) return
     getAttendanceByDate(todayStr)
       .then(setRecords)
-      .catch(() => {})
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '출퇴근 기록을 불러오지 못했습니다'))
   }, [isAdmin, todayStr])
 
   // 일반 사용자: 내 출퇴근 기록 전체 이력
   useEffect(() => {
     getMyAttendance()
       .then(setMyRecords)
-      .catch(() => {})
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '내 출퇴근 이력을 불러오지 못했습니다'))
   }, [])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
@@ -43,7 +45,7 @@ export function Attendance() {
     if (!dateInput) return
     getAttendanceByDate(dateInput)
       .then(setRecords)
-      .catch(() => {})
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '조회에 실패했습니다'))
   }
 
   const handleExport = () => {
@@ -63,6 +65,9 @@ export function Attendance() {
 
   return (
     <div className="attendance-page">
+      {errorMessage && (
+        <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
+      )}
       <header className="attendance-header">
         <h1>Attendance</h1>
         <div className="header-actions">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Calendar, Clock, Users, User } from 'lucide-react'
 import { AnimatedClockRing } from '../../features/attendance/ui'
 import { useWorkSession } from '../../features/attendance/model/useWorkSession'
+import { Toast } from '../../shared/ui/Toast'
 import './dashboard.css'
 
 function formatDuration(ms: number) {
@@ -16,7 +17,7 @@ function formatDuration(ms: number) {
 export function Dashboard() {
   const [now, setNow] = useState(() => new Date())
   const [hover, setHover] = useState(false)
-  const { status, clockIn, clockOut, handleClockClick } = useWorkSession()
+  const { status, clockIn, clockOut, handleClockClick, errorMessage, clearError } = useWorkSession()
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
@@ -44,6 +45,9 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
+      {errorMessage && (
+        <Toast message={errorMessage} type="error" onClose={clearError} />
+      )}
       <div className="dashboard-grid">
         <button
           type="button"

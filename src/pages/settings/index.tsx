@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { User, Bell, Palette, Shield, Save } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { updateMyProfile } from '../../shared/api/membersApi'
+import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
 type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security'
@@ -17,13 +18,16 @@ export function Settings() {
   })
   const [displayName, setDisplayName] = useState(state.currentUser?.name ?? '')
   const [saved, setSaved] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSave = async () => {
     try {
       await updateMyProfile({ name: displayName })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch {}
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '저장에 실패했습니다')
+    }
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
@@ -35,6 +39,9 @@ export function Settings() {
 
   return (
     <div className="settings-page">
+      {errorMessage && (
+        <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
+      )}
       <header className="settings-header">
         <h1>설정</h1>
       </header>
