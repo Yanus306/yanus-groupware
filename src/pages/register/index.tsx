@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, AlertCircle, Users } from 'lucide-react'
-import { getMe, register } from '../../features/auth/api/authClient'
+import { getMe, login, register } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
-import type { User } from '../../entities/user/model/types'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -15,11 +14,12 @@ interface FormErrors {
   team?: string
 }
 
-const teams: Array<{ value: User['team']; label: string }> = [
-  { value: 'BACKEND', label: '백엔드팀' },
-  { value: 'FRONTEND', label: '프론트엔드팀' },
-  { value: 'AI', label: 'AI팀' },
-  { value: 'SECURITY', label: '보안팀' },
+// teamId 매핑 — teamsApi 연동 후 동적으로 교체 예정
+const teams: Array<{ value: string; label: string; teamId: number }> = [
+  { value: 'BACKEND', label: '백엔드팀', teamId: 1 },
+  { value: 'FRONTEND', label: '프론트엔드팀', teamId: 2 },
+  { value: 'AI', label: 'AI팀', teamId: 3 },
+  { value: 'SECURITY', label: '보안팀', teamId: 4 },
 ]
 
 function validate(name: string, email: string, password: string, confirmPassword: string, team: string): FormErrors {
@@ -75,7 +75,9 @@ export function Register() {
 
     setLoading(true)
     try {
-      const token = await register({ name, email, password, team: team as User['team'] })
+      const teamId = teams.find((t) => t.value === team)?.teamId ?? 1
+      await register({ name, email, password, teamId })
+      const token = await login(email, password)
       localStorage.setItem('accessToken', token)
       const user = await getMe()
       loadUser(user)
