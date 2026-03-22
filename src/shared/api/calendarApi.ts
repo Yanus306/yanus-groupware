@@ -1,22 +1,29 @@
 import { baseClient } from './baseClient'
 
 export interface ApiEvent {
-  id: string
+  id: number
   title: string
-  startDate: string
-  startTime: string
-  endDate: string
-  endTime: string
-  createdBy?: string
+  startDate: string   // YYYY-MM-DD
+  startTime: string   // HH:mm:ss
+  endDate: string     // YYYY-MM-DD
+  endTime: string     // HH:mm:ss
+  createdById: number
+  createdByName: string
 }
 
-export const getEvents = () => baseClient.get<ApiEvent[]>('/events')
+export type CreateEventPayload = Omit<ApiEvent, 'id' | 'createdById' | 'createdByName'>
 
-export const createEvent = (body: Omit<ApiEvent, 'id' | 'createdBy'>) =>
-  baseClient.post<ApiEvent>('/events', body)
+export const getEvents = (startDate: string, endDate: string) =>
+  baseClient.get<ApiEvent[]>(`/api/v1/events?startDate=${startDate}&endDate=${endDate}`)
 
-export const updateEvent = (id: string, body: Partial<ApiEvent>) =>
-  baseClient.put<ApiEvent>(`/events/${id}`, body)
+export const getMyEvents = () =>
+  baseClient.get<ApiEvent[]>('/api/v1/events/me')
 
-export const deleteEvent = (id: string) =>
-  baseClient.delete<{ success: boolean }>(`/events/${id}`)
+export const createEvent = (body: CreateEventPayload) =>
+  baseClient.post<ApiEvent>('/api/v1/events', body)
+
+export const updateEvent = (id: number, body: Partial<CreateEventPayload>) =>
+  baseClient.put<ApiEvent>(`/api/v1/events/${id}`, body)
+
+export const deleteEvent = (id: number) =>
+  baseClient.delete<null>(`/api/v1/events/${id}`)
