@@ -39,11 +39,35 @@ const PRIORITY_FROM_API: Record<ApiTaskPriority, TaskPriority> = {
   LOW: 'low',
 }
 
+/** "HH:mm:ss" → "H:mm 오전/오후" */
+function apiTimeToDisplay(t: string): string {
+  const [h, m] = t.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return t
+  const period = h >= 12 ? '오후' : '오전'
+  const h12 = h % 12 || 12
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`
+}
+
+/** "H:mm 오전/오후" → "HH:mm:00" */
+function displayTimeToApi(t: string): string {
+  const parts = t.trim().split(' ')
+  const [timePart, period] = parts.length >= 2 ? [parts[0], parts[1]] : [parts[0], '']
+  const [h12str, mStr] = timePart.split(':')
+  const h12 = Number(h12str)
+  const m = Number(mStr) || 0
+  if (isNaN(h12)) return '00:00:00'
+  let h24: number
+  if (period === '오전') h24 = h12 === 12 ? 0 : h12
+  else if (period === '오후') h24 = h12 === 12 ? 12 : h12 + 12
+  else h24 = h12
+  return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
+}
+
 function toTask(api: ApiTask): Task {
   return {
     id: String(api.id),
     title: api.title,
-    time: api.time,
+    time: apiTimeToDisplay(api.time),
     date: api.date,
     priority: PRIORITY_FROM_API[api.priority] ?? 'medium',
     done: api.done,
@@ -70,7 +94,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const apiTask = await apiCreateTask({
       title: task.title,
       date: task.date,
-      time: task.time,
+      time: displayTimeToApi(task.time),
       priority: PRIORITY_TO_API[task.priority] ?? 'MEDIUM',
       isTeamTask: false,
       assigneeId: task.assigneeId ? Number(task.assigneeId) : null,
@@ -82,7 +106,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const apiUpdates: Parameters<typeof apiUpdateTask>[1] = {}
     if (updates.title !== undefined) apiUpdates.title = updates.title
     if (updates.date !== undefined) apiUpdates.date = updates.date
-    if (updates.time !== undefined) apiUpdates.time = updates.time
+    if (updates.time !== undefined) apiUpdates.time = displayTimeToApi(updates.time)
     if (updates.priority !== undefined) apiUpdates.priority = PRIORITY_TO_API[updates.priority]
     const apiTask = await apiUpdateTask(Number(id), apiUpdates)
     setTasks((prev) => prev.map((t) => (t.id === id ? toTask(apiTask) : t)))
