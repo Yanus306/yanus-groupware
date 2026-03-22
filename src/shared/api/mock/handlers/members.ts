@@ -1,38 +1,83 @@
 import { http, HttpResponse } from 'msw'
 
 let mockMembers = [
-  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true },
-  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true },
-  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false },
-  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true },
-  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true, active: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true, active: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false, active: true },
+  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true, active: true },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', online: false, active: false },
+]
+
+const mockTeams = [
+  { id: 1, name: 'BACKEND' },
+  { id: 2, name: 'FRONTEND' },
+  { id: 3, name: 'AI' },
+  { id: 4, name: 'SECURITY' },
 ]
 
 export const membersHandlers = [
-  http.get('/members', () => {
-    return HttpResponse.json(mockMembers)
+  http.get('/api/v1/members', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockMembers }),
+  ),
+
+  http.get('/api/v1/members/me', ({ request }) => {
+    const auth = request.headers.get('Authorization') ?? ''
+    const userId = auth.replace('Bearer mock-token-', '') || '1'
+    const member = mockMembers.find((m) => m.id === userId) ?? mockMembers[0]
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: member })
   }),
 
-  http.patch('/members/:id/role', async ({ params, request }) => {
+  http.get('/api/v1/members/:id', ({ params }) => {
+    const member = mockMembers.find((m) => m.id === params.id)
+    if (!member) {
+      return HttpResponse.json({ code: 'NOT_FOUND', message: '멤버를 찾을 수 없습니다', data: null }, { status: 404 })
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: member })
+  }),
+
+  http.patch('/api/v1/members/:id/role', async ({ params, request }) => {
     const body = await request.json() as { role: string }
     mockMembers = mockMembers.map((m) =>
-      m.id === params.id ? { ...m, role: body.role } : m
+      m.id === params.id ? { ...m, role: body.role } : m,
     )
-    const updated = mockMembers.find((m) => m.id === params.id)
-    return HttpResponse.json({ id: params.id, role: body.role, ...updated })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 
-  http.post('/members/invite', async ({ request }) => {
-    const body = await request.json() as { email: string; role: string }
-    const newMember = {
-      id: `m${Date.now()}`,
-      email: body.email,
-      role: body.role,
-      name: body.email.split('@')[0],
-      team: 'BACKEND',
-      online: false,
+  http.delete('/api/v1/members/:id', ({ params }) => {
+    mockMembers = mockMembers.map((m) =>
+      m.id === params.id ? { ...m, active: false } : m,
+    )
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+  }),
+
+  http.patch('/api/v1/members/:id/activate', ({ params }) => {
+    mockMembers = mockMembers.map((m) =>
+      m.id === params.id ? { ...m, active: true } : m,
+    )
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+  }),
+
+  http.put('/api/v1/members/me', async ({ request }) => {
+    const body = await request.json() as { name?: string; password?: string }
+    const auth = request.headers.get('Authorization') ?? ''
+    const userId = auth.replace('Bearer mock-token-', '') || '1'
+    if (body.name) {
+      mockMembers = mockMembers.map((m) =>
+        m.id === userId ? { ...m, name: body.name! } : m,
+      )
     }
-    mockMembers = [...mockMembers, newMember]
-    return HttpResponse.json(newMember, { status: 201 })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+  }),
+
+  http.get('/api/v1/teams', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockTeams }),
+  ),
+
+  http.get('/api/v1/teams/:id', ({ params }) => {
+    const team = mockTeams.find((t) => t.id === Number(params.id))
+    if (!team) {
+      return HttpResponse.json({ code: 'NOT_FOUND', message: '팀을 찾을 수 없습니다', data: null }, { status: 404 })
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: team })
   }),
 ]
