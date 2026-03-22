@@ -1,32 +1,52 @@
 import { http, HttpResponse } from 'msw'
 
 const mockRecords = [
-  { id: '1', userId: '1', userName: '김리더', date: '2026-03-18', clockIn: '09:02', clockOut: '18:15', status: 'done' },
-  { id: '2', userId: '2', userName: '박팀장', date: '2026-03-18', clockIn: '09:45', clockOut: '18:30', status: 'done' },
-  { id: '3', userId: '3', userName: '이멤버', date: '2026-03-18', clockIn: '-', clockOut: '-', status: 'absent' },
-  { id: '4', userId: '1', userName: '김리더', date: '2026-03-17', clockIn: '09:10', clockOut: '18:00', status: 'done' },
-  { id: '5', userId: '2', userName: '박팀장', date: '2026-03-17', clockIn: '09:00', clockOut: '18:00', status: 'done' },
-  { id: '6', userId: '1', userName: '김리더', date: '2026-03-16', clockIn: '08:55', clockOut: '17:50', status: 'done' },
+  { id: 1, memberId: 1, memberName: '김리더', workDate: '2026-03-22', checkInTime: '2026-03-22T09:02:00', checkOutTime: '2026-03-22T18:15:00', status: 'LEFT' },
+  { id: 2, memberId: 2, memberName: '박팀장', workDate: '2026-03-22', checkInTime: '2026-03-22T09:45:00', checkOutTime: '2026-03-22T18:30:00', status: 'LEFT' },
+  { id: 3, memberId: 3, memberName: '이멤버', workDate: '2026-03-22', checkInTime: '2026-03-22T09:00:00', checkOutTime: null, status: 'WORKING' },
 ]
 
 export const attendanceHandlers = [
-  http.get('/attendance', () => {
-    return HttpResponse.json(mockRecords)
+  http.get('/api/v1/attendances', ({ request }) => {
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date')
+    const filtered = date ? mockRecords.filter((r) => r.workDate === date) : mockRecords
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
   }),
 
-  http.post('/attendance/clock-in', () => {
+  http.get('/api/v1/attendances/me', () => {
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockRecords.slice(0, 1) })
+  }),
+
+  http.post('/api/v1/attendances/check-in', () => {
     return HttpResponse.json({
-      id: `rec-${Date.now()}`,
-      clockIn: new Date().toTimeString().slice(0, 5),
-      date: new Date().toISOString().slice(0, 10),
-      status: 'working',
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        id: Date.now(),
+        memberId: 1,
+        memberName: '김리더',
+        workDate: new Date().toISOString().slice(0, 10),
+        checkInTime: new Date().toISOString(),
+        checkOutTime: null,
+        status: 'WORKING',
+      },
     })
   }),
 
-  http.post('/attendance/clock-out', () => {
+  http.post('/api/v1/attendances/check-out', () => {
     return HttpResponse.json({
-      clockOut: new Date().toTimeString().slice(0, 5),
-      status: 'done',
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        id: Date.now(),
+        memberId: 1,
+        memberName: '김리더',
+        workDate: new Date().toISOString().slice(0, 10),
+        checkInTime: new Date().toISOString(),
+        checkOutTime: new Date().toISOString(),
+        status: 'LEFT',
+      },
     })
   }),
 ]

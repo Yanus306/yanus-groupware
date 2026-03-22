@@ -7,11 +7,13 @@ import { Register } from '../index'
 
 vi.mock('../../../features/auth/api/authClient', () => ({
   register: vi.fn(),
+  login: vi.fn(),
   getMe: vi.fn(),
 }))
 
-import { register, getMe } from '../../../features/auth/api/authClient'
+import { register, login, getMe } from '../../../features/auth/api/authClient'
 const mockRegister = vi.mocked(register)
+const mockLogin = vi.mocked(login)
 const mockGetMe = vi.mocked(getMe)
 
 const mockNavigate = vi.fn()
@@ -34,7 +36,8 @@ describe('Register 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', team: 'dev', role: 'member', online: true })
+    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', email: 'new@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true })
+    mockLogin.mockResolvedValue('mock-login-token')
   })
 
   it('이름, 이메일, 팀, 비밀번호 필드와 회원가입 버튼이 렌더링된다', () => {
@@ -61,7 +64,7 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password456')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
@@ -69,16 +72,16 @@ describe('Register 페이지', () => {
   })
 
   it('회원가입 성공 시 accessToken을 저장하고 홈으로 이동한다', async () => {
-    mockRegister.mockResolvedValue('mock-register-token')
+    mockRegister.mockResolvedValue(undefined)
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
     await waitFor(() => {
-      expect(localStorage.getItem('accessToken')).toBe('mock-register-token')
+      expect(localStorage.getItem('accessToken')).toBe('mock-login-token')
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })
   })
@@ -88,7 +91,7 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'admin@yanus.kr')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))

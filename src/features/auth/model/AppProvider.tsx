@@ -33,7 +33,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [personalSchedule, setPersonalSchedule] = useState<PersonalWorkSchedule>(defaultSchedule)
 
   const isAdmin =
-    state.currentUser?.role === 'leader' || state.currentUser?.role === 'team_lead'
+    state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
 
   function loadUser(user: User) {
     setState((prev) => ({ ...prev, currentUser: user }))

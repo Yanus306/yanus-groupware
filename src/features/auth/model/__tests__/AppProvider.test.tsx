@@ -43,9 +43,9 @@ describe('AppProvider', () => {
       expect(result.current.isAdmin).toBe(false)
     })
 
-    it('loadUser로 leader 역할을 로드하면 isAdmin은 true이다', () => {
+    it('loadUser로 ADMIN 역할을 로드하면 isAdmin은 true이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      const leaderUser: User = { id: '1', name: '홍길동', team: 'dev', role: 'leader', online: true }
+      const leaderUser: User = { id: '1', name: '홍길동', email: 'admin@test.com', team: 'BACKEND', role: 'ADMIN', online: true }
       act(() => {
         result.current.loadUser(leaderUser)
       })
@@ -54,7 +54,7 @@ describe('AppProvider', () => {
 
     it('loadUser로 member 역할을 로드하면 isAdmin은 false이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      const memberUser: User = { id: '2', name: '김철수', team: 'dev', role: 'member', online: true }
+      const memberUser: User = { id: '2', name: '김철수', email: 'user@test.com', team: 'BACKEND', role: 'MEMBER', online: true }
       act(() => {
         result.current.loadUser(memberUser)
       })
@@ -65,7 +65,7 @@ describe('AppProvider', () => {
   describe('loadUser', () => {
     it('loadUser 호출 시 currentUser가 업데이트된다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      const user: User = { id: '99', name: '테스트 유저', team: 'design', role: 'member', online: true }
+      const user: User = { id: '99', name: '테스트 유저', email: 'test@test.com', team: 'FRONTEND', role: 'MEMBER', online: true }
       act(() => {
         result.current.loadUser(user)
       })
@@ -85,7 +85,7 @@ describe('AppProvider', () => {
 
     it('logout 호출 시 currentUser가 null로 초기화된다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      const user: User = { id: '1', name: '홍길동', team: 'dev', role: 'leader', online: true }
+      const user: User = { id: '1', name: '홍길동', email: 'admin@test.com', team: 'BACKEND', role: 'ADMIN', online: true }
       act(() => {
         result.current.loadUser(user)
       })

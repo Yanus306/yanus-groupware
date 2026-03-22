@@ -5,19 +5,21 @@ export interface RegisterPayload {
   name: string
   email: string
   password: string
-  team: User['team']
+  teamId: number
 }
 
 export async function login(email: string, password: string): Promise<string> {
-  const data = await baseClient.post<{ accessToken: string }>('/auth/login', { email, password })
+  const data = await baseClient.post<{ accessToken: string; refreshToken: string; tokenType: string }>(
+    '/api/v1/auth/login',
+    { email, password },
+  )
   return data.accessToken
 }
 
-export async function register(payload: RegisterPayload): Promise<string> {
-  const data = await baseClient.post<{ accessToken: string }>('/auth/register', payload)
-  return data.accessToken
+export async function register(payload: RegisterPayload): Promise<void> {
+  await baseClient.post<null>('/api/v1/auth/register', payload)
 }
 
 export async function getMe(): Promise<User> {
-  return baseClient.get<User>('/auth/me')
+  return baseClient.get<User>('/api/v1/auth/me')
 }
