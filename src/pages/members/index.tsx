@@ -3,6 +3,7 @@ import { Search, Crown, ChevronDown, UserPlus, X } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { getMembers, updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
+import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
 const teams = ['All Teams', 'BACKEND', 'FRONTEND', 'AI', 'SECURITY']
@@ -34,10 +35,11 @@ export function Members() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER')
   const [saving, setSaving] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAdmin) return
-    getMembers().then(loadMembers).catch(() => {})
+    getMembers().then(loadMembers).catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
   }, [isAdmin, loadMembers])
 
   if (!isAdmin) {
@@ -69,7 +71,9 @@ export function Members() {
     try {
       await updateMemberRole(changeRoleFor.id, selectedRole)
       loadMembers(state.users.map((u) => u.id === changeRoleFor.id ? { ...u, role: selectedRole } : u))
-    } catch {}
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '역할 변경에 실패했습니다')
+    }
     setSaving(false)
     setChangeRoleFor(null)
   }
@@ -80,7 +84,9 @@ export function Members() {
       await deactivateMember(id)
       const updated = await getMembers()
       loadMembers(updated)
-    } catch {}
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+    }
     setSaving(false)
   }
 
@@ -90,7 +96,9 @@ export function Members() {
       await activateMember(id)
       const updated = await getMembers()
       loadMembers(updated)
-    } catch {}
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '활성화에 실패했습니다')
+    }
     setSaving(false)
   }
 
@@ -102,12 +110,17 @@ export function Members() {
       loadMembers(updated)
       setInviteEmail('')
       setShowInvite(false)
-    } catch {}
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '초대에 실패했습니다')
+    }
     setSaving(false)
   }
 
   return (
     <div className="members-page">
+      {errorMessage && (
+        <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
+      )}
       <header className="members-header">
         <h1>
           Member Management

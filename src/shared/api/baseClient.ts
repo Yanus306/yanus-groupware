@@ -2,10 +2,12 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  code: string
+  constructor(status: number, message: string, code = '') {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -36,15 +38,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     let message = `요청 실패: ${res.status}`
+    let code = ''
     try {
-      const data = await res.json() as { message?: string }
-      if (data.message) {
-        message = data.message
-      }
+      const data = await res.json() as { message?: string; code?: string }
+      if (data.message) message = data.message
+      if (data.code) code = data.code
     } catch {
       // Ignore non-JSON error bodies and keep the fallback message.
     }
-    throw new ApiError(res.status, message)
+    throw new ApiError(res.status, message, code)
   }
 
   const body = await res.json() as unknown
