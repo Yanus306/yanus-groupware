@@ -16,10 +16,10 @@ interface FormErrors {
 }
 
 const teams: Array<{ value: User['team']; label: string }> = [
-  { value: 'dev', label: '개발팀' },
-  { value: 'design', label: '디자인팀' },
-  { value: 'marketing', label: '마케팅팀' },
-  { value: 'product', label: '기획팀' },
+  { value: 'BACKEND', label: '백엔드팀' },
+  { value: 'FRONTEND', label: '프론트엔드팀' },
+  { value: 'AI', label: 'AI팀' },
+  { value: 'SECURITY', label: '보안팀' },
 ]
 
 function validate(name: string, email: string, password: string, confirmPassword: string, team: string): FormErrors {

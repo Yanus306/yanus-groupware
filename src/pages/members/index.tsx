@@ -5,23 +5,23 @@ import { getMembers, updateMemberRole, inviteMember } from '../../shared/api/mem
 import type { UserRole } from '../../entities/user/model/types'
 import './members.css'
 
-const teams = ['All Teams', 'Design Team', 'Dev Team', 'Marketing', 'Product Team']
-const roles = ['All Roles', 'Leader', 'Team Lead', 'Member']
+const teams = ['All Teams', 'BACKEND', 'FRONTEND', 'AI', 'SECURITY']
+const roles = ['All Roles', 'ADMIN', 'TEAM_LEAD', 'MEMBER']
 
 const roleLabels: Record<string, string> = {
-  leader: 'Leader',
-  team_lead: 'Team Lead',
-  member: 'Member',
+  ADMIN: 'Admin',
+  TEAM_LEAD: 'Team Lead',
+  MEMBER: 'Member',
 }
 
 const teamLabels: Record<string, string> = {
-  design: 'Design Team',
-  dev: 'Dev Team',
-  marketing: 'Marketing',
-  product: 'Product Team',
+  BACKEND: 'Backend',
+  FRONTEND: 'Frontend',
+  AI: 'AI',
+  SECURITY: 'Security',
 }
 
-const ALL_ROLES: UserRole[] = ['member', 'team_lead', 'leader']
+const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 
 export function Members() {
   const { state, isAdmin, loadMembers } = useApp()
@@ -29,10 +29,10 @@ export function Members() {
   const [teamFilter, setTeamFilter] = useState('All Teams')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [changeRoleFor, setChangeRoleFor] = useState<{ id: string; name: string } | null>(null)
-  const [selectedRole, setSelectedRole] = useState<UserRole>('member')
+  const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<UserRole>('member')
+  const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export function Members() {
                   <td><span className={"team-tag " + u.team}>{teamLabels[u.team] ?? u.team}</span></td>
                   <td>
                     <span className={"role-tag " + u.role}>
-                      {u.role === 'leader' && <Crown size={14} />}
+                      {u.role === 'ADMIN' && <Crown size={14} />}
                       {roleLabels[u.role] ?? u.role}
                     </span>
                   </td>
@@ -173,9 +173,9 @@ export function Members() {
           </div>
           <h3>Role Distribution</h3>
           <div className="pie-legend">
-            <span><i style={{ background: 'var(--accent-purple)' }} /> Leader {state.users.filter((u) => u.role === 'leader').length}</span>
-            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> Team Lead {state.users.filter((u) => u.role === 'team_lead').length}</span>
-            <span><i style={{ background: 'var(--text-secondary)' }} /> Member {state.users.filter((u) => u.role === 'member').length}</span>
+            <span><i style={{ background: 'var(--accent-purple)' }} /> Admin {state.users.filter((u) => u.role === 'ADMIN').length}</span>
+            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> Team Lead {state.users.filter((u) => u.role === 'TEAM_LEAD').length}</span>
+            <span><i style={{ background: 'var(--text-secondary)' }} /> Member {state.users.filter((u) => u.role === 'MEMBER').length}</span>
           </div>
         </aside>
       </div>
@@ -188,7 +188,7 @@ export function Members() {
               {ALL_ROLES.map((r) => (
                 <div key={r} className={"role-option " + (selectedRole === r ? 'selected' : '')} onClick={() => setSelectedRole(r)}>
                   <span className={"role-pill " + r}>
-                    {r === 'leader' && <Crown size={14} />}
+                    {r === 'ADMIN' && <Crown size={14} />}
                     {roleLabels[r]}
                   </span>
                 </div>

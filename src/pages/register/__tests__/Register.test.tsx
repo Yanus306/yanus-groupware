@@ -34,7 +34,7 @@ describe('Register 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', team: 'dev', role: 'member', online: true })
+    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', team: 'BACKEND', role: 'MEMBER', online: true })
   })
 
   it('이름, 이메일, 팀, 비밀번호 필드와 회원가입 버튼이 렌더링된다', () => {
@@ -61,7 +61,7 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password456')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
@@ -73,7 +73,7 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
@@ -88,7 +88,7 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'admin@yanus.kr')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), 'dev')
+    await userEvent.selectOptions(screen.getByLabelText('팀'), 'BACKEND')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))

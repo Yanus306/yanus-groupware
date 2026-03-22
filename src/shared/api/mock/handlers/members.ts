@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw'
 
 let mockMembers = [
-  { id: '1', name: '김리더', team: 'dev', role: 'leader', online: true },
-  { id: '2', name: '박팀장', team: 'design', role: 'team_lead', online: true },
-  { id: '3', name: '이멤버', team: 'marketing', role: 'member', online: false },
-  { id: '4', name: '최개발', team: 'dev', role: 'member', online: true },
-  { id: '5', name: '정디자인', team: 'design', role: 'member', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false },
+  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', online: false },
 ]
 
 export const membersHandlers = [
@@ -29,7 +29,7 @@ export const membersHandlers = [
       email: body.email,
       role: body.role,
       name: body.email.split('@')[0],
-      team: 'dev',
+      team: 'BACKEND',
       online: false,
     }
     mockMembers = [...mockMembers, newMember]
