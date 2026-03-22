@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 import { attendanceHandlers } from '../../../shared/api/mock/handlers/attendance'
 import { Attendance } from '../index'
+
+const TODAY = new Date().toISOString().slice(0, 10)
 
 const server = setupServer(...attendanceHandlers)
 beforeAll(() => server.listen())
@@ -38,6 +41,14 @@ describe('Attendance 페이지', () => {
   })
 
   it('출퇴근 기록을 로드한다', async () => {
+    server.use(
+      http.get('/api/v1/attendances', () =>
+        HttpResponse.json({
+          code: 'SUCCESS', message: 'ok',
+          data: [{ id: 1, memberId: 1, memberName: '김리더', workDate: TODAY, checkInTime: `${TODAY}T09:00:00`, checkOutTime: `${TODAY}T18:00:00`, status: 'LEFT' }],
+        }),
+      ),
+    )
     render(<Attendance />)
     await waitFor(() => {
       expect(screen.getAllByText('김리더').length).toBeGreaterThan(0)

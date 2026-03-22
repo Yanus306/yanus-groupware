@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { WorkStatus } from '../ui/AnimatedClockRing'
 import { clockIn as apiClockIn, clockOut as apiClockOut, getMyAttendance } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
+import { getTodayStr } from '../../../shared/lib/date'
 
 const STORAGE_KEY = 'yanus-work-session'
 
@@ -10,10 +11,11 @@ export function useWorkSession() {
   const [clockIn, setClockIn] = useState<Date | null>(null)
   const [clockOut, setClockOut] = useState<Date | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [toastType, setToastType] = useState<'error' | 'info'>('error')
 
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = getTodayStr()
     getMyAttendance()
       .then((records) => {
         const todayRecord = records.find((r) => r.workDate === todayStr)
@@ -64,34 +66,33 @@ export function useWorkSession() {
     setErrorMessage(null)
 
     if (status === 'idle') {
-      // 낙관적 업데이트
       const now = new Date()
       setClockIn(now)
       setClockOut(null)
       setStatus('working')
       try {
         const record = await apiClockIn()
-        // 서버 실제 시각으로 보정
         if (record.checkInTime) setClockIn(new Date(record.checkInTime))
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.code === 'ATT_001') {
-            // 이미 출근 처리됨 — 조용히 서버 기록으로 시각 보정 (에러 아님)
+          if (err.code === 'ALREADY_CHECKED_IN') {
+            // 이미 출근 처리됨 — 서버 기록으로 시각 보정, info 안내
+            setToastType('info')
+            setErrorMessage('이미 출근 처리된 기록이 있습니다')
             getMyAttendance().then((records) => {
-              const today = new Date().toISOString().slice(0, 10)
-              const rec = records.find((r) => r.workDate === today)
+              const rec = records.find((r) => r.workDate === getTodayStr())
               if (rec) setClockIn(rec.checkInTime ? new Date(rec.checkInTime) : now)
             }).catch(() => {})
-            // status는 'working' 유지
           } else {
-            // 기타 에러 — 낙관적 업데이트 롤백
             setStatus('idle')
             setClockIn(null)
+            setToastType('error')
             setErrorMessage(err.message)
           }
         } else {
           setStatus('idle')
           setClockIn(null)
+          setToastType('error')
           setErrorMessage('출근 처리에 실패했습니다')
         }
       }
@@ -104,27 +105,31 @@ export function useWorkSession() {
         if (record.checkOutTime) setClockOut(new Date(record.checkOutTime))
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.code === 'ATT_003') {
-            // 이미 퇴근 처리됨 — 조용히 done 유지 (에러 아님)
-          } else if (err.code === 'ATT_002') {
-            // 출근 기록 없음 — idle로 복구
+          if (err.code === 'ALREADY_CHECKED_OUT') {
+            // 이미 퇴근 처리됨 — info 안내
+            setToastType('info')
+            setErrorMessage('이미 퇴근 처리된 기록이 있습니다')
+          } else if (err.code === 'NOT_CHECKED_IN') {
             setStatus('idle')
             setClockIn(null)
             setClockOut(null)
+            setToastType('error')
             setErrorMessage(err.message)
-          } else if (err.code === 'ATT_004') {
-            // 퇴근 시각이 출근 시각 이전
+          } else if (err.code === 'INVALID_CHECKOUT_TIME') {
             setStatus('working')
             setClockOut(null)
+            setToastType('error')
             setErrorMessage(err.message)
           } else {
             setStatus('working')
             setClockOut(null)
+            setToastType('error')
             setErrorMessage(err.message)
           }
         } else {
           setStatus('working')
           setClockOut(null)
+          setToastType('error')
           setErrorMessage('퇴근 처리에 실패했습니다')
         }
       }
@@ -137,5 +142,5 @@ export function useWorkSession() {
 
   const clearError = () => setErrorMessage(null)
 
-  return { status, clockIn, clockOut, handleClockClick, errorMessage, clearError }
+  return { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError }
 }

@@ -1,9 +1,25 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMyAttendance, getAttendanceByDate, clockIn, clockOut } from '../attendanceApi'
+import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, updateWorkSchedule } from '../attendanceApi'
+
+const WORK_SCHEDULE = {
+  id: 1,
+  memberId: 1,
+  workStartTime: '09:00:00',
+  workEndTime: '18:00:00',
+  breakStartTime: '12:00:00',
+  breakEndTime: '13:00:00',
+}
 
 const server = setupServer(
+  http.get('/api/v1/work-schedules/me', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULE }),
+  ),
+  http.put('/api/v1/work-schedules', async ({ request }) => {
+    const body = await request.json() as Record<string, string>
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { ...WORK_SCHEDULE, ...body } })
+  }),
   http.get('/api/v1/attendances/me', () =>
     HttpResponse.json({
       code: 'SUCCESS',
@@ -74,5 +90,18 @@ describe('attendanceApi', () => {
     const result = await clockOut()
     expect(result).toMatchObject({ id: 10, status: 'LEFT' })
     expect(result.checkOutTime).not.toBeNull()
+  })
+})
+
+describe('workScheduleApi', () => {
+  it('getMyWorkSchedule() 내 근무 일정을 반환한다', async () => {
+    const schedule = await getMyWorkSchedule()
+    expect(schedule).toMatchObject({ memberId: 1, workStartTime: '09:00:00', workEndTime: '18:00:00' })
+  })
+
+  it('updateWorkSchedule() 근무 일정을 수정하고 반환한다', async () => {
+    const updated = await updateWorkSchedule({ workStartTime: '08:00:00', workEndTime: '17:00:00' })
+    expect(updated.workStartTime).toBe('08:00:00')
+    expect(updated.workEndTime).toBe('17:00:00')
   })
 })

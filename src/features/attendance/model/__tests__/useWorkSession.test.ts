@@ -112,11 +112,11 @@ describe('useWorkSession', () => {
   })
 
   describe('에러 처리', () => {
-    it('ATT_001: 이미 출근된 경우 working 상태 유지 — 에러 메시지 없음', async () => {
+    it('ALREADY_CHECKED_IN: 이미 출근된 경우 working 상태 유지 및 info 메시지 설정', async () => {
       server.use(
         http.post('/api/v1/attendances/check-in', () =>
           HttpResponse.json(
-            { code: 'ATT_001', message: '이미 출근 처리되었습니다.', data: null },
+            { code: 'ALREADY_CHECKED_IN', message: '이미 출근 처리되었습니다.', data: null },
             { status: 400 },
           ),
         ),
@@ -124,53 +124,69 @@ describe('useWorkSession', () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() })
       expect(result.current.status).toBe('working')
-      expect(result.current.errorMessage).toBeNull()
+      expect(result.current.errorMessage).toBe('이미 출근 처리된 기록이 있습니다')
     })
 
-    it('ATT_003: 이미 퇴근된 경우 done 상태 유지 — 에러 메시지 없음', async () => {
+    it('ALREADY_CHECKED_OUT: 이미 퇴근된 경우 done 상태 유지 및 info 메시지 설정', async () => {
       server.use(
         http.post('/api/v1/attendances/check-out', () =>
           HttpResponse.json(
-            { code: 'ATT_003', message: '이미 퇴근 처리되었습니다.', data: null },
+            { code: 'ALREADY_CHECKED_OUT', message: '이미 퇴근 처리되었습니다.', data: null },
             { status: 400 },
           ),
         ),
       )
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() }) // idle -> working
-      await act(async () => { await result.current.handleClockClick() }) // working -> done (ATT_003)
+      await act(async () => { await result.current.handleClockClick() }) // working -> done (ALREADY_CHECKED_OUT)
       expect(result.current.status).toBe('done')
-      expect(result.current.errorMessage).toBeNull()
+      expect(result.current.errorMessage).toBe('이미 퇴근 처리된 기록이 있습니다')
     })
 
-    it('ATT_002: 출근 기록 없이 퇴근 시 idle로 복구 및 에러 메시지 설정', async () => {
+    it('NOT_CHECKED_IN: 출근 기록 없이 퇴근 시 idle로 복구 및 에러 메시지 설정', async () => {
       server.use(
         http.post('/api/v1/attendances/check-out', () =>
           HttpResponse.json(
-            { code: 'ATT_002', message: '출근 기록이 없습니다.', data: null },
+            { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
             { status: 400 },
           ),
         ),
       )
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() }) // idle -> working
-      await act(async () => { await result.current.handleClockClick() }) // working -> idle (ATT_002)
+      await act(async () => { await result.current.handleClockClick() }) // working -> idle (NOT_CHECKED_IN)
       expect(result.current.status).toBe('idle')
       expect(result.current.errorMessage).toBe('출근 기록이 없습니다.')
+    })
+
+    it('INVALID_CHECKOUT_TIME: 잘못된 퇴근 시간 시 working 상태 복구 및 에러 메시지 설정', async () => {
+      server.use(
+        http.post('/api/v1/attendances/check-out', () =>
+          HttpResponse.json(
+            { code: 'INVALID_CHECKOUT_TIME', message: '퇴근 시간이 출근 시간보다 빠릅니다.', data: null },
+            { status: 400 },
+          ),
+        ),
+      )
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() }) // idle -> working
+      await act(async () => { await result.current.handleClockClick() }) // working -> working (rollback)
+      expect(result.current.status).toBe('working')
+      expect(result.current.errorMessage).toBe('퇴근 시간이 출근 시간보다 빠릅니다.')
     })
 
     it('clearError 호출 시 errorMessage가 null이 된다', async () => {
       server.use(
         http.post('/api/v1/attendances/check-out', () =>
           HttpResponse.json(
-            { code: 'ATT_002', message: '출근 기록이 없습니다.', data: null },
+            { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
             { status: 400 },
           ),
         ),
       )
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() }) // idle -> working
-      await act(async () => { await result.current.handleClockClick() }) // working -> idle (ATT_002)
+      await act(async () => { await result.current.handleClockClick() }) // working -> idle (NOT_CHECKED_IN)
       act(() => { result.current.clearError() })
       expect(result.current.errorMessage).toBeNull()
     })
