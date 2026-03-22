@@ -12,13 +12,14 @@ export function useWorkSession() {
   const [clockOut, setClockOut] = useState<Date | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [toastType, setToastType] = useState<'error' | 'info'>('error')
+  const [isLoading, setIsLoading] = useState(true)
 
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
     const todayStr = getTodayStr()
-    getMyAttendance()
+    getMyAttendance(todayStr)
       .then((records) => {
-        const todayRecord = records.find((r) => r.workDate === todayStr)
+        const todayRecord = records[0]
         if (todayRecord) {
           if (todayRecord.status === 'LEFT') {
             setStatus('done')
@@ -52,6 +53,7 @@ export function useWorkSession() {
           } catch {}
         }
       })
+      .finally(() => setIsLoading(false))
   }, [])
 
   useEffect(() => {
@@ -66,72 +68,65 @@ export function useWorkSession() {
     setErrorMessage(null)
 
     if (status === 'idle') {
-      const now = new Date()
-      setClockIn(now)
-      setClockOut(null)
-      setStatus('working')
+      setIsLoading(true)
       try {
         const record = await apiClockIn()
-        if (record.checkInTime) setClockIn(new Date(record.checkInTime))
+        setClockIn(record.checkInTime ? new Date(record.checkInTime) : new Date())
+        setClockOut(null)
+        setStatus('working')
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.code === 'ALREADY_CHECKED_IN') {
-            // 이미 출근 처리됨 — 서버 기록으로 시각 보정, info 안내
+            // 이미 출근 처리됨 — 서버 기록으로 동기화 후 working 전환
             setToastType('info')
             setErrorMessage('이미 출근 처리된 기록이 있습니다')
-            getMyAttendance().then((records) => {
-              const rec = records.find((r) => r.workDate === getTodayStr())
-              if (rec) setClockIn(rec.checkInTime ? new Date(rec.checkInTime) : now)
+            getMyAttendance(getTodayStr()).then((records) => {
+              const rec = records[0]
+              if (rec) {
+                setClockIn(rec.checkInTime ? new Date(rec.checkInTime) : new Date())
+                setStatus('working')
+              }
             }).catch(() => {})
           } else {
-            setStatus('idle')
-            setClockIn(null)
             setToastType('error')
             setErrorMessage(err.message)
           }
         } else {
-          setStatus('idle')
-          setClockIn(null)
           setToastType('error')
           setErrorMessage('출근 처리에 실패했습니다')
         }
+      } finally {
+        setIsLoading(false)
       }
     } else if (status === 'working') {
-      const now = new Date()
-      setClockOut(now)
-      setStatus('done')
+      setIsLoading(true)
       try {
         const record = await apiClockOut()
-        if (record.checkOutTime) setClockOut(new Date(record.checkOutTime))
+        setClockOut(record.checkOutTime ? new Date(record.checkOutTime) : new Date())
+        setStatus('done')
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.code === 'ALREADY_CHECKED_OUT') {
-            // 이미 퇴근 처리됨 — info 안내
+            // 이미 퇴근 처리됨 — done으로 동기화
             setToastType('info')
             setErrorMessage('이미 퇴근 처리된 기록이 있습니다')
+            setStatus('done')
           } else if (err.code === 'NOT_CHECKED_IN') {
             setStatus('idle')
             setClockIn(null)
             setClockOut(null)
             setToastType('error')
             setErrorMessage(err.message)
-          } else if (err.code === 'INVALID_CHECKOUT_TIME') {
-            setStatus('working')
-            setClockOut(null)
-            setToastType('error')
-            setErrorMessage(err.message)
           } else {
-            setStatus('working')
-            setClockOut(null)
             setToastType('error')
             setErrorMessage(err.message)
           }
         } else {
-          setStatus('working')
-          setClockOut(null)
           setToastType('error')
           setErrorMessage('퇴근 처리에 실패했습니다')
         }
+      } finally {
+        setIsLoading(false)
       }
     } else {
       setClockIn(null)
@@ -142,5 +137,5 @@ export function useWorkSession() {
 
   const clearError = () => setErrorMessage(null)
 
-  return { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError }
+  return { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError, isLoading }
 }

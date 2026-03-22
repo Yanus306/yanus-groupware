@@ -1,55 +1,68 @@
 import { useApp } from '../../auth/model/AppProvider'
+import { useWorkSchedule } from '../model/useWorkSchedule'
 import './SetWorkDaysPersonal.css'
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function SetWorkDaysPersonal() {
-  const { state, personalSchedule, setPersonalSchedule } = useApp()
-
-  const toggleDay = (index: number) => {
-    const next = [...personalSchedule.workDays]
-    next[index] = !next[index]
-    setPersonalSchedule({ ...personalSchedule, workDays: next })
-  }
+  const { state } = useApp()
+  const { workDays, daySchedules, isLoading, isSaving, error, toggleDay, setDayTime, saveSchedule } =
+    useWorkSchedule()
 
   return (
     <div className="set-work-days-personal">
-      <h3>Set Work Days</h3>
-      <p className="desc">Customize your personal schedule. Set your own work days and check-in/out times.</p>
-      <div className="member-row">
+      <h3>근무 일정 설정</h3>
+      <p className="desc">
+        요일별로 출퇴근 시간을 개별 설정할 수 있습니다.
+      </p>
+
+      <div className="member-info">
         <span className="member-avatar">{state.currentUser?.name[0] ?? '?'}</span>
         <span className="member-name">{state.currentUser?.name ?? ''}</span>
-        <div className="days-toggles">
-          {DAYS.map((day, i) => (
-            <div key={day} className="day-cell">
-              <span className="day-name">{day}</span>
+      </div>
+
+      {isLoading ? (
+        <div className="schedule-loading">로딩 중...</div>
+      ) : (
+        <div className="day-schedule-list">
+          {DAY_NAMES.map((day, i) => (
+            <div key={day} className={`day-schedule-row ${workDays[i] ? 'active' : 'inactive'}`}>
               <button
-                className={`toggle ${personalSchedule.workDays[i] ? 'on' : ''}`}
+                className={`toggle ${workDays[i] ? 'on' : ''}`}
                 onClick={() => toggleDay(i)}
+                aria-label={`${day} 토글`}
               />
+              <span className="day-label">{day}</span>
+              {workDays[i] && (
+                <div className="day-times">
+                  <div className="time-field">
+                    <label>출근</label>
+                    <input
+                      type="time"
+                      value={daySchedules[i].checkInTime}
+                      onChange={(e) => setDayTime(i, 'checkInTime', e.target.value)}
+                    />
+                  </div>
+                  <div className="time-field">
+                    <label>퇴근</label>
+                    <input
+                      type="time"
+                      value={daySchedules[i].checkOutTime}
+                      onChange={(e) => setDayTime(i, 'checkOutTime', e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
-      </div>
-      <div className="time-row">
-        <div className="time-field">
-          <label>Check-in</label>
-          <input
-            type="time"
-            value={personalSchedule.checkInTime}
-            onChange={(e) => setPersonalSchedule({ ...personalSchedule, checkInTime: e.target.value })}
-          />
-        </div>
-        <div className="time-field">
-          <label>Check-out</label>
-          <input
-            type="time"
-            value={personalSchedule.checkOutTime}
-            onChange={(e) => setPersonalSchedule({ ...personalSchedule, checkOutTime: e.target.value })}
-          />
-        </div>
-      </div>
-      <button className="save-btn">Save</button>
+      )}
+
+      {error && <p className="schedule-error">{error}</p>}
+
+      <button className="save-btn" onClick={saveSchedule} disabled={isSaving}>
+        {isSaving ? '저장 중...' : '저장'}
+      </button>
     </div>
   )
 }

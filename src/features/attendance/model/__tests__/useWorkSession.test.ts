@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSession } from '../useWorkSession'
+import { getTodayStr } from '../../../../shared/lib/date'
 
 const CLOCK_IN_RECORD = {
   id: 1, memberId: 1, memberName: '테스터',
@@ -37,6 +38,49 @@ async function mountHook() {
 }
 
 describe('useWorkSession', () => {
+  describe('로딩 상태', () => {
+    it('초기 isLoading은 true이다', () => {
+      const { result } = renderHook(() => useWorkSession())
+      expect(result.current.isLoading).toBe(true)
+    })
+
+    it('초기 로드 완료 후 isLoading이 false가 된다', async () => {
+      const { result } = await mountHook()
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    it('출근/퇴근 처리 완료 후 isLoading이 false가 된다', async () => {
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() })
+      expect(result.current.isLoading).toBe(false)
+    })
+  })
+
+  describe('API 실패 시 상태 롤백', () => {
+    it('출근 API 실패 시 idle 상태를 유지한다', async () => {
+      server.use(
+        http.post('/api/v1/attendances/check-in', () =>
+          HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
+        ),
+      )
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() })
+      expect(result.current.status).toBe('idle')
+    })
+
+    it('퇴근 API 실패(INVALID_CHECKOUT_TIME) 시 working 상태를 유지한다', async () => {
+      server.use(
+        http.post('/api/v1/attendances/check-out', () =>
+          HttpResponse.json({ code: 'INVALID_CHECKOUT_TIME', message: '잘못된 퇴근 시간', data: null }, { status: 400 }),
+        ),
+      )
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() }) // idle → working
+      await act(async () => { await result.current.handleClockClick() }) // working → 실패 → working 유지
+      expect(result.current.status).toBe('working')
+    })
+  })
+
   describe('초기 상태', () => {
     it('초기 상태는 idle이다', async () => {
       const { result } = await mountHook()
@@ -112,7 +156,8 @@ describe('useWorkSession', () => {
   })
 
   describe('에러 처리', () => {
-    it('ALREADY_CHECKED_IN: 이미 출근된 경우 working 상태 유지 및 info 메시지 설정', async () => {
+    it('ALREADY_CHECKED_IN: 이미 출근된 경우 서버 동기화 후 working 상태로 전환 및 info 메시지 설정', async () => {
+      const { result } = await mountHook() // 초기 마운트는 기본 핸들러(빈 목록)로
       server.use(
         http.post('/api/v1/attendances/check-in', () =>
           HttpResponse.json(
@@ -120,9 +165,15 @@ describe('useWorkSession', () => {
             { status: 400 },
           ),
         ),
+        http.get('/api/v1/attendances/me', () =>
+          HttpResponse.json({
+            code: 'SUCCESS', message: 'ok',
+            data: [{ ...CLOCK_IN_RECORD, workDate: getTodayStr() }],
+          }),
+        ),
       )
-      const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() })
+      await act(async () => {}) // getMyAttendance() sync 완료 대기
       expect(result.current.status).toBe('working')
       expect(result.current.errorMessage).toBe('이미 출근 처리된 기록이 있습니다')
     })
