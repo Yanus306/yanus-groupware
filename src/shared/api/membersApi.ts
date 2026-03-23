@@ -4,8 +4,6 @@ import type { User } from '../../entities/user/model/types'
 export interface ProfileUpdatePayload {
   name?: string
   password?: string
-  currentPassword?: string
-  newPassword?: string
 }
 
 export const getMembers = () => baseClient.get<User[]>('/api/v1/members')

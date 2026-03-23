@@ -21,6 +21,11 @@ vi.mock('../../../features/auth/model', () => ({
 
 vi.mock('../../../features/attendance/ui', () => ({
   SetWorkDaysPersonal: () => <div data-testid="set-work-days" />,
+  TeamAttendanceStatus: () => <div data-testid="team-attendance-status" />,
+}))
+
+vi.mock('../../../features/leave/ui/LeaveSection', () => ({
+  LeaveSection: () => <div data-testid="leave-section" />,
 }))
 
 describe('Attendance 페이지', () => {

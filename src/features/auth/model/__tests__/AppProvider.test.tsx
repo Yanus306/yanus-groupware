@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { AppProvider, useApp } from '../AppProvider'
-import type { PersonalWorkSchedule } from '../AppProvider'
 import type { User } from '../../../../entities/user/model/types'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -20,20 +19,9 @@ describe('AppProvider', () => {
       expect(result.current.state.currentUser).toBeNull()
     })
 
-    it('기본 근무 스케줄 출근 시간은 09:00이다', () => {
+    it('초기 users는 빈 배열이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.personalSchedule.checkInTime).toBe('09:00')
-    })
-
-    it('기본 근무 스케줄 퇴근 시간은 18:00이다', () => {
-      const { result } = renderHook(() => useApp(), { wrapper })
-      expect(result.current.personalSchedule.checkOutTime).toBe('18:00')
-    })
-
-    it('기본 근무 요일은 월~금(5일)이다', () => {
-      const { result } = renderHook(() => useApp(), { wrapper })
-      const workDays = result.current.personalSchedule.workDays
-      expect(workDays.filter(Boolean)).toHaveLength(5)
+      expect(result.current.state.users).toEqual([])
     })
   })
 
@@ -93,22 +81,6 @@ describe('AppProvider', () => {
         result.current.logout()
       })
       expect(result.current.state.currentUser).toBeNull()
-    })
-  })
-
-  describe('setPersonalSchedule', () => {
-    it('근무 스케줄을 업데이트할 수 있다', () => {
-      const { result } = renderHook(() => useApp(), { wrapper })
-      const newSchedule: PersonalWorkSchedule = {
-        workDays: [true, false, true, false, true, false, false],
-        checkInTime: '10:00',
-        checkOutTime: '19:00',
-      }
-      act(() => {
-        result.current.setPersonalSchedule(newSchedule)
-      })
-      expect(result.current.personalSchedule.checkInTime).toBe('10:00')
-      expect(result.current.personalSchedule.checkOutTime).toBe('19:00')
     })
   })
 

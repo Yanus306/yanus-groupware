@@ -174,7 +174,7 @@ export function Members() {
                       <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
                         Change Role <ChevronDown size={14} />
                       </button>
-                      {'active' in u && !(u as { active?: boolean }).active ? (
+                      {u.status === 'INACTIVE' ? (
                         <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
                           활성화
                         </button>

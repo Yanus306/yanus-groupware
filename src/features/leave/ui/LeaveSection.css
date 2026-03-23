@@ -1,0 +1,212 @@
+.leave-section {
+  padding: 24px;
+}
+
+.leave-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.leave-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.leave-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.leave-add-btn:hover {
+  opacity: 0.85;
+}
+
+/* 신청 폼 */
+.leave-form {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.leave-form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.leave-form-row label {
+  min-width: 48px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.leave-form-row select,
+.leave-form-row input[type='date'],
+.leave-form-row input[type='text'] {
+  flex: 1;
+  background: var(--bg-tertiary, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.leave-form-row select:focus,
+.leave-form-row input:focus {
+  border-color: var(--accent);
+}
+
+.leave-submit-btn {
+  align-self: flex-end;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.leave-submit-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.leave-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 목록 */
+.leave-list,
+.leave-admin-list {
+  margin-bottom: 28px;
+}
+
+.leave-list h4,
+.leave-admin-list h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 14px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leave-empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.leave-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.leave-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+
+.leave-table td {
+  padding: 10px 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.leave-table tr:hover td {
+  background: var(--bg-hover, rgba(255,255,255,0.03));
+}
+
+/* 상태 뱃지 */
+.leave-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.leave-status-badge.pending {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.leave-status-badge.approved {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.leave-status-badge.rejected {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+/* 처리 버튼 */
+.leave-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.leave-approve-btn,
+.leave-reject-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.leave-approve-btn {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.leave-approve-btn:hover {
+  opacity: 0.75;
+}
+
+.leave-reject-btn {
+  background: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.leave-reject-btn:hover {
+  opacity: 0.75;
+}
+
+@media (max-width: 768px) {
+  .leave-table th:nth-child(3),
+  .leave-table td:nth-child(3) {
+    display: none;
+  }
+}

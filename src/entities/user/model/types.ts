@@ -1,5 +1,6 @@
 export type UserRole = 'MEMBER' | 'ADMIN' | 'TEAM_LEAD'
 export type Team = 'BACKEND' | 'FRONTEND' | 'AI' | 'SECURITY'
+export type UserStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface User {
   id: string
@@ -8,11 +9,6 @@ export interface User {
   avatar?: string
   team: Team
   role: UserRole
+  status?: UserStatus
   online?: boolean
-}
-
-export interface PersonalWorkSchedule {
-  workDays: boolean[] // Mon-Sun
-  checkInTime: string
-  checkOutTime: string
 }

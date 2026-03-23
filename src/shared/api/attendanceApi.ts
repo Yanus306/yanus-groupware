@@ -24,19 +24,23 @@ export const clockIn = () =>
 export const clockOut = () =>
   baseClient.post<AttendanceRecord>('/api/v1/attendances/check-out', {})
 
-export interface WorkSchedule {
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+
+export interface WorkScheduleItem {
   id: number
-  memberId: number
-  workStartTime: string   // HH:mm:ss
-  workEndTime: string     // HH:mm:ss
-  breakStartTime: string  // HH:mm:ss
-  breakEndTime: string    // HH:mm:ss
+  dayOfWeek: DayOfWeek
+  startTime: string  // HH:mm:ss
+  endTime: string    // HH:mm:ss
 }
 
-export type WorkSchedulePayload = Pick<WorkSchedule, 'workStartTime' | 'workEndTime' | 'breakStartTime' | 'breakEndTime'>
+export interface WorkSchedulePayload {
+  dayOfWeek: DayOfWeek
+  startTime: string  // HH:mm:ss
+  endTime: string    // HH:mm:ss
+}
 
 export const getMyWorkSchedule = () =>
-  baseClient.get<WorkSchedule>('/api/v1/work-schedules/me')
+  baseClient.get<WorkScheduleItem[]>('/api/v1/work-schedules/me')
 
-export const updateWorkSchedule = (body: Partial<WorkSchedulePayload>) =>
-  baseClient.put<WorkSchedule>('/api/v1/work-schedules', body)
+export const upsertWorkScheduleDay = (body: WorkSchedulePayload) =>
+  baseClient.put<WorkScheduleItem>('/api/v1/work-schedules', body)

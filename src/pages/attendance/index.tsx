@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { SetWorkDaysPersonal, TeamAttendanceStatus } from '../../features/attendance/ui'
+import { LeaveSection } from '../../features/leave/ui/LeaveSection'
 import { getAttendanceByDate, getMyAttendance } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
 import { getMembers } from '../../shared/api/membersApi'
@@ -224,6 +225,11 @@ export function Attendance() {
             </div>
           </div>
         )}
+
+        {/* 휴가 신청 — 모든 유저 */}
+        <section className="leave-section-wrap glass">
+          <LeaveSection />
+        </section>
       </div>
     </div>
   )
