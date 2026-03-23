@@ -23,7 +23,7 @@
   border-radius: 12px;
 }
 
-.settings-nav .nav-item {
+.settings-nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -36,16 +36,17 @@
   font-size: 14px;
   transition: all 0.2s;
   text-align: left;
+  width: 100%;
 }
 
-.settings-nav .nav-item:hover {
+.settings-nav-item:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
-.settings-nav .nav-item.active {
+.settings-nav-item.active {
   background: rgba(150, 128, 204, 0.2);
-  color: var(--purple);
+  color: var(--accent-purple-light, #b39ddb);
 }
 
 .settings-content {

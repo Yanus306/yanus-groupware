@@ -51,7 +51,7 @@ export function Settings() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+              className={`settings-nav-item ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.icon}
