@@ -13,6 +13,7 @@ interface EditForm {
 
 interface Props {
   event: CalendarEvent | null
+  canEdit: boolean
   editMode: boolean
   editForm: EditForm
   onEditFormChange: (f: Partial<EditForm>) => void
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export function EventDetailModal({
-  event, editMode, editForm, onEditFormChange,
+  event, canEdit, editMode, editForm, onEditFormChange,
   onEnterEditMode, onSave, onDelete, onClose,
 }: Props) {
   if (!event) return null
@@ -68,9 +69,12 @@ export function EventDetailModal({
               <div className="event-detail-title">{event.title}</div>
               <div className="event-detail-meta">{formatEventRange(event)}</div>
             </div>
+            <div className="event-detail-creator">
+              작성자: {event.createdBy}
+            </div>
             <div className="edit-task-actions add-task-modal-actions">
-              <button className="cancel-btn" onClick={onEnterEditMode}>수정</button>
-              <button className="cancel-btn delete-btn" onClick={onDelete}>삭제</button>
+              {canEdit && <button className="cancel-btn" onClick={onEnterEditMode}>수정</button>}
+              {canEdit && <button className="cancel-btn delete-btn" onClick={onDelete}>삭제</button>}
               <button className="add-btn" onClick={onClose}>닫기</button>
             </div>
           </>

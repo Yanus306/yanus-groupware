@@ -96,6 +96,18 @@ export function Calendar() {
   const todayStr = getTodayStr()
   const DELETE_ANIM_DURATION = 320
 
+  // 권한 헬퍼 — admin/team_lead는 모두 편집 가능
+  const isAdmin = state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
+  const canEditEvent = useCallback((event: CalendarEvent) =>
+    isAdmin || event.createdBy === state.currentUser?.name,
+    [isAdmin, state.currentUser],
+  )
+  const canEditTask = useCallback((task: Task) => {
+    if (isAdmin) return true
+    if (!task.isTeamTask) return true // 내 할일은 항상 본인 것
+    return task.assigneeId === String(state.currentUser?.id)
+  }, [isAdmin, state.currentUser])
+
   const handleAddTask = (closeModal?: boolean) => {
     const title = newTaskTitle.trim()
     if (!title) return
@@ -250,17 +262,19 @@ export function Calendar() {
   const handleEventDrop = useCallback((arg: EventDropArg) => {
     const id = arg.event.id
     if (!id) return
-    const ext = arg.event.extendedProps as { isTask?: boolean }
+    const ext = arg.event.extendedProps as { isTask?: boolean; rawEvent?: CalendarEvent; rawTask?: Task }
     const start = arg.event.start!
     const end = arg.event.end!
     if (ext?.isTask && id.startsWith('task-')) {
+      if (ext.rawTask && !canEditTask(ext.rawTask)) { arg.revert(); return }
       const taskId = id.replace(/^task-/, '')
       const time24 = parseDateToTime(start)
       updateTask(taskId, { date: parseDateToStr(start), time: formatTimeForDisplay(time24) })
     } else {
+      if (ext.rawEvent && !canEditEvent(ext.rawEvent)) { arg.revert(); return }
       updateEvent(id, { startDate: parseDateToStr(start), startTime: parseDateToTime(start), endDate: parseDateToStr(end), endTime: parseDateToTime(end) })
     }
-  }, [updateEvent, updateTask])
+  }, [updateEvent, updateTask, canEditEvent, canEditTask])
 
   const handleDatesSet = useCallback((arg: { start: Date; end: Date; view: { type: string } }) => {
     const key = `${arg.view.type}-${arg.start.getFullYear()}-${arg.start.getMonth()}`
@@ -278,12 +292,13 @@ export function Calendar() {
   const handleEventResize = useCallback((arg: EventResizeDoneArg) => {
     const id = arg.event.id
     if (!id) return
-    const ext = arg.event.extendedProps as { isTask?: boolean }
+    const ext = arg.event.extendedProps as { isTask?: boolean; rawEvent?: CalendarEvent }
     if (ext?.isTask && id.startsWith('task-')) return
+    if (ext.rawEvent && !canEditEvent(ext.rawEvent)) { arg.revert(); return }
     const start = arg.event.start!
     const end = arg.event.end!
     updateEvent(id, { startDate: parseDateToStr(start), startTime: parseDateToTime(start), endDate: parseDateToStr(end), endTime: parseDateToTime(end) })
-  }, [updateEvent])
+  }, [updateEvent, canEditEvent])
 
   useEffect(() => {
     if (editingTask) {
@@ -345,24 +360,27 @@ export function Calendar() {
     return Array.from(byDate.entries()).map(([date, items]) => ({ date: formatDateDisplay(date, new Date()), dateStr: date, items }))
   }, [filteredTasks, todayStr])
 
-  const TaskItemRow = ({ t, showCheckbox = true, showAssignee = true }: { t: Task; showCheckbox?: boolean; showAssignee?: boolean }) => (
-    <div key={t.id} className={`task-item ${t.done ? 'done' : ''} ${deletingTaskId === t.id ? 'deleting' : ''}`}>
-      {showCheckbox && (
-        <span className="task-checkbox" onClick={() => toggleTaskDone(t.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && toggleTaskDone(t.id)}>
-          {t.done ? '✓' : ''}
-        </span>
-      )}
-      <div className="task-info">
-        <span className="task-title">{t.title}</span>
-        <span className="task-meta">{t.time} · <span className={`priority-dot ${t.priority}`}>{PRIORITY_LABELS[t.priority]}</span></span>
+  const TaskItemRow = ({ t, showCheckbox = true, showAssignee = true }: { t: Task; showCheckbox?: boolean; showAssignee?: boolean }) => {
+    const canEdit = canEditTask(t)
+    return (
+      <div key={t.id} className={`task-item ${t.done ? 'done' : ''} ${deletingTaskId === t.id ? 'deleting' : ''}`}>
+        {showCheckbox && (
+          <span className="task-checkbox" onClick={() => toggleTaskDone(t.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && toggleTaskDone(t.id)}>
+            {t.done ? '✓' : ''}
+          </span>
+        )}
+        <div className="task-info">
+          <span className="task-title">{t.title}</span>
+          <span className="task-meta">{t.time} · <span className={`priority-dot ${t.priority}`}>{PRIORITY_LABELS[t.priority]}</span></span>
+        </div>
+        <div className="task-actions">
+          {showAssignee && t.assigneeName && <span className="assignee" title={t.assigneeName}><User size={14} /></span>}
+          {canEdit && <button onClick={() => setEditingTask(t)} aria-label="수정"><Pencil size={14} /></button>}
+          {canEdit && <button onClick={(e) => { e.stopPropagation(); handleDeleteTaskWithAnimation(t.id) }} aria-label="삭제"><Trash2 size={14} /></button>}
+        </div>
       </div>
-      <div className="task-actions">
-        {showAssignee && t.assigneeName && <span className="assignee" title={t.assigneeName}><User size={14} /></span>}
-        <button onClick={() => setEditingTask(t)} aria-label="수정"><Pencil size={14} /></button>
-        <button onClick={(e) => { e.stopPropagation(); handleDeleteTaskWithAnimation(t.id) }} aria-label="삭제"><Trash2 size={14} /></button>
-      </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="calendar-page">
@@ -506,9 +524,11 @@ export function Calendar() {
                         <span className="event-item-title">{e.title}</span>
                         <span className="event-item-meta">{formatEventRange(e)}</span>
                       </div>
-                      <button className="event-item-delete" onClick={(ev) => { ev.stopPropagation(); handleDeleteEventWithAnimation(e.id) }} aria-label="삭제">
-                        <Trash2 size={14} />
-                      </button>
+                      {canEditEvent(e) && (
+                        <button className="event-item-delete" onClick={(ev) => { ev.stopPropagation(); handleDeleteEventWithAnimation(e.id) }} aria-label="삭제">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -577,6 +597,7 @@ export function Calendar() {
 
       <EventDetailModal
         event={selectedEvent}
+        canEdit={selectedEvent ? canEditEvent(selectedEvent) : false}
         editMode={eventDetailEditMode}
         editForm={editEventForm}
         onEditFormChange={handleEventDetailFormChange}
