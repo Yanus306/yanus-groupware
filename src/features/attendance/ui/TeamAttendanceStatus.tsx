@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { User } from '../../../entities/user/model/types'
 import type { AttendanceRecord } from '../../../shared/api/attendanceApi'
 import './TeamAttendanceStatus.css'
@@ -35,10 +36,22 @@ const TEAM_LABEL: Record<string, string> = {
   SECURITY: 'Security',
 }
 
+const FILTER_TABS: { value: AttendStatus; label: string }[] = [
+  { value: 'working', label: '근무 중' },
+  { value: 'left', label: '퇴근' },
+  { value: 'absent', label: '미출근' },
+]
+
 export function TeamAttendanceStatus({ members, records, date }: Props) {
+  const [activeFilter, setActiveFilter] = useState<AttendStatus>('working')
+
   const workingCount = records.filter((r) => r.status === 'WORKING').length
   const leftCount = records.filter((r) => r.status === 'LEFT').length
   const absentCount = members.length - workingCount - leftCount
+
+  const filteredMembers = members.filter(
+    (member) => getStatus(member.id, records) === activeFilter,
+  )
 
   return (
     <div className="team-attendance-status">
@@ -48,45 +61,50 @@ export function TeamAttendanceStatus({ members, records, date }: Props) {
       </div>
 
       <div className="attend-summary">
-        <div className="summary-item working">
-          <span className="summary-count">{workingCount}</span>
-          <span className="summary-label">근무 중</span>
-        </div>
-        <div className="summary-item left">
-          <span className="summary-count">{leftCount}</span>
-          <span className="summary-label">퇴근</span>
-        </div>
-        <div className="summary-item absent">
-          <span className="summary-count">{absentCount}</span>
-          <span className="summary-label">미출근</span>
-        </div>
+        {FILTER_TABS.map(({ value, label }) => {
+          const count = value === 'working' ? workingCount : value === 'left' ? leftCount : absentCount
+          return (
+            <button
+              key={value}
+              className={`summary-item ${value} ${activeFilter === value ? 'active' : ''}`}
+              onClick={() => setActiveFilter(value)}
+            >
+              <span className="summary-count">{count}</span>
+              <span className="summary-label">{label}</span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="attend-member-grid">
-        {members.map((member) => {
-          const rec = records.find((r) => String(r.memberId) === member.id)
-          const status = getStatus(member.id, records)
-          return (
-            <div key={member.id} className={`attend-member-card ${status}`}>
-              <div className="attend-member-avatar">{member.name[0]}</div>
-              <div className="attend-member-info">
-                <span className="attend-member-name">{member.name}</span>
-                <span className="attend-member-team">{TEAM_LABEL[member.team] ?? member.team}</span>
-              </div>
-              <div className="attend-member-right">
-                <span className={`attend-status-badge ${status}`}>
-                  {STATUS_LABEL[status]}
-                </span>
-                {rec && (
-                  <span className="attend-time">
-                    {formatTime(rec.checkInTime)}
-                    {rec.checkOutTime ? ` ~ ${formatTime(rec.checkOutTime)}` : '~'}
+        {filteredMembers.length === 0 ? (
+          <p className="attend-empty">해당 상태의 팀원이 없습니다</p>
+        ) : (
+          filteredMembers.map((member) => {
+            const rec = records.find((r) => String(r.memberId) === member.id)
+            const status = getStatus(member.id, records)
+            return (
+              <div key={member.id} className={`attend-member-card ${status}`}>
+                <div className="attend-member-avatar">{member.name[0]}</div>
+                <div className="attend-member-info">
+                  <span className="attend-member-name">{member.name}</span>
+                  <span className="attend-member-team">{TEAM_LABEL[member.team] ?? member.team}</span>
+                </div>
+                <div className="attend-member-right">
+                  <span className={`attend-status-badge ${status}`}>
+                    {STATUS_LABEL[status]}
                   </span>
-                )}
+                  {rec && (
+                    <span className="attend-time">
+                      {formatTime(rec.checkInTime)}
+                      {rec.checkOutTime ? ` ~ ${formatTime(rec.checkOutTime)}` : ' ~'}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
     </div>
   )
