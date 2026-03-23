@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { User, PersonalWorkSchedule } from '../../../entities/user/model/types'
 import { getMe } from '../api/authClient'
@@ -54,18 +54,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isAdmin =
     state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
 
-  function loadUser(user: User) {
+  const loadUser = useCallback((user: User) => {
     setState((prev) => ({ ...prev, currentUser: user }))
-  }
+  }, [])
 
-  function loadMembers(users: User[]) {
+  const loadMembers = useCallback((users: User[]) => {
     setState((prev) => ({ ...prev, users }))
-  }
+  }, [])
 
-  function logout() {
+  const logout = useCallback(() => {
     localStorage.removeItem('accessToken')
     setState({ currentUser: null, users: [] })
-  }
+  }, [])
 
   return (
     <AppContext.Provider
