@@ -19,6 +19,11 @@ export function Settings() {
   const [displayName, setDisplayName] = useState(state.currentUser?.name ?? '')
   const [saved, setSaved] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSaved, setPasswordSaved] = useState(false)
 
   const handleSave = async () => {
     try {
@@ -27,6 +32,28 @@ export function Settings() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '저장에 실패했습니다')
+    }
+  }
+
+  const handlePasswordChange = async () => {
+    setPasswordError(null)
+    if (!newPassword) {
+      setPasswordError('새 비밀번호를 입력해주세요')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('새 비밀번호가 일치하지 않습니다')
+      return
+    }
+    try {
+      await updateMyProfile({ currentPassword, newPassword })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordSaved(true)
+      setTimeout(() => setPasswordSaved(false), 2000)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다')
     }
   }
 
@@ -155,19 +182,40 @@ export function Settings() {
               <h3>보안 설정</h3>
               <div className="setting-field">
                 <label>현재 비밀번호</label>
-                <input type="password" placeholder="••••••••" className="setting-input" />
+                <input
+                  type="password"
+                  placeholder="현재 비밀번호 입력"
+                  className="setting-input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </div>
               <div className="setting-field">
                 <label>새 비밀번호</label>
-                <input type="password" placeholder="••••••••" className="setting-input" />
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 입력"
+                  className="setting-input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
               <div className="setting-field">
                 <label>비밀번호 확인</label>
-                <input type="password" placeholder="••••••••" className="setting-input" />
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 확인"
+                  className="setting-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
               </div>
-              <button className="save-btn" onClick={handleSave}>
+              {passwordError && (
+                <p className="password-error">{passwordError}</p>
+              )}
+              <button className="save-btn" onClick={handlePasswordChange}>
                 <Save size={16} />
-                {saved ? '변경됨!' : '비밀번호 변경'}
+                {passwordSaved ? '변경됨!' : '비밀번호 변경'}
               </button>
             </section>
           )}
