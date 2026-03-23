@@ -38,20 +38,8 @@ export function Members() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAdmin) return
     getMembers().then(loadMembers).catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
-  }, [isAdmin, loadMembers])
-
-  if (!isAdmin) {
-    return (
-      <div className="members-page">
-        <h1>Member Management</h1>
-        <div className="glass no-access">
-          <p>Admin access required. Only team leads and leaders can view this page.</p>
-        </div>
-      </div>
-    )
-  }
+  }, [loadMembers])
 
   const filtered = state.users.filter((u) => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase())
@@ -123,13 +111,15 @@ export function Members() {
       )}
       <header className="members-header">
         <h1>
-          Member Management
-          <span className="admin-badge">! Admin Only</span>
+          {isAdmin ? 'Member Management' : '멤버 목록'}
+          {isAdmin && <span className="admin-badge">! Admin Only</span>}
         </h1>
-        <button className="invite-btn glass" onClick={() => setShowInvite(true)}>
-          <UserPlus size={16} />
-          멤버 초대
-        </button>
+        {isAdmin && (
+          <button className="invite-btn glass" onClick={() => setShowInvite(true)}>
+            <UserPlus size={16} />
+            멤버 초대
+          </button>
+        )}
       </header>
 
       <div className="filters-row">
@@ -165,7 +155,7 @@ export function Members() {
                 <th>Profile</th>
                 <th>Current Team</th>
                 <th>Role</th>
-                <th>Actions</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -179,20 +169,22 @@ export function Members() {
                       {roleLabels[u.role] ?? u.role}
                     </span>
                   </td>
-                  <td className="actions-cell">
-                    <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
-                      Change Role <ChevronDown size={14} />
-                    </button>
-                    {'active' in u && !(u as { active?: boolean }).active ? (
-                      <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
-                        활성화
+                  {isAdmin && (
+                    <td className="actions-cell">
+                      <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
+                        Change Role <ChevronDown size={14} />
                       </button>
-                    ) : (
-                      <button className="action-btn deactivate-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
-                        비활성화
-                      </button>
-                    )}
-                  </td>
+                      {'active' in u && !(u as { active?: boolean }).active ? (
+                        <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
+                          활성화
+                        </button>
+                      ) : (
+                        <button className="action-btn deactivate-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
+                          비활성화
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

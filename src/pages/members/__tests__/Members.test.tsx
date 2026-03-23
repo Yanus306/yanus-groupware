@@ -14,10 +14,10 @@ const mockLoadMembers = vi.fn()
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: {
-      currentUser: { id: '1', name: '김리더', role: 'leader' },
+      currentUser: { id: '1', name: '김리더', role: 'ADMIN' },
       users: [
-        { id: '1', name: '김리더', role: 'leader', team: 'dev', email: 'leader@test.com' },
-        { id: '2', name: '박팀장', role: 'team_lead', team: 'design', email: 'teamlead@test.com' },
+        { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND', email: 'leader@test.com' },
+        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: 'FRONTEND', email: 'teamlead@test.com' },
       ],
     },
     isAdmin: true,
@@ -31,7 +31,7 @@ describe('Members 페이지', () => {
     expect(screen.getByText('Member Management')).toBeInTheDocument()
   })
 
-  it('멤버 초대 버튼이 표시된다', () => {
+  it('관리자에게 멤버 초대 버튼이 표시된다', () => {
     render(<Members />)
     expect(screen.getByText('멤버 초대')).toBeInTheDocument()
   })
@@ -44,16 +44,8 @@ describe('Members 페이지', () => {
     })
   })
 
-  it('비관리자는 접근 불가 메시지를 본다', () => {
-    vi.doMock('../../../features/auth/model', () => ({
-      useApp: () => ({
-        state: { currentUser: { id: '2', name: '홍길동', role: 'member' }, users: [] },
-        isAdmin: false,
-        loadMembers: vi.fn(),
-      }),
-    }))
-    // isAdmin=false 경우 Members 컴포넌트가 보호 메시지를 표시
-    // 실제 컴포넌트 흐름: AdminRoute가 router 레벨에서 차단하므로 여기선 isAdmin=true만 도달
-    expect(true).toBe(true)
+  it('관리자에게 Actions 컬럼이 표시된다', () => {
+    render(<Members />)
+    expect(screen.getByText('Actions')).toBeInTheDocument()
   })
 })
