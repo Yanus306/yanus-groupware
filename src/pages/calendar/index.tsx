@@ -12,6 +12,7 @@ import { TimeInput } from '../../components/TimeInput'
 import { useApp } from '../../features/auth/model'
 import { useTasks, type Task, type TaskPriority } from '../../features/tasks/model'
 import { useEvents, type CalendarEvent } from '../../features/calendar/model'
+import { useWorkSchedule } from '../../features/attendance/model/useWorkSchedule'
 import { formatDateDisplay, getTodayStr } from '../../features/tasks/model'
 import {
   formatTimeForDisplay,
@@ -47,6 +48,7 @@ export function Calendar() {
   const { state } = useApp()
   const { tasks, addTask, updateTask, deleteTask, toggleTaskDone } = useTasks()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { workDays, daySchedules } = useWorkSchedule()
 
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(() => getTodayStr())
   const [activeTab, setActiveTab] = useState<'my' | 'team' | 'schedule'>('my')
@@ -306,6 +308,23 @@ export function Calendar() {
     [events, filteredTasks]
   )
 
+  // 근무 일정 → FullCalendar businessHours (0=Sun, 1=Mon, ..., 6=Sat)
+  // useWorkSchedule 인덱스: 0=Mon, ..., 5=Sat, 6=Sun
+  const businessHours = useMemo(() =>
+    workDays
+      .map((isWork, i) => {
+        if (!isWork) return null
+        const fcDay = i === 6 ? 0 : i + 1
+        return {
+          daysOfWeek: [fcDay],
+          startTime: daySchedules[i].checkInTime,
+          endTime: daySchedules[i].checkOutTime,
+        }
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null),
+    [workDays, daySchedules]
+  )
+
   const todayTasks = useMemo(
     () => filteredTasks.filter((t) => t.date === todayStr).sort((a, b) => a.time.localeCompare(b.time)),
     [filteredTasks, todayStr]
@@ -365,6 +384,7 @@ export function Calendar() {
             editable
             dayMaxEvents={3}
             events={fullCalendarEvents}
+            businessHours={businessHours}
             dateClick={handleDateClick}
             select={handleSelect}
             eventClick={handleEventClick}
