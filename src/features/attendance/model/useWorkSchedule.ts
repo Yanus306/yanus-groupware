@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { getMyWorkSchedule, updateWorkSchedule } from '../../../shared/api/attendanceApi'
+import { getMyWorkSchedule, upsertWorkScheduleDay } from '../../../shared/api/attendanceApi'
+import type { DayOfWeek } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
 
 export interface DaySchedule {
@@ -7,7 +8,12 @@ export interface DaySchedule {
   checkOutTime: string  // "HH:mm"
 }
 
-const STORAGE_KEY = 'yanus-work-schedule'
+// 배열 인덱스 ↔ DayOfWeek 매핑 (0=Mon, 1=Tue, ..., 6=Sun)
+const INDEX_TO_DOW: DayOfWeek[] = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+]
+
+const WORK_DAYS_STORAGE_KEY = 'yanus-work-days'
 const DEFAULT_CHECK_IN = '09:00'
 const DEFAULT_CHECK_OUT = '18:00'
 const DEFAULT_WORK_DAYS = [true, true, true, true, true, false, false]
@@ -26,23 +32,38 @@ export function useWorkSchedule() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // localStorage에 저장된 스케줄 복원
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
+    // localStorage에서 근무 요일 토글 상태 복원
+    const storedDays = localStorage.getItem(WORK_DAYS_STORAGE_KEY)
+    if (storedDays) {
       try {
-        const parsed = JSON.parse(stored) as { workDays: boolean[]; daySchedules: DaySchedule[] }
-        if (Array.isArray(parsed.workDays)) setWorkDays(parsed.workDays)
-        if (Array.isArray(parsed.daySchedules)) setDaySchedules(parsed.daySchedules)
+        const parsed = JSON.parse(storedDays) as boolean[]
+        if (Array.isArray(parsed) && parsed.length === 7) setWorkDays(parsed)
       } catch {}
     }
 
-    // API에서 기본 시간 불러오기 (localStorage 데이터 없을 때만 덮어씀)
+    // API에서 요일별 근무 시간 불러오기
     getMyWorkSchedule()
-      .then((schedule) => {
-        if (!stored) {
-          const checkIn = schedule.workStartTime.slice(0, 5)
-          const checkOut = schedule.workEndTime.slice(0, 5)
-          setDaySchedules(makeDefaultDaySchedules(checkIn, checkOut))
+      .then((items) => {
+        if (items.length === 0) return
+        setDaySchedules((prev) => {
+          const next = [...prev]
+          for (const item of items) {
+            const idx = INDEX_TO_DOW.indexOf(item.dayOfWeek)
+            if (idx >= 0) {
+              next[idx] = {
+                checkInTime: item.startTime.slice(0, 5),
+                checkOutTime: item.endTime.slice(0, 5),
+              }
+            }
+          }
+          return next
+        })
+        // localStorage에 저장된 토글 없으면 API 응답 기반으로 활성 요일 설정
+        if (!storedDays) {
+          const activeDays = INDEX_TO_DOW.map((dow) =>
+            items.some((item) => item.dayOfWeek === dow),
+          )
+          if (activeDays.some(Boolean)) setWorkDays(activeDays)
         }
       })
       .catch(() => {})
@@ -61,14 +82,20 @@ export function useWorkSchedule() {
     setIsSaving(true)
     setError(null)
     try {
-      // 첫 번째 활성 요일의 시간을 API 기본값으로 전송
-      const activeIdx = workDays.findIndex((d) => d)
-      const activeSchedule = activeIdx >= 0 ? daySchedules[activeIdx] : daySchedules[0]
-      await updateWorkSchedule({
-        workStartTime: activeSchedule.checkInTime + ':00',
-        workEndTime: activeSchedule.checkOutTime + ':00',
-      })
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ workDays, daySchedules }))
+      // 활성화된 요일만 API에 upsert
+      const promises = workDays
+        .map((active, i) => {
+          if (!active) return null
+          return upsertWorkScheduleDay({
+            dayOfWeek: INDEX_TO_DOW[i],
+            startTime: daySchedules[i].checkInTime + ':00',
+            endTime: daySchedules[i].checkOutTime + ':00',
+          })
+        })
+        .filter(Boolean)
+
+      await Promise.all(promises)
+      localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)

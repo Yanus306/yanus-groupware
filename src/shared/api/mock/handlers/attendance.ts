@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import type { DayOfWeek, WorkScheduleItem } from '../../attendanceApi'
 
 function todayStr() {
   const d = new Date()
@@ -10,6 +11,15 @@ let myRecord: {
   id: number; memberId: number; memberName: string
   workDate: string; checkInTime: string; checkOutTime: string | null; status: 'WORKING' | 'LEFT'
 } | null = null
+
+// 근무 일정 mock 데이터
+let workSchedules: WorkScheduleItem[] = [
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+]
 
 export function resetAttendanceMockData() {
   myRecord = null
@@ -32,8 +42,8 @@ export const attendanceHandlers = [
     const today = todayStr()
     if (myRecord && myRecord.workDate === today) {
       return HttpResponse.json(
-        { code: 'ATT_001', message: '이미 출근 처리되었습니다.', data: null },
-        { status: 400 },
+        { code: 'ALREADY_CHECKED_IN', message: '이미 출근 처리되었습니다.', data: null },
+        { status: 409 },
       )
     }
     myRecord = {
@@ -52,17 +62,35 @@ export const attendanceHandlers = [
     const today = todayStr()
     if (!myRecord || myRecord.workDate !== today) {
       return HttpResponse.json(
-        { code: 'ATT_002', message: '출근 기록이 없습니다.', data: null },
+        { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
         { status: 400 },
       )
     }
     if (myRecord.status === 'LEFT') {
       return HttpResponse.json(
-        { code: 'ATT_003', message: '이미 퇴근 처리되었습니다.', data: null },
+        { code: 'ALREADY_CHECKED_OUT', message: '이미 퇴근 처리되었습니다.', data: null },
         { status: 400 },
       )
     }
     myRecord = { ...myRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
+  }),
+
+  http.get('/api/v1/work-schedules/me', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: workSchedules }),
+  ),
+
+  http.put('/api/v1/work-schedules', async ({ request }) => {
+    const body = await request.json() as { dayOfWeek: DayOfWeek; startTime: string; endTime: string }
+    const existing = workSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
+    let updated: WorkScheduleItem
+    if (existing) {
+      updated = { ...existing, startTime: body.startTime, endTime: body.endTime }
+      workSchedules = workSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
+    } else {
+      updated = { id: Date.now(), dayOfWeek: body.dayOfWeek, startTime: body.startTime, endTime: body.endTime }
+      workSchedules = [...workSchedules, updated]
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
 ]
