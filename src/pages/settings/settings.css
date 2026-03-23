@@ -146,6 +146,12 @@
   opacity: 0.85;
 }
 
+.password-error {
+  color: #f87171;
+  font-size: 13px;
+  margin: -4px 0 8px;
+}
+
 /* Notification rows */
 .setting-row {
   display: flex;
