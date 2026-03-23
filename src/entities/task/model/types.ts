@@ -7,6 +7,7 @@ export interface Task {
   date: string // YYYY-MM-DD
   priority: TaskPriority
   done: boolean
+  isTeamTask: boolean
   assigneeId?: string
   assigneeName?: string
   createdBy: string

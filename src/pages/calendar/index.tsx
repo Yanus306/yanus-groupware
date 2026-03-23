@@ -112,7 +112,7 @@ export function Calendar() {
         assigneeName = assignee?.name
       }
     }
-    addTask({ title, time: timeStr, date: newTaskDate, priority: newTaskPriority, done: false, assigneeId, assigneeName })
+    addTask({ title, time: timeStr, date: newTaskDate, priority: newTaskPriority, done: false, isTeamTask: activeTab === 'team', assigneeId, assigneeName })
     setNewTaskTitle('')
     setNewTaskTime(getCurrentTimeStr())
     setNewTaskDate(getTodayStr())
@@ -296,12 +296,9 @@ export function Calendar() {
   useEffect(() => { if (addTaskModalOpen) addTaskModalInputRef.current?.focus() }, [addTaskModalOpen])
   useEffect(() => { if (addEventModalOpen) addEventModalInputRef.current?.focus() }, [addEventModalOpen])
 
-  const myTasksFilter = (t: Task) =>
-    t.assigneeId === state.currentUser?.id || t.createdBy === state.currentUser?.id || !t.assigneeId
-
   const filteredTasks = useMemo(() => {
-    return activeTab === 'my' ? tasks.filter(myTasksFilter) : tasks
-  }, [tasks, activeTab, state.currentUser?.id])
+    return activeTab === 'my' ? tasks.filter((t) => !t.isTeamTask) : tasks.filter((t) => t.isTeamTask)
+  }, [tasks, activeTab])
 
   const fullCalendarEvents = useMemo(
     () => [...events.map(toOurEventFormat), ...filteredTasks.filter((t) => !t.done).map(taskToEventFormat)],
