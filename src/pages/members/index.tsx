@@ -43,8 +43,8 @@ export function Members() {
 
   const filtered = state.users.filter((u) => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase())
-    const matchTeam = teamFilter === 'All Teams' || teamLabels[u.team] === teamFilter
-    const matchRole = roleFilter === 'All Roles' || roleLabels[u.role] === roleFilter
+    const matchTeam = teamFilter === 'All Teams' || u.team === teamFilter
+    const matchRole = roleFilter === 'All Roles' || u.role === roleFilter
     return matchSearch && matchTeam && matchRole
   })
 
