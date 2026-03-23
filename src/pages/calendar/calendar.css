@@ -160,6 +160,29 @@
   box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
 }
 
+/* 팀 할일 — 보라/인디고 계열로 내 할일과 구분 */
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-high {
+  background: rgba(167, 139, 250, 0.35);
+  border-color: rgba(167, 139, 250, 0.6);
+}
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-high:hover {
+  background: rgba(167, 139, 250, 0.5);
+}
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-medium {
+  background: rgba(99, 102, 241, 0.35);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-medium:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-low {
+  background: rgba(139, 92, 246, 0.3);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.fullcalendar-wrapper .fc-event-team-task.fc-event-priority-low:hover {
+  background: rgba(139, 92, 246, 0.45);
+}
+
 .fullcalendar-wrapper .fc-daygrid-day {
   transition: background 0.2s ease;
 }
