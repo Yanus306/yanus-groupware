@@ -199,7 +199,7 @@ export function Admin() {
                     >
                       역할 변경 <ChevronDown size={13} />
                     </button>
-                    {'active' in u && !(u as { active?: boolean }).active ? (
+                    {u.status === 'INACTIVE' ? (
                       <button
                         type="button"
                         className="admin-action-btn activate-btn"
