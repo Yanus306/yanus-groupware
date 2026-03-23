@@ -69,7 +69,7 @@ export function Attendance() {
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
       <header className="attendance-header">
-        <h1>Attendance</h1>
+        <h1>출퇴근</h1>
         <div className="header-actions">
           {isAdmin && (
             <button className="export-btn glass" onClick={handleExport}>
