@@ -91,8 +91,7 @@ describe('Settings 페이지', () => {
 
       await waitFor(() => {
         expect(mockUpdateMyProfile).toHaveBeenCalledWith({
-          currentPassword: 'old1234!',
-          newPassword: 'new1234!',
+          password: 'new1234!',
         })
       })
     })
