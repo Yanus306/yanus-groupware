@@ -24,9 +24,9 @@ vi.mock('../../../features/attendance/ui', () => ({
 }))
 
 describe('Attendance 페이지', () => {
-  it('Attendance 헤더가 렌더링된다', () => {
+  it('출퇴근 헤더가 렌더링된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('Attendance')).toBeInTheDocument()
+    expect(screen.getByText('출퇴근')).toBeInTheDocument()
   })
 
   it('관리자에게 Export CSV 버튼이 표시된다', () => {
