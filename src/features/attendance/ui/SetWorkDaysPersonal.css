@@ -132,8 +132,8 @@
   background: rgba(15, 15, 26, 0.5);
   color: var(--text-primary);
   font-size: 0.85rem;
-  width: 115px;
-  min-width: 100px;
+  width: 150px;
+  color-scheme: dark;
   transition: border-color 0.2s;
 }
 
