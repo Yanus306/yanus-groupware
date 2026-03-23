@@ -12,6 +12,7 @@ export interface ApiTask {
   isTeamTask: boolean
   assigneeId: number | null
   assigneeName: string | null
+  createdById?: number | null  // 생성자 ID (백엔드 반환 시)
 }
 
 export interface CreateTaskPayload {
@@ -41,7 +42,9 @@ export const getTasks = (params?: GetTasksParams) => {
 export const createTask = (body: CreateTaskPayload) =>
   baseClient.post<ApiTask>('/api/v1/tasks', body)
 
-export const updateTask = (id: number, body: Partial<Omit<CreateTaskPayload, 'isTeamTask'>>) =>
+// PUT 요청 시 백엔드 필수 필드(title, date, time, priority) 포함
+export type UpdateTaskPayload = Partial<Omit<CreateTaskPayload, 'isTeamTask'>>
+export const updateTask = (id: number, body: UpdateTaskPayload) =>
   baseClient.put<ApiTask>(`/api/v1/tasks/${id}`, body)
 
 export const toggleTaskDone = (id: number) =>

@@ -105,7 +105,8 @@ export function Calendar() {
   const canEditTask = useCallback((task: Task) => {
     if (isAdmin) return true
     if (!task.isTeamTask) return true // 내 할일은 항상 본인 것
-    return task.assigneeId === String(state.currentUser?.id)
+    // 팀 할일: 생성자(createdBy)만 편집 가능
+    return task.createdBy === String(state.currentUser?.id)
   }, [isAdmin, state.currentUser])
 
   const handleAddTask = (closeModal?: boolean) => {
@@ -266,13 +267,26 @@ export function Calendar() {
     const start = arg.event.start!
     const end = arg.event.end!
     if (ext?.isTask && id.startsWith('task-')) {
-      if (ext.rawTask && !canEditTask(ext.rawTask)) { arg.revert(); return }
+      if (!ext.rawTask || !canEditTask(ext.rawTask)) { arg.revert(); return }
       const taskId = id.replace(/^task-/, '')
+      const newDate = parseDateToStr(start)
       const time24 = parseDateToTime(start)
-      updateTask(taskId, { date: parseDateToStr(start), time: formatTimeForDisplay(time24) })
+      // PUT 백엔드 호환: 기존 title·priority 함께 전송
+      updateTask(taskId, {
+        title: ext.rawTask.title,
+        date: newDate,
+        time: formatTimeForDisplay(time24),
+        priority: ext.rawTask.priority,
+      })
     } else {
-      if (ext.rawEvent && !canEditEvent(ext.rawEvent)) { arg.revert(); return }
-      updateEvent(id, { startDate: parseDateToStr(start), startTime: parseDateToTime(start), endDate: parseDateToStr(end), endTime: parseDateToTime(end) })
+      if (!ext.rawEvent || !canEditEvent(ext.rawEvent)) { arg.revert(); return }
+      updateEvent(id, {
+        title: ext.rawEvent.title,
+        startDate: parseDateToStr(start),
+        startTime: parseDateToTime(start),
+        endDate: parseDateToStr(end),
+        endTime: parseDateToTime(end),
+      })
     }
   }, [updateEvent, updateTask, canEditEvent, canEditTask])
 
@@ -315,9 +329,10 @@ export function Calendar() {
     return activeTab === 'my' ? tasks.filter((t) => !t.isTeamTask) : tasks.filter((t) => t.isTeamTask)
   }, [tasks, activeTab])
 
+  // 캘린더에는 내 할일 + 팀 할일 모두 표시 (사이드바는 탭으로 필터)
   const fullCalendarEvents = useMemo(
-    () => [...events.map(toOurEventFormat), ...filteredTasks.filter((t) => !t.done).map(taskToEventFormat)],
-    [events, filteredTasks]
+    () => [...events.map(toOurEventFormat), ...tasks.filter((t) => !t.done).map(taskToEventFormat)],
+    [events, tasks]
   )
 
   // 근무 일정 → FullCalendar businessHours (0=Sun, 1=Mon, ..., 6=Sat)

@@ -65,7 +65,8 @@ export function taskToEventFormat(t: Task): EventInput {
     end: endStr,
     allDay: false,
     extendedProps: { rawTask: t, isTask: true },
-    className: `fc-event-task fc-event-priority-${t.priority}`,
+    // 팀 할일은 별도 클래스로 색상 구분
+    className: `fc-event-task fc-event-priority-${t.priority}${t.isTeamTask ? ' fc-event-team-task' : ''}`,
     durationEditable: false,
   }
 }
