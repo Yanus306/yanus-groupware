@@ -20,7 +20,7 @@ export default defineConfig({
       filename: 'sw.js',
       injectRegister: 'auto',
       manifest: {
-        name: 'yANUs - 동아리 그룹웨어',
+        name: 'yANUs',
         short_name: 'yANUs',
         description: '업무 채팅, 출퇴근, 파일 공유, AI 챗봇',
         theme_color: '#9680cc',
