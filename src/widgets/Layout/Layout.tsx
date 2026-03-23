@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut } from 'lucide-react'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import logoImg from '../../assets/logo.png'
@@ -17,7 +17,7 @@ const navItems = [
 
 export function Layout() {
   const navigate = useNavigate()
-  const { state, logout } = useApp()
+  const { state, isAdmin, logout } = useApp()
   const { currentUser } = state
 
   function handleLogout() {
@@ -43,6 +43,16 @@ export function Layout() {
               <span className="nav-label">{label}</span>
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `nav-item admin-nav-item ${isActive ? 'active' : ''}`}
+              title="관리자"
+            >
+              <ShieldCheck size={22} />
+              <span className="nav-label">관리자</span>
+            </NavLink>
+          )}
         </nav>
         {currentUser && (
           <div className="sidebar-bottom">
