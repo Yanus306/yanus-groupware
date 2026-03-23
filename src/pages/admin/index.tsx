@@ -27,7 +27,7 @@ const teamLabels: Record<string, string> = {
 }
 
 export function Admin() {
-  const { state, loadMembers } = useApp()
+  const { loadMembers } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [members, setMembers] = useState<User[]>([])
