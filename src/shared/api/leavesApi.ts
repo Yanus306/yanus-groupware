@@ -1,24 +1,12 @@
 import { baseClient } from './baseClient'
+import type { Leave, LeaveCategory } from '../../entities/leave/model/types'
 
-export type LeaveCategory = 'VACATION' | 'SICK_LEAVE' | 'PERSONAL' | 'OTHER'
-export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-export interface Leave {
-  id: number
-  memberId: number
-  memberName: string
-  category: LeaveCategory
-  detail: string
-  date: string         // YYYY-MM-DD
-  status: LeaveStatus
-  submittedAt: string  // ISO datetime
-  reviewedAt: string | null
-}
+export type { LeaveCategory, LeaveStatus, Leave } from '../../entities/leave/model/types'
 
 export interface CreateLeavePayload {
   category: LeaveCategory
   detail: string
-  date: string
+  date: string  // YYYY-MM-DD
 }
 
 export const getMyLeaves = () =>
@@ -31,7 +19,7 @@ export const getAdminLeaves = (teamId: number) =>
   baseClient.get<Leave[]>(`/api/v1/leaves/admin?teamId=${teamId}`)
 
 export const approveLeave = (id: number) =>
-  baseClient.patch<Leave>(`/api/v1/leaves/${id}/approve`, {})
+  baseClient.patch<Pick<Leave, 'id' | 'status' | 'reviewedAt'>>(`/api/v1/leaves/${id}/approve`, {})
 
 export const rejectLeave = (id: number) =>
-  baseClient.patch<Leave>(`/api/v1/leaves/${id}/reject`, {})
+  baseClient.patch<Pick<Leave, 'id' | 'status' | 'reviewedAt'>>(`/api/v1/leaves/${id}/reject`, {})
