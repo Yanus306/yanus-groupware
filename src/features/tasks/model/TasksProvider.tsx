@@ -90,8 +90,13 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setIsLoading(true)
-    apiGetTasks()
-      .then((apiTasks) => setTasks(apiTasks.map(toTask)))
+    Promise.all([
+      apiGetTasks({ type: 'MY' }),
+      apiGetTasks({ type: 'TEAM' }),
+    ])
+      .then(([myApiTasks, teamApiTasks]) => {
+        setTasks([...myApiTasks.map(toTask), ...teamApiTasks.map(toTask)])
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])
