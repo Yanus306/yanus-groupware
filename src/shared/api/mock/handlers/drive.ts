@@ -12,13 +12,25 @@ export const driveHandlers = [
   }),
 
   http.post('/drive/upload', async ({ request }) => {
-    const formData = await request.formData()
-    const file = formData.get('file') as File | null
+    let fileName = 'unknown'
+    let fileType = 'application/octet-stream'
+    let fileSize = 0
+    try {
+      const formData = await request.formData()
+      const file = formData.get('file') as File | null
+      if (file) {
+        fileName = file.name
+        fileType = file.type
+        fileSize = file.size
+      }
+    } catch {
+      // node 환경에서 formData 파싱 실패 시 기본값 사용
+    }
     const newFile = {
       id: `f${Date.now()}`,
-      name: file?.name ?? 'unknown',
-      type: file?.type ?? 'application/octet-stream',
-      size: file?.size ?? 0,
+      name: fileName,
+      type: fileType,
+      size: fileSize,
       uploadedBy: '1',
       uploadedAt: new Date().toISOString(),
       folder: null,
