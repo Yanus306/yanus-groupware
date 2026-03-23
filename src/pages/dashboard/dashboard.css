@@ -1,14 +1,18 @@
 .dashboard {
   max-width: 1200px;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── 그리드: 3칸 2줄 ── */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 240px 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-rows: 1fr 1fr;
   gap: 20px;
-  align-items: start;
+  flex: 1;
+  min-height: 0;
 }
 
 /* 클락 카드: 1열 전체 높이 */
@@ -21,7 +25,6 @@
   justify-content: center;
   gap: 16px;
   padding: 32px 24px;
-  min-height: 340px;
 }
 
 .clock-card-loading {
@@ -367,9 +370,14 @@
 
 /* ── 반응형 ── */
 @media (max-width: 900px) {
+  .dashboard {
+    height: auto;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
+    flex: none;
   }
 
   .clock-card,
