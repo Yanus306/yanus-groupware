@@ -1,37 +1,50 @@
+.set-work-days-personal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .set-work-days-personal h3 {
   font-size: 1.1rem;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .set-work-days-personal .desc {
   color: var(--text-secondary);
   font-size: 0.85rem;
-  margin-bottom: 16px;
 }
 
 .member-info {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .member-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--gradient-purple);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   flex-shrink: 0;
 }
 
 .member-name {
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .schedule-loading {
@@ -40,43 +53,58 @@
   padding: 12px 0;
 }
 
-.day-schedule-list {
-  display: flex;
-  flex-direction: column;
+/* ── 가로 배치 그리드 ── */
+.day-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 10px;
+  overflow-x: auto;
 }
 
-.day-schedule-row {
+.day-col {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 14px 8px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid transparent;
   transition: border-color 0.2s, background 0.2s;
+  min-width: 80px;
 }
 
-.day-schedule-row.active {
+.day-col.active {
   background: rgba(139, 92, 246, 0.08);
   border-color: rgba(139, 92, 246, 0.2);
 }
 
+.day-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.day-col.active .day-label {
+  color: var(--text-primary);
+}
+
 .toggle {
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
   background: rgba(148, 163, 184, 0.3);
   position: relative;
   transition: background 0.2s;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .toggle::after {
   content: '';
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--text-primary);
   top: 3px;
@@ -90,50 +118,41 @@
 }
 
 .toggle.on::after {
-  transform: translateX(18px);
+  transform: translateX(16px);
 }
 
-.day-label {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  width: 28px;
-  flex-shrink: 0;
-}
-
-.day-schedule-row.active .day-label {
-  color: var(--text-primary);
-}
-
+/* 시간 필드 — 세로 정렬 */
 .day-times {
   display: flex;
-  gap: 16px;
-  flex: 1;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
 .time-field {
   display: flex;
+  flex-direction: column;
+  gap: 3px;
   align-items: center;
-  gap: 6px;
 }
 
 .time-field label {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
   white-space: nowrap;
-  min-width: 24px;
 }
 
 .time-field input {
-  padding: 6px 8px;
+  padding: 5px 6px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background: rgba(15, 15, 26, 0.5);
   color: var(--text-primary);
-  font-size: 0.85rem;
-  width: 115px;
-  min-width: 100px;
+  font-size: 0.78rem;
+  width: 100%;
+  min-width: 70px;
+  color-scheme: dark;
+  text-align: center;
   transition: border-color 0.2s;
 }
 
@@ -142,14 +161,20 @@
   outline: none;
 }
 
+.day-off-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-top: 4px;
+}
+
 .schedule-error {
   color: #f87171;
   font-size: 0.85rem;
-  margin-top: 10px;
 }
 
 .save-btn {
-  margin-top: 20px;
+  align-self: flex-start;
   padding: 10px 28px;
   background: var(--gradient-purple);
   color: var(--text-primary);
@@ -166,4 +191,16 @@
 
 .save-btn:hover:not(:disabled) {
   opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .day-schedule-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .day-schedule-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

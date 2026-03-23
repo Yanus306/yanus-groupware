@@ -68,7 +68,6 @@
 
 .two-cards-row.single {
   grid-template-columns: 1fr;
-  max-width: 500px;
 }
 
 .set-work-days-section {
