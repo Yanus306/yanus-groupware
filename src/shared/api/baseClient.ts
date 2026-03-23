@@ -62,6 +62,45 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: getAuthHeaders(),
+  })
+  if (res.status === 401) {
+    handleUnauthorized()
+    throw new ApiError(401, '인증이 만료되었습니다')
+  }
+  if (!res.ok) throw new ApiError(res.status, `다운로드 실패: ${res.status}`)
+  return res.blob()
+}
+
+async function requestUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: getAuthHeaders(), // Content-Type 미설정 → 브라우저가 multipart boundary 자동 지정
+    body: formData,
+  })
+  if (res.status === 401) {
+    handleUnauthorized()
+    throw new ApiError(401, '인증이 만료되었습니다')
+  }
+  if (!res.ok) {
+    let message = `업로드 실패: ${res.status}`
+    let code = ''
+    try {
+      const data = await res.json() as { message?: string; code?: string }
+      if (data.message) message = data.message
+      if (data.code) code = data.code
+    } catch { /* noop */ }
+    throw new ApiError(res.status, message, code)
+  }
+  const body = await res.json() as unknown
+  if (body !== null && typeof body === 'object' && 'data' in body && 'code' in body) {
+    return (body as { data: T }).data
+  }
+  return body as T
+}
+
 export const baseClient = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
@@ -71,4 +110,6 @@ export const baseClient = {
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  upload: <T>(path: string, formData: FormData) => requestUpload<T>(path, formData),
+  download: (path: string) => requestBlob(path),
 }
