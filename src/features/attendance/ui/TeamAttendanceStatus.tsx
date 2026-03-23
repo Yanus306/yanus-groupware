@@ -12,7 +12,7 @@ interface Props {
 type AttendStatus = 'working' | 'left' | 'absent'
 
 function getStatus(memberId: string, records: AttendanceRecord[]): AttendStatus {
-  const rec = records.find((r) => String(r.memberId) === memberId)
+  const rec = records.find((r) => String(r.memberId) === String(memberId))
   if (!rec) return 'absent'
   return rec.status === 'WORKING' ? 'working' : 'left'
 }
@@ -81,7 +81,7 @@ export function TeamAttendanceStatus({ members, records, date }: Props) {
           <p className="attend-empty">해당 상태의 팀원이 없습니다</p>
         ) : (
           filteredMembers.map((member) => {
-            const rec = records.find((r) => String(r.memberId) === member.id)
+            const rec = records.find((r) => String(r.memberId) === String(member.id))
             const status = getStatus(member.id, records)
             return (
               <div key={member.id} className={`attend-member-card ${status}`}>
