@@ -34,11 +34,21 @@
   padding: 14px 0;
   border-radius: 10px;
   gap: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+  background: none;
 }
+
+.summary-item:hover { transform: translateY(-1px); }
 
 .summary-item.working { background: rgba(34, 197, 94, 0.12); }
 .summary-item.left    { background: rgba(100, 116, 139, 0.15); }
 .summary-item.absent  { background: rgba(239, 68, 68, 0.12); }
+
+.summary-item.working.active { border-color: var(--success); }
+.summary-item.left.active    { border-color: var(--text-secondary); }
+.summary-item.absent.active  { border-color: var(--error); }
 
 .summary-count {
   font-size: 1.6rem;
@@ -145,4 +155,11 @@
   font-size: 0.72rem;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.attend-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 32px 0;
 }

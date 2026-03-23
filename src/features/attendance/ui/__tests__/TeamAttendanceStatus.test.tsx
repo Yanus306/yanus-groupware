@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { TeamAttendanceStatus } from '../TeamAttendanceStatus'
 import type { User } from '../../../../entities/user/model/types'
 import type { AttendanceRecord } from '../../../../shared/api/attendanceApi'
@@ -27,36 +27,64 @@ describe('TeamAttendanceStatus', () => {
   it('팀원 목록이 렌더링된다', () => {
     render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
     expect(screen.getByText('김리더')).toBeInTheDocument()
-    expect(screen.getByText('박팀장')).toBeInTheDocument()
-    expect(screen.getByText('이개발')).toBeInTheDocument()
-  })
-
-  it('근무 중 상태를 올바르게 표시한다', () => {
-    render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
-    expect(screen.getAllByText('근무 중').length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('퇴근 상태를 올바르게 표시한다', () => {
-    render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
-    expect(screen.getAllByText('퇴근').length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('미출근 상태를 올바르게 표시한다', () => {
-    render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
-    expect(screen.getAllByText('미출근').length).toBeGreaterThanOrEqual(1)
   })
 
   it('요약 카운트를 올바르게 표시한다', () => {
     render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
-    // 근무 중 1명, 퇴근 1명, 미출근 1명 — summary-count 영역
     const ones = screen.getAllByText('1')
     expect(ones.length).toBe(3)
   })
 
   it('records가 비어있으면 전체 미출근으로 표시한다', () => {
     render(<TeamAttendanceStatus members={members} records={[]} date={TODAY} />)
-    // 요약 레이블 1 + 멤버 카드 뱃지 3 = 4
-    const badges = screen.getAllByText('미출근')
-    expect(badges.length).toBe(4)
+    expect(screen.getByText('3')).toBeInTheDocument() // 미출근 카운트
+  })
+
+  describe('상태 필터', () => {
+    it('기본으로 근무 중인 멤버만 표시된다', () => {
+      render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
+      expect(screen.getByText('김리더')).toBeInTheDocument()
+      expect(screen.queryByText('박팀장')).not.toBeInTheDocument()
+      expect(screen.queryByText('이개발')).not.toBeInTheDocument()
+    })
+
+    it('퇴근 필터 클릭 시 퇴근한 멤버만 표시된다', () => {
+      render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
+      fireEvent.click(screen.getByRole('button', { name: /퇴근/ }))
+      expect(screen.queryByText('김리더')).not.toBeInTheDocument()
+      expect(screen.getByText('박팀장')).toBeInTheDocument()
+      expect(screen.queryByText('이개발')).not.toBeInTheDocument()
+    })
+
+    it('미출근 필터 클릭 시 미출근 멤버만 표시된다', () => {
+      render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
+      fireEvent.click(screen.getByRole('button', { name: /미출근/ }))
+      expect(screen.queryByText('김리더')).not.toBeInTheDocument()
+      expect(screen.queryByText('박팀장')).not.toBeInTheDocument()
+      expect(screen.getByText('이개발')).toBeInTheDocument()
+    })
+
+    it('근무 중 필터 클릭 시 근무 중인 멤버만 표시된다', () => {
+      render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
+      fireEvent.click(screen.getByRole('button', { name: /퇴근/ }))
+      fireEvent.click(screen.getByRole('button', { name: /근무 중/ }))
+      expect(screen.getByText('김리더')).toBeInTheDocument()
+      expect(screen.queryByText('박팀장')).not.toBeInTheDocument()
+    })
+
+    it('필터 버튼이 3개 렌더링된다', () => {
+      render(<TeamAttendanceStatus members={members} records={records} date={TODAY} />)
+      expect(screen.getByRole('button', { name: /근무 중/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /퇴근/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /미출근/ })).toBeInTheDocument()
+    })
+
+    it('records가 비어있을 때 미출근 필터로 전체 멤버가 표시된다', () => {
+      render(<TeamAttendanceStatus members={members} records={[]} date={TODAY} />)
+      fireEvent.click(screen.getByRole('button', { name: /미출근/ }))
+      expect(screen.getByText('김리더')).toBeInTheDocument()
+      expect(screen.getByText('박팀장')).toBeInTheDocument()
+      expect(screen.getByText('이개발')).toBeInTheDocument()
+    })
   })
 })

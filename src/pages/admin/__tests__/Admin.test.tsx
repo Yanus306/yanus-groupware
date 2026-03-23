@@ -87,11 +87,11 @@ describe('Admin 페이지', () => {
     })
   })
 
-  it('출근 현황 탭에 팀원 카드가 표시된다', async () => {
+  it('출근 현황 탭 기본 필터(근무 중)에 근무 중인 팀원만 표시된다', async () => {
     renderAdmin()
     await waitFor(() => {
       expect(screen.getByText('김민준')).toBeInTheDocument()
-      expect(screen.getByText('이서연')).toBeInTheDocument()
     })
+    expect(screen.queryByText('이서연')).not.toBeInTheDocument()
   })
 })
