@@ -5,9 +5,10 @@
 /* ── 그리드: 3칸 2줄 ── */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 260px 1fr 1fr;
+  grid-template-columns: 240px 1fr 1fr;
   grid-template-rows: auto auto;
   gap: 20px;
+  align-items: start;
 }
 
 /* 클락 카드: 1열 전체 높이 */
@@ -18,30 +19,38 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  min-height: 380px;
-}
-
-.clock-card-link {
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-.clock-card-link:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(150, 128, 204, 0.18);
+  gap: 16px;
+  padding: 32px 24px;
+  min-height: 340px;
 }
 
 .clock-card-loading {
-  cursor: default;
   opacity: 0.85;
 }
 
+/* 클락 링 버튼: idle 상태에서만 커서 포인터 */
+.clock-ring-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock-ring-btn.clickable {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.clock-ring-btn.clickable:hover {
+  transform: scale(1.03);
+}
+
 .clock-outer {
-  width: 170px;
-  height: 170px;
+  width: 160px;
+  height: 160px;
   position: relative;
   display: flex;
   align-items: center;
@@ -54,8 +63,8 @@
 }
 
 .clock-inner {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   background: rgba(13, 13, 20, 0.98);
   display: flex;
@@ -66,71 +75,110 @@
 }
 
 .clock-time {
-  font-size: 1.85rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
 }
 
 .clock-time-start {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: var(--success);
 }
 
-.clock-time-leave {
-  font-size: 1.3rem;
-  color: #e05050;
+.clock-time-elapsed {
+  font-size: 1.35rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
 }
 
 .clock-time-done {
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
 }
 
 .clock-time-loading {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: var(--text-secondary);
 }
 
-.clock-duration {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: 2px;
-  font-variant-numeric: tabular-nums;
+/* 클락 하단 영역 */
+.clock-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .clock-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.clock-checkin-time {
   font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+/* 퇴근하기 버튼 */
+.clockout-btn {
+  padding: 8px 24px;
+  background: rgba(224, 80, 80, 0.15);
+  color: #e05050;
+  border: 1px solid rgba(224, 80, 80, 0.3);
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: 100%;
+}
+
+.clockout-btn:hover:not(:disabled) {
+  background: rgba(224, 80, 80, 0.25);
+  border-color: rgba(224, 80, 80, 0.5);
+}
+
+.clockout-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 오늘 일정: 2열 1행 */
 .schedule-card {
   grid-column: 2 / 4;
   grid-row: 1;
+  min-height: 140px;
 }
 
 /* 채팅: 2열 2행 */
 .chat-preview {
   grid-column: 2;
   grid-row: 2;
+  min-height: 160px;
 }
 
 /* 할 일: 3열 2행 */
 .tasks-card {
   grid-column: 3;
   grid-row: 2;
+  min-height: 160px;
 }
 
 /* ── 공통 카드 ── */
 .card {
-  padding: 24px;
+  padding: 20px 24px;
 }
 
 .card h3 {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -141,13 +189,13 @@
 .empty-state {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 20px 0;
+  gap: 8px;
+  padding: 12px 0;
 }
 
 .empty-state p {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 /* ── 일정 목록 ── */
@@ -191,7 +239,7 @@
 }
 
 .schedule-title {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: var(--text-primary);
 }
 
@@ -333,6 +381,6 @@
   }
 
   .clock-card {
-    min-height: 280px;
+    min-height: 260px;
   }
 }
