@@ -784,6 +784,43 @@
   color: var(--text-secondary);
 }
 
+/* 멀티 멤버 선택 영역 */
+.member-select-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.member-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 20px;
+  padding: 2px 8px 2px 10px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.member-tag button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.member-tag button:hover {
+  color: #ef4444;
+}
+
 .event-detail-creator {
   font-size: 0.82rem;
   color: var(--text-secondary);

@@ -76,6 +76,8 @@ function toTask(api: ApiTask): Task {
     isTeamTask: api.isTeamTask,
     assigneeId: api.assigneeId != null ? String(api.assigneeId) : undefined,
     assigneeName: api.assigneeName ?? undefined,
+    memberIds: api.memberIds?.map(String) ?? undefined,
+    memberNames: api.memberNames?.filter(Boolean) as string[] | undefined,
     // createdById 있으면 생성자 ID 사용, 없으면 빈 문자열 (권한 체크 시 fallback)
     createdBy: api.createdById != null ? String(api.createdById) : '',
   }
@@ -105,6 +107,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       priority: PRIORITY_TO_API[task.priority] ?? 'MEDIUM',
       isTeamTask: task.isTeamTask,
       assigneeId: task.assigneeId ? Number(task.assigneeId) : null,
+      memberIds: task.memberIds?.map(Number),
     })
     // 생성 직후: 백엔드가 createdById를 안 내려줘도 현재 유저 ID로 보존
     const newTask = toTask(apiTask)

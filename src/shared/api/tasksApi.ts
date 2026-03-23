@@ -12,7 +12,9 @@ export interface ApiTask {
   isTeamTask: boolean
   assigneeId: number | null
   assigneeName: string | null
-  createdById?: number | null  // 생성자 ID (백엔드 반환 시)
+  memberIds?: number[] | null    // 추가 참여 멤버 ID 목록
+  memberNames?: string[] | null  // 추가 참여 멤버 이름 목록
+  createdById?: number | null    // 생성자 ID (백엔드 반환 시)
 }
 
 export interface CreateTaskPayload {
@@ -22,6 +24,7 @@ export interface CreateTaskPayload {
   priority: ApiTaskPriority
   isTeamTask: boolean
   assigneeId?: number | null
+  memberIds?: number[]  // 추가 참여 멤버 ID 목록
 }
 
 export interface GetTasksParams {

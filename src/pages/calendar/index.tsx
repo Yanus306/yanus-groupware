@@ -57,6 +57,8 @@ export function Calendar() {
   const [newTaskDate, setNewTaskDate] = useState(getTodayStr())
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium')
   const [newTaskAssigneeId, setNewTaskAssigneeId] = useState<string>('')
+  const [newTaskMemberIds, setNewTaskMemberIds] = useState<string[]>([])
+  const [editTaskMemberIds, setEditTaskMemberIds] = useState<string[]>([])
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [contextMenuModalOpen, setContextMenuModalOpen] = useState(false)
   const [pendingSelectRange, setPendingSelectRange] = useState<{ start: Date; end: Date } | null>(null)
@@ -96,18 +98,37 @@ export function Calendar() {
   const todayStr = getTodayStr()
   const DELETE_ANIM_DURATION = 320
 
-  // 권한 헬퍼 — admin/team_lead는 모두 편집 가능
-  const isAdmin = state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
+  // 권한 헬퍼
+  // ADMIN: 일정·팀 할일 모두 이동/편집 가능
+  // TEAM_LEAD: 팀 할일만 이동/편집 가능, 일정은 본인 것만
+  // MEMBER: 본인이 만든 것만
+  const isAdmin = state.currentUser?.role === 'ADMIN'
+  const isTeamLead = state.currentUser?.role === 'TEAM_LEAD'
+
   const canEditEvent = useCallback((event: CalendarEvent) =>
     isAdmin || event.createdBy === state.currentUser?.name,
     [isAdmin, state.currentUser],
   )
   const canEditTask = useCallback((task: Task) => {
     if (isAdmin) return true
-    if (!task.isTeamTask) return true // 내 할일은 항상 본인 것
-    // 팀 할일: 생성자(createdBy)만 편집 가능
+    if (!task.isTeamTask) return true
+    // 팀 할일: TEAM_LEAD 또는 생성자만 편집 가능
+    if (isTeamLead) return true
     return task.createdBy === String(state.currentUser?.id)
-  }, [isAdmin, state.currentUser])
+  }, [isAdmin, isTeamLead, state.currentUser])
+
+  // 드래그 전용 권한 (편집 권한과 분리)
+  // - 일정: ADMIN 또는 본인 것
+  // - 팀 할일: ADMIN, TEAM_LEAD 또는 생성자
+  // - 내 할일: 항상 본인 것
+  const canDragEvent = useCallback((event: CalendarEvent) =>
+    isAdmin || event.createdBy === state.currentUser?.name,
+    [isAdmin, state.currentUser],
+  )
+  const canDragTask = useCallback((task: Task) => {
+    if (!task.isTeamTask) return true
+    return isAdmin || isTeamLead || task.createdBy === String(state.currentUser?.id)
+  }, [isAdmin, isTeamLead, state.currentUser])
 
   const handleAddTask = (closeModal?: boolean) => {
     const title = newTaskTitle.trim()
@@ -115,22 +136,26 @@ export function Calendar() {
     const timeStr = newTaskTime ? formatTimeForDisplay(newTaskTime) : '--:--'
     let assigneeId: string | undefined
     let assigneeName: string | undefined
-    if (activeTab === 'team' && newTaskAssigneeId) {
-      if (newTaskAssigneeId === 'all') {
-        assigneeId = 'all'
-        assigneeName = '팀원 전체'
-      } else {
+    let memberIds: string[] | undefined
+    let memberNames: string[] | undefined
+    if (activeTab === 'team') {
+      if (newTaskAssigneeId) {
         const assignee = state.users.find((u) => u.id === newTaskAssigneeId)
         assigneeId = newTaskAssigneeId
         assigneeName = assignee?.name
       }
+      if (newTaskMemberIds.length > 0) {
+        memberIds = newTaskMemberIds
+        memberNames = newTaskMemberIds.map((id) => state.users.find((u) => u.id === id)?.name ?? '').filter(Boolean)
+      }
     }
-    addTask({ title, time: timeStr, date: newTaskDate, priority: newTaskPriority, done: false, isTeamTask: activeTab === 'team', assigneeId, assigneeName })
+    addTask({ title, time: timeStr, date: newTaskDate, priority: newTaskPriority, done: false, isTeamTask: activeTab === 'team', assigneeId, assigneeName, memberIds, memberNames })
     setNewTaskTitle('')
     setNewTaskTime(getCurrentTimeStr())
     setNewTaskDate(getTodayStr())
     setNewTaskPriority('medium')
     setNewTaskAssigneeId('')
+    setNewTaskMemberIds([])
     if (closeModal) setAddTaskModalOpen(false)
   }
 
@@ -214,17 +239,18 @@ export function Calendar() {
     if (!title) return
     let assigneeId: string | undefined
     let assigneeName: string | undefined
+    let memberIds: string[] | undefined
+    let memberNames: string[] | undefined
     if (editTaskAssigneeId) {
-      if (editTaskAssigneeId === 'all') {
-        assigneeId = 'all'
-        assigneeName = '팀원 전체'
-      } else {
-        const assignee = state.users.find((u) => u.id === editTaskAssigneeId)
-        assigneeId = editTaskAssigneeId
-        assigneeName = assignee?.name
-      }
+      const assignee = state.users.find((u) => u.id === editTaskAssigneeId)
+      assigneeId = editTaskAssigneeId
+      assigneeName = assignee?.name
     }
-    updateTask(editingTask.id, { title, assigneeId, assigneeName, priority: editTaskPriority })
+    if (editTaskMemberIds.length > 0) {
+      memberIds = editTaskMemberIds
+      memberNames = editTaskMemberIds.map((id) => state.users.find((u) => u.id === id)?.name ?? '').filter(Boolean)
+    }
+    updateTask(editingTask.id, { title, assigneeId, assigneeName, memberIds, memberNames, priority: editTaskPriority })
     setEditingTask(null)
   }
 
@@ -267,11 +293,10 @@ export function Calendar() {
     const start = arg.event.start!
     const end = arg.event.end!
     if (ext?.isTask && id.startsWith('task-')) {
-      if (!ext.rawTask || !canEditTask(ext.rawTask)) { arg.revert(); return }
+      if (!ext.rawTask || !canDragTask(ext.rawTask)) { arg.revert(); return }
       const taskId = id.replace(/^task-/, '')
       const newDate = parseDateToStr(start)
       const time24 = parseDateToTime(start)
-      // PUT 백엔드 호환: 기존 title·priority 함께 전송
       updateTask(taskId, {
         title: ext.rawTask.title,
         date: newDate,
@@ -279,7 +304,7 @@ export function Calendar() {
         priority: ext.rawTask.priority,
       })
     } else {
-      if (!ext.rawEvent || !canEditEvent(ext.rawEvent)) { arg.revert(); return }
+      if (!ext.rawEvent || !canDragEvent(ext.rawEvent)) { arg.revert(); return }
       updateEvent(id, {
         title: ext.rawEvent.title,
         startDate: parseDateToStr(start),
@@ -288,7 +313,7 @@ export function Calendar() {
         endTime: parseDateToTime(end),
       })
     }
-  }, [updateEvent, updateTask, canEditEvent, canEditTask])
+  }, [updateEvent, updateTask, canDragEvent, canDragTask])
 
   const handleDatesSet = useCallback((arg: { start: Date; end: Date; view: { type: string } }) => {
     const key = `${arg.view.type}-${arg.start.getFullYear()}-${arg.start.getMonth()}`
@@ -308,7 +333,7 @@ export function Calendar() {
     if (!id) return
     const ext = arg.event.extendedProps as { isTask?: boolean; rawEvent?: CalendarEvent }
     if (ext?.isTask && id.startsWith('task-')) return
-    if (ext.rawEvent && !canEditEvent(ext.rawEvent)) { arg.revert(); return }
+    if (ext.rawEvent && !canDragEvent(ext.rawEvent)) { arg.revert(); return }
     const start = arg.event.start!
     const end = arg.event.end!
     updateEvent(id, { startDate: parseDateToStr(start), startTime: parseDateToTime(start), endDate: parseDateToStr(end), endTime: parseDateToTime(end) })
@@ -318,6 +343,7 @@ export function Calendar() {
     if (editingTask) {
       setEditTaskAssigneeId(editingTask.assigneeId || '')
       setEditTaskPriority(editingTask.priority)
+      setEditTaskMemberIds(editingTask.memberIds ?? [])
       editInputRef.current?.focus()
     }
   }, [editingTask])
@@ -454,14 +480,42 @@ export function Calendar() {
               </select>
             </div>
             {activeTab === 'team' && (
-              <div className="add-task-row">
-                <label>담당자</label>
-                <select className="add-task-assignee" value={newTaskAssigneeId} onChange={(e) => setNewTaskAssigneeId(e.target.value)}>
-                  <option value="">담당자 없음</option>
-                  <option value="all">팀원 전체</option>
-                  {state.users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
-              </div>
+              <>
+                <div className="add-task-row">
+                  <label>담당자</label>
+                  <select className="add-task-assignee" value={newTaskAssigneeId} onChange={(e) => setNewTaskAssigneeId(e.target.value)}>
+                    <option value="">담당자 없음</option>
+                    {state.users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+                <div className="add-task-row">
+                  <label>멤버 추가</label>
+                  <div className="member-select-area">
+                    {newTaskMemberIds.map((id) => {
+                      const u = state.users.find((u) => u.id === id)
+                      return (
+                        <span key={id} className="member-tag">
+                          {u?.name}
+                          <button type="button" onClick={() => setNewTaskMemberIds((prev) => prev.filter((i) => i !== id))}>×</button>
+                        </span>
+                      )
+                    })}
+                    <select
+                      className="add-task-assignee"
+                      value=""
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (val && !newTaskMemberIds.includes(val)) setNewTaskMemberIds((prev) => [...prev, val])
+                      }}
+                    >
+                      <option value="">+ 멤버 추가</option>
+                      {state.users.filter((u) => u.id !== newTaskAssigneeId && !newTaskMemberIds.includes(u.id)).map((u) => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
             <div className="add-task-row">
               <button className="add-task-inline-btn" onClick={() => handleAddTask()}>추가</button>
@@ -558,8 +612,10 @@ export function Calendar() {
         currentUserId={state.currentUser?.id}
         users={state.users}
         assigneeId={editTaskAssigneeId}
+        memberIds={editTaskMemberIds}
         priority={editTaskPriority}
         onAssigneeChange={setEditTaskAssigneeId}
+        onMemberIdsChange={setEditTaskMemberIds}
         onPriorityChange={setEditTaskPriority}
         onSave={handleUpdateTask}
         onClose={() => setEditingTask(null)}
@@ -582,6 +638,7 @@ export function Calendar() {
         date={newTaskDate}
         priority={newTaskPriority}
         assigneeId={newTaskAssigneeId}
+        memberIds={newTaskMemberIds}
         users={state.users}
         inputRef={addTaskModalInputRef}
         onTitleChange={setNewTaskTitle}
@@ -589,6 +646,7 @@ export function Calendar() {
         onDateChange={setNewTaskDate}
         onPriorityChange={setNewTaskPriority}
         onAssigneeChange={setNewTaskAssigneeId}
+        onMemberIdsChange={setNewTaskMemberIds}
         onAdd={() => handleAddTask(true)}
         onClose={() => setAddTaskModalOpen(false)}
       />
