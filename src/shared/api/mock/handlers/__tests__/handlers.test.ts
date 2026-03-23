@@ -41,17 +41,18 @@ describe('MSW 핸들러 — 채팅', () => {
 })
 
 describe('MSW 핸들러 — 드라이브', () => {
-  it('GET /drive/files 성공 시 파일 배열을 반환한다', async () => {
-    const res = await fetch('/drive/files', {
+  it('GET /api/v1/drive 성공 시 파일 배열을 반환한다', async () => {
+    const res = await fetch('/api/v1/drive', {
       headers: { Authorization: 'Bearer mock-token' },
     })
-    const data = await res.json()
+    const body = await res.json() as { code: string; data: unknown[] }
     expect(res.status).toBe(200)
-    expect(Array.isArray(data)).toBe(true)
+    expect(body.code).toBe('SUCCESS')
+    expect(Array.isArray(body.data)).toBe(true)
   })
 
-  it('DELETE /drive/files/:id 성공 시 200을 반환한다', async () => {
-    const res = await fetch('/drive/files/1', {
+  it('DELETE /api/v1/drive/:id 성공 시 200을 반환한다', async () => {
+    const res = await fetch('/api/v1/drive/1', {
       method: 'DELETE',
       headers: { Authorization: 'Bearer mock-token' },
     })
