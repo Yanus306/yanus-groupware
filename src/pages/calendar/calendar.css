@@ -761,6 +761,14 @@
   color: var(--text-secondary);
 }
 
+.event-detail-creator {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .add-task-modal-actions .delete-btn {
   color: var(--error);
 }
