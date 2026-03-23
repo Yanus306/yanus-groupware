@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { SetWorkDaysPersonal } from '../../features/attendance/ui'
+import { SetWorkDaysPersonal, TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate, getMyAttendance } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import { getMembers } from '../../shared/api/membersApi'
+import type { User } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
 import './attendance.css'
@@ -15,6 +17,7 @@ export function Attendance() {
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
+  const [members, setMembers] = useState<User[]>([])
   const [page, setPage] = useState(1)
   const [dateInput, setDateInput] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -22,12 +25,15 @@ export function Attendance() {
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  // 관리자: 날짜별 전체 기록
+  // 관리자: 날짜별 전체 기록 + 멤버 목록
   useEffect(() => {
     if (!isAdmin) return
     getAttendanceByDate(todayStr)
       .then(setRecords)
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '출퇴근 기록을 불러오지 못했습니다'))
+    getMembers()
+      .then(setMembers)
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
   }, [isAdmin, todayStr])
 
   // 일반 사용자: 내 출퇴근 기록 전체 이력
@@ -104,6 +110,12 @@ export function Attendance() {
       </header>
 
       <div className="attendance-content">
+        {isAdmin && members.length > 0 && (
+          <section className="team-status-section glass">
+            <TeamAttendanceStatus members={members} records={records} date={todayStr} />
+          </section>
+        )}
+
         <div className={`two-cards-row ${!isAdmin ? 'single' : ''}`}>
           <section className="set-work-days-section glass">
             <SetWorkDaysPersonal />

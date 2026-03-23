@@ -54,6 +54,11 @@
   color: var(--accent-purple-light);
 }
 
+.team-status-section {
+  padding: 20px 24px;
+  border-radius: 14px;
+}
+
 .attendance-content {
   display: flex;
   flex-direction: column;
