@@ -19,7 +19,6 @@ function formatDuration(ms: number) {
 }
 
 function formatTime(t: string) {
-  // "HH:mm" → "오전/오후 H:mm"
   const [h, m] = t.split(':').map(Number)
   const period = h >= 12 ? '오후' : '오전'
   const h12 = h % 12 || 12
@@ -70,19 +69,16 @@ export function Dashboard() {
     centerText = '출근'
     centerClass += ' clock-time-start'
   } else if (status === 'working') {
-    centerText = '퇴근'
-    centerClass += ' clock-time-leave'
+    // working 상태: 경과 시간 표시
+    centerText = clockIn ? formatDuration(now.getTime() - clockIn.getTime()) : '00:00'
+    centerClass += ' clock-time-elapsed'
   } else {
-    centerText = '완료'
+    // done 상태: 총 근무 시간 표시
+    centerText = clockIn && clockOut
+      ? formatDuration(clockOut.getTime() - clockIn.getTime())
+      : '완료'
     centerClass += ' clock-time-done'
   }
-
-  const workedDuration =
-    status === 'working' && clockIn
-      ? formatDuration(now.getTime() - clockIn.getTime())
-      : status === 'done' && clockIn && clockOut
-      ? formatDuration(clockOut.getTime() - clockIn.getTime())
-      : null
 
   return (
     <div className="dashboard">
@@ -91,36 +87,59 @@ export function Dashboard() {
       )}
       <div className="dashboard-grid">
         {/* 출퇴근 버튼 */}
-        <button
-          type="button"
-          className={`card clock-card glass clock-card-link ${isLoading ? 'clock-card-loading' : ''}`}
-          onClick={isLoading ? undefined : handleClockClick}
-          disabled={isLoading}
-        >
-          <div className="clock-outer">
-            <AnimatedClockRing
-              status={status}
-              clockIn={clockIn}
-              clockOut={clockOut}
-              now={now}
-              variant={
-                isLoading ? 'default'
-                : status === 'idle' ? 'start'
-                : status === 'working' ? 'leave'
-                : 'default'
-              }
-            />
-            <div className="clock-inner">
-              <span className={centerClass}>{centerText}</span>
+        <div className={`card clock-card glass ${isLoading ? 'clock-card-loading' : ''}`}>
+          <button
+            type="button"
+            className={`clock-ring-btn ${status === 'idle' && !isLoading ? 'clickable' : ''}`}
+            onClick={status === 'idle' && !isLoading ? handleClockClick : undefined}
+            disabled={isLoading || status !== 'idle'}
+            aria-label="출근하기"
+          >
+            <div className="clock-outer">
+              <AnimatedClockRing
+                status={status}
+                clockIn={clockIn}
+                clockOut={clockOut}
+                now={now}
+                variant={
+                  isLoading ? 'default'
+                  : status === 'idle' ? 'start'
+                  : status === 'working' ? 'leave'
+                  : 'default'
+                }
+              />
+              <div className="clock-inner">
+                <span className={centerClass}>{centerText}</span>
+              </div>
             </div>
+          </button>
+
+          <div className="clock-footer">
+            {status === 'idle' && !isLoading && (
+              <span className="clock-hint">클릭하여 출근</span>
+            )}
+            {status === 'working' && clockIn && (
+              <span className="clock-checkin-time">
+                출근 {formatMsgTime(clockIn)}
+              </span>
+            )}
+            {status === 'done' && clockIn && clockOut && (
+              <span className="clock-checkin-time">
+                {formatMsgTime(clockIn)} – {formatMsgTime(clockOut)}
+              </span>
+            )}
+            {status === 'working' && !isLoading && (
+              <button
+                type="button"
+                className="clockout-btn"
+                onClick={handleClockClick}
+                disabled={isLoading}
+              >
+                퇴근하기
+              </button>
+            )}
           </div>
-          {workedDuration && (
-            <span className="clock-duration">{workedDuration}</span>
-          )}
-          {!isLoading && status === 'idle' && (
-            <span className="clock-hint">클릭하여 출근</span>
-          )}
-        </button>
+        </div>
 
         {/* 오늘 일정 */}
         <div className="card schedule-card glass">
