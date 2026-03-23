@@ -1,0 +1,148 @@
+.team-attendance-status {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.team-attend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.team-attend-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.attend-date {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* 요약 카운트 */
+.attend-summary {
+  display: flex;
+  gap: 12px;
+}
+
+.summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  border-radius: 10px;
+  gap: 4px;
+}
+
+.summary-item.working { background: rgba(34, 197, 94, 0.12); }
+.summary-item.left    { background: rgba(100, 116, 139, 0.15); }
+.summary-item.absent  { background: rgba(239, 68, 68, 0.12); }
+
+.summary-count {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.summary-item.working .summary-count { color: var(--success); }
+.summary-item.left    .summary-count { color: var(--text-secondary); }
+.summary-item.absent  .summary-count { color: var(--error); }
+
+.summary-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* 멤버 카드 그리드 */
+.attend-member-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.attend-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.attend-member-card.working { border-color: rgba(34, 197, 94, 0.2); }
+.attend-member-card.left    { border-color: rgba(100, 116, 139, 0.2); }
+.attend-member-card.absent  { border-color: rgba(239, 68, 68, 0.15); }
+
+.attend-member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-purple, var(--accent-purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.attend-member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.attend-member-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.attend-member-team {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.attend-member-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.attend-status-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.attend-status-badge.working {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--success);
+}
+
+.attend-status-badge.left {
+  background: rgba(100, 116, 139, 0.2);
+  color: var(--text-secondary);
+}
+
+.attend-status-badge.absent {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
+.attend-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
