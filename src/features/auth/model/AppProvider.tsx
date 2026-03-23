@@ -1,25 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import type { User, PersonalWorkSchedule } from '../../../entities/user/model/types'
+import type { User } from '../../../entities/user/model/types'
 import { getMe } from '../api/authClient'
 
-export type { UserRole, Team, User, PersonalWorkSchedule } from '../../../entities/user/model/types'
+export type { UserRole, Team, User, UserStatus } from '../../../entities/user/model/types'
 
 export interface AppState {
   currentUser: User | null
   users: User[]
 }
 
-const defaultSchedule: PersonalWorkSchedule = {
-  workDays: [true, true, true, true, true, false, false],
-  checkInTime: '09:00',
-  checkOutTime: '18:00',
-}
-
 const AppContext = createContext<{
   state: AppState
-  personalSchedule: PersonalWorkSchedule
-  setPersonalSchedule: (s: PersonalWorkSchedule) => void
   isAdmin: boolean
   isInitializing: boolean
   loadUser: (user: User) => void
@@ -32,7 +24,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     currentUser: null,
     users: [],
   })
-  const [personalSchedule, setPersonalSchedule] = useState<PersonalWorkSchedule>(defaultSchedule)
   const [isInitializing, setIsInitializing] = useState(true)
 
   // 앱 시작 시 저장된 토큰으로 currentUser 복원
@@ -69,7 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider
-      value={{ state, personalSchedule, setPersonalSchedule, isAdmin: !!isAdmin, isInitializing, loadUser, loadMembers, logout }}
+      value={{ state, isAdmin: !!isAdmin, isInitializing, loadUser, loadMembers, logout }}
     >
       {children}
     </AppContext.Provider>

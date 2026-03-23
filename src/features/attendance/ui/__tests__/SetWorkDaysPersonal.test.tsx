@@ -11,12 +11,18 @@ const server = setupServer(
     HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: { id: 1, memberId: 1, workStartTime: '09:00:00', workEndTime: '18:00:00', breakStartTime: '12:00:00', breakEndTime: '13:00:00' },
+      data: [
+        { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
+        { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+        { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+        { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
+        { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+      ],
     }),
   ),
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as Record<string, string>
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: body })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
   }),
   http.get('/api/v1/me', () =>
     HttpResponse.json({ code: 'ERROR', message: 'unauthorized' }, { status: 401 }),

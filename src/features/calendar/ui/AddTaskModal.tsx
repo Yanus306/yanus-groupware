@@ -18,6 +18,7 @@ interface Props {
   date: string
   priority: TaskPriority
   assigneeId: string
+  memberIds: string[]
   users: User[]
   inputRef: RefObject<HTMLInputElement | null>
   onTitleChange: (v: string) => void
@@ -25,23 +26,30 @@ interface Props {
   onDateChange: (v: string) => void
   onPriorityChange: (v: TaskPriority) => void
   onAssigneeChange: (v: string) => void
+  onMemberIdsChange: (ids: string[]) => void
   onAdd: () => void
   onClose: () => void
 }
 
 export function AddTaskModal({
-  open, tabType, title, time, date, priority, assigneeId, users, inputRef,
+  open, tabType, title, time, date, priority, assigneeId, memberIds, users, inputRef,
   onTitleChange, onTimeChange, onDateChange, onPriorityChange, onAssigneeChange,
-  onAdd, onClose,
+  onMemberIdsChange, onAdd, onClose,
 }: Props) {
   if (!open) return null
+
+  const addMember = (id: string) => {
+    if (id && !memberIds.includes(id)) onMemberIdsChange([...memberIds, id])
+  }
+  const removeMember = (id: string) => onMemberIdsChange(memberIds.filter((i) => i !== id))
+
   return (
     <div className="edit-task-modal-overlay" onClick={onClose}>
       <div className="edit-task-modal add-task-modal" onClick={(e) => e.stopPropagation()}>
         <div className="edit-task-header">
           <div className="edit-task-header-title">
             <h4>할일 추가</h4>
-            <span className={"task-type-badge " + (tabType === 'team' ? 'team' : 'my')}>
+            <span className={`task-type-badge ${tabType === 'team' ? 'team' : 'my'}`}>
               {tabType === 'team' ? '팀 할일' : '내 할일'}
             </span>
           </div>
@@ -68,14 +76,39 @@ export function AddTaskModal({
             </select>
           </div>
           {tabType === 'team' && (
-            <div className="add-task-row">
-              <label>담당자</label>
-              <select className="add-task-assignee" value={assigneeId} onChange={(e) => onAssigneeChange(e.target.value)}>
-                <option value="">담당자 없음</option>
-                <option value="all">팀원 전체</option>
-                {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </div>
+            <>
+              <div className="add-task-row">
+                <label>담당자</label>
+                <select className="add-task-assignee" value={assigneeId} onChange={(e) => onAssigneeChange(e.target.value)}>
+                  <option value="">담당자 없음</option>
+                  {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div className="add-task-row">
+                <label>참여 멤버</label>
+                <div className="member-select-area">
+                  {memberIds.map((id) => {
+                    const u = users.find((u) => u.id === id)
+                    return (
+                      <span key={id} className="member-tag">
+                        {u?.name ?? id}
+                        <button type="button" onClick={() => removeMember(id)}>×</button>
+                      </span>
+                    )
+                  })}
+                  <select
+                    className="add-task-assignee"
+                    value=""
+                    onChange={(e) => addMember(e.target.value)}
+                  >
+                    <option value="">+ 멤버 추가</option>
+                    {users
+                      .filter((u) => u.id !== assigneeId && !memberIds.includes(u.id))
+                      .map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </>
           )}
           <div className="edit-task-actions add-task-modal-actions">
             <button className="cancel-btn" onClick={onClose}>취소</button>

@@ -4,27 +4,29 @@ import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 
-const DEFAULT_SCHEDULE = {
-  id: 1,
-  memberId: 1,
-  workStartTime: '09:00:00',
-  workEndTime: '18:00:00',
-  breakStartTime: '12:00:00',
-  breakEndTime: '13:00:00',
-}
+const DEFAULT_SCHEDULES = [
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+]
 
 const server = setupServer(
   http.get('/api/v1/work-schedules/me', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: DEFAULT_SCHEDULE }),
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: DEFAULT_SCHEDULES }),
   ),
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as Record<string, string>
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { ...DEFAULT_SCHEDULE, ...body } })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
   }),
 )
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  localStorage.clear()
+})
 afterAll(() => server.close())
 
 async function mountHook() {
@@ -40,7 +42,7 @@ describe('useWorkSchedule', () => {
       expect(result.current.workDays).toEqual([true, true, true, true, true, false, false])
     })
 
-    it('마운트 시 API에서 시간을 불러와 전체 요일 기본값으로 설정한다', async () => {
+    it('마운트 시 API에서 요일별 시간을 불러온다', async () => {
       const { result } = await mountHook()
       expect(result.current.daySchedules[0].checkInTime).toBe('09:00')
       expect(result.current.daySchedules[0].checkOutTime).toBe('18:00')
@@ -49,6 +51,14 @@ describe('useWorkSchedule', () => {
     it('로드 완료 후 isLoading이 false가 된다', async () => {
       const { result } = await mountHook()
       expect(result.current.isLoading).toBe(false)
+    })
+
+    it('API 응답에 있는 요일만 활성화한다 (localStorage 없을 때)', async () => {
+      const { result } = await mountHook()
+      // API에 MONDAY~FRIDAY만 있으므로 0~4만 true
+      expect(result.current.workDays.slice(0, 5)).toEqual([true, true, true, true, true])
+      expect(result.current.workDays[5]).toBe(false)
+      expect(result.current.workDays[6]).toBe(false)
     })
   })
 
@@ -93,23 +103,23 @@ describe('useWorkSchedule', () => {
       expect(result.current.isSaving).toBe(false)
     })
 
-    it('저장 시 localStorage에 스케줄이 저장된다', async () => {
+    it('저장 시 localStorage에 workDays가 저장된다', async () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.saveSchedule() })
-      const stored = localStorage.getItem('yanus-work-schedule')
+      const stored = localStorage.getItem('yanus-work-days')
       expect(stored).not.toBeNull()
       const parsed = JSON.parse(stored!)
-      expect(parsed.workDays).toEqual([true, true, true, true, true, false, false])
+      expect(Array.isArray(parsed)).toBe(true)
+      expect(parsed.length).toBe(7)
     })
 
-    it('localStorage에 저장된 스케줄을 마운트 시 복원한다', async () => {
-      localStorage.setItem('yanus-work-schedule', JSON.stringify({
-        workDays: [false, true, true, true, true, false, false],
-        daySchedules: Array.from({ length: 7 }, () => ({ checkInTime: '10:00', checkOutTime: '19:00' })),
-      }))
+    it('localStorage에 저장된 workDays를 마운트 시 복원한다', async () => {
+      localStorage.setItem('yanus-work-days', JSON.stringify(
+        [false, true, true, true, true, false, false],
+      ))
       const { result } = await mountHook()
       expect(result.current.workDays[0]).toBe(false)
-      expect(result.current.daySchedules[0].checkInTime).toBe('10:00')
+      expect(result.current.workDays[1]).toBe(true)
     })
 
     it('API 에러 시 error 메시지가 설정된다', async () => {

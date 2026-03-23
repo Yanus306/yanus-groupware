@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw'
 
 let mockMembers = [
-  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true, active: true },
-  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true, active: true },
-  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false, active: true },
-  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true, active: true },
-  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', online: false, active: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', status: 'ACTIVE', online: false },
+  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', status: 'ACTIVE', online: true },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', status: 'INACTIVE', online: false },
 ]
 
 const mockTeams = [
@@ -45,14 +45,14 @@ export const membersHandlers = [
 
   http.delete('/api/v1/members/:id', ({ params }) => {
     mockMembers = mockMembers.map((m) =>
-      m.id === params.id ? { ...m, active: false } : m,
+      m.id === params.id ? { ...m, status: 'INACTIVE' } : m,
     )
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 
   http.patch('/api/v1/members/:id/activate', ({ params }) => {
     mockMembers = mockMembers.map((m) =>
-      m.id === params.id ? { ...m, active: true } : m,
+      m.id === params.id ? { ...m, status: 'ACTIVE' } : m,
     )
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),

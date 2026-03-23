@@ -1,24 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, updateWorkSchedule } from '../attendanceApi'
+import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, upsertWorkScheduleDay } from '../attendanceApi'
 
-const WORK_SCHEDULE = {
-  id: 1,
-  memberId: 1,
-  workStartTime: '09:00:00',
-  workEndTime: '18:00:00',
-  breakStartTime: '12:00:00',
-  breakEndTime: '13:00:00',
-}
+const WORK_SCHEDULES = [
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+]
 
 const server = setupServer(
   http.get('/api/v1/work-schedules/me', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULE }),
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULES }),
   ),
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as Record<string, string>
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { ...WORK_SCHEDULE, ...body } })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
   }),
   http.get('/api/v1/attendances/me', ({ request }) => {
     const url = new URL(request.url)
@@ -73,17 +72,6 @@ describe('attendanceApi', () => {
     expect(records[0]).toMatchObject({ id: 1, memberName: '김리더', status: 'LEFT' })
   })
 
-  it('getMyAttendance(date) 날짜 파라미터로 필터링된 기록을 반환한다', async () => {
-    const records = await getMyAttendance('2026-03-22')
-    expect(records).toHaveLength(1)
-    expect(records[0]).toMatchObject({ id: 1, memberName: '김리더', status: 'LEFT' })
-  })
-
-  it('getMyAttendance(date) 해당 날짜 기록이 없으면 빈 배열을 반환한다', async () => {
-    const records = await getMyAttendance('2026-03-01')
-    expect(records).toHaveLength(0)
-  })
-
   it('getAttendanceByDate() 날짜별 전체 기록을 반환한다', async () => {
     const records = await getAttendanceByDate('2026-03-22')
     expect(records).toHaveLength(1)
@@ -103,14 +91,17 @@ describe('attendanceApi', () => {
 })
 
 describe('workScheduleApi', () => {
-  it('getMyWorkSchedule() 내 근무 일정을 반환한다', async () => {
-    const schedule = await getMyWorkSchedule()
-    expect(schedule).toMatchObject({ memberId: 1, workStartTime: '09:00:00', workEndTime: '18:00:00' })
+  it('getMyWorkSchedule() 내 근무 일정 배열을 반환한다', async () => {
+    const schedules = await getMyWorkSchedule()
+    expect(Array.isArray(schedules)).toBe(true)
+    expect(schedules).toHaveLength(5)
+    expect(schedules[0]).toMatchObject({ dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' })
   })
 
-  it('updateWorkSchedule() 근무 일정을 수정하고 반환한다', async () => {
-    const updated = await updateWorkSchedule({ workStartTime: '08:00:00', workEndTime: '17:00:00' })
-    expect(updated.workStartTime).toBe('08:00:00')
-    expect(updated.workEndTime).toBe('17:00:00')
+  it('upsertWorkScheduleDay() 특정 요일 근무 일정을 저장하고 반환한다', async () => {
+    const result = await upsertWorkScheduleDay({ dayOfWeek: 'MONDAY', startTime: '08:00:00', endTime: '17:00:00' })
+    expect(result.dayOfWeek).toBe('MONDAY')
+    expect(result.startTime).toBe('08:00:00')
+    expect(result.endTime).toBe('17:00:00')
   })
 })

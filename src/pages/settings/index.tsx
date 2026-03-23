@@ -46,7 +46,7 @@ export function Settings() {
       return
     }
     try {
-      await updateMyProfile({ currentPassword, newPassword })
+      await updateMyProfile({ password: newPassword })
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')

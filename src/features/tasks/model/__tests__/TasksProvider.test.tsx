@@ -32,9 +32,14 @@ function makeApiTask(overrides: Partial<{
 }
 
 const server = setupServer(
-  http.get('/api/v1/tasks', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [...TASKS] }),
-  ),
+  http.get('/api/v1/tasks', ({ request }) => {
+    const url = new URL(request.url)
+    const type = url.searchParams.get('type')
+    const filtered = type === 'TEAM'
+      ? TASKS.filter((t) => t.isTeamTask)
+      : TASKS.filter((t) => !t.isTeamTask)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
+  }),
   http.post('/api/v1/tasks', async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
     const task = makeApiTask({
