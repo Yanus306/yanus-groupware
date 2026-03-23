@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import type { Task, TaskPriority } from '../../../entities/task/model/types'
@@ -16,6 +16,8 @@ export { getTodayStr, formatDateDisplay } from '../../../shared/lib/date'
 
 type TasksContextValue = {
   tasks: Task[]
+  myTasks: Task[]
+  teamTasks: Task[]
   addTask: (task: Omit<Task, 'id' | 'createdBy'>) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
@@ -71,6 +73,7 @@ function toTask(api: ApiTask): Task {
     date: api.date,
     priority: PRIORITY_FROM_API[api.priority] ?? 'medium',
     done: api.done,
+    isTeamTask: api.isTeamTask,
     assigneeId: api.assigneeId != null ? String(api.assigneeId) : undefined,
     assigneeName: api.assigneeName ?? undefined,
     createdBy: api.assigneeId != null ? String(api.assigneeId) : '',
@@ -90,13 +93,16 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false))
   }, [])
 
+  const myTasks = useMemo(() => tasks.filter((t) => !t.isTeamTask), [tasks])
+  const teamTasks = useMemo(() => tasks.filter((t) => t.isTeamTask), [tasks])
+
   const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdBy'>) => {
     const apiTask = await apiCreateTask({
       title: task.title,
       date: task.date,
       time: displayTimeToApi(task.time),
       priority: PRIORITY_TO_API[task.priority] ?? 'MEDIUM',
-      isTeamTask: false,
+      isTeamTask: task.isTeamTask,
       assigneeId: task.assigneeId ? Number(task.assigneeId) : null,
     })
     setTasks((prev) => [...prev, toTask(apiTask)])
@@ -134,6 +140,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     <TasksContext.Provider
       value={{
         tasks,
+        myTasks,
+        teamTasks,
         addTask,
         updateTask,
         deleteTask,

@@ -9,7 +9,14 @@ import { TasksProvider, useTasks } from '../TasksProvider'
 let nextId = 100
 const TASKS: ReturnType<typeof makeApiTask>[] = []
 
-function makeApiTask(overrides: Partial<{ title: string; date: string; priority: 'HIGH' | 'MEDIUM' | 'LOW'; done: boolean }> = {}) {
+function makeApiTask(overrides: Partial<{
+  title: string
+  date: string
+  priority: 'HIGH' | 'MEDIUM' | 'LOW'
+  done: boolean
+  isTeamTask: boolean
+  assigneeId: number | null
+}> = {}) {
   return {
     id: nextId++,
     title: '테스트 태스크',
@@ -18,8 +25,8 @@ function makeApiTask(overrides: Partial<{ title: string; date: string; priority:
     priority: 'MEDIUM' as const,
     done: false,
     isTeamTask: false,
-    assigneeId: 1,
-    assigneeName: '테스터',
+    assigneeId: null,
+    assigneeName: null,
     ...overrides,
   }
 }
@@ -30,7 +37,12 @@ const server = setupServer(
   ),
   http.post('/api/v1/tasks', async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
-    const task = makeApiTask({ title: body.title as string, priority: body.priority as 'HIGH' | 'MEDIUM' | 'LOW' })
+    const task = makeApiTask({
+      title: body.title as string,
+      priority: body.priority as 'HIGH' | 'MEDIUM' | 'LOW',
+      isTeamTask: body.isTeamTask as boolean,
+      assigneeId: body.assigneeId as number | null,
+    })
     TASKS.push(task)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: task }, { status: 201 })
   }),
@@ -76,13 +88,21 @@ describe('TasksProvider', () => {
       expect(result.current.tasks).toHaveLength(1)
       expect(result.current.tasks[0].title).toBe('서버 태스크')
     })
+
+    it('API 응답의 isTeamTask 값을 Task에 올바르게 매핑한다', async () => {
+      TASKS.push(makeApiTask({ isTeamTask: false }))
+      TASKS.push(makeApiTask({ isTeamTask: true }))
+      const { result } = await mountHook()
+      expect(result.current.tasks[0].isTeamTask).toBe(false)
+      expect(result.current.tasks[1].isTeamTask).toBe(true)
+    })
   })
 
   describe('addTask', () => {
     it('태스크를 추가할 수 있다', async () => {
       const { result } = await mountHook()
       await act(async () => {
-        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false })
+        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false, isTeamTask: false })
       })
       expect(result.current.tasks.length).toBeGreaterThan(0)
       expect(result.current.tasks.at(-1)?.title).toBe('새 태스크')
@@ -91,7 +111,7 @@ describe('TasksProvider', () => {
     it('추가한 태스크에 id가 자동 생성된다', async () => {
       const { result } = await mountHook()
       await act(async () => {
-        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false })
+        await result.current.addTask({ title: '새 태스크', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false, isTeamTask: false })
       })
       expect(result.current.tasks.at(-1)?.id).toBeTruthy()
     })
@@ -109,7 +129,7 @@ describe('TasksProvider', () => {
       )
       const { result } = await mountHook()
       await act(async () => {
-        await result.current.addTask({ title: 'time 형식 테스트', time: '1:30 오후', date: '2025-06-01', priority: 'medium', done: false })
+        await result.current.addTask({ title: 'time 형식 테스트', time: '1:30 오후', date: '2025-06-01', priority: 'medium', done: false, isTeamTask: false })
       })
       expect(capturedTime).toBe('13:30:00')
     })
@@ -118,6 +138,58 @@ describe('TasksProvider', () => {
       TASKS.push({ ...makeApiTask(), time: '14:00:00' })
       const { result } = await mountHook()
       expect(result.current.tasks[0].time).toBe('2:00 오후')
+    })
+
+    it('내 할일 추가 시 isTeamTask: false로 API 호출된다', async () => {
+      let capturedIsTeamTask: boolean | undefined
+      server.use(
+        http.post('/api/v1/tasks', async ({ request }) => {
+          const body = await request.json() as Record<string, unknown>
+          capturedIsTeamTask = body.isTeamTask as boolean
+          const task = makeApiTask()
+          TASKS.push(task)
+          return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: task }, { status: 201 })
+        }),
+      )
+      const { result } = await mountHook()
+      await act(async () => {
+        await result.current.addTask({ title: '내 할일', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false, isTeamTask: false })
+      })
+      expect(capturedIsTeamTask).toBe(false)
+    })
+
+    it('팀 할일 추가 시 isTeamTask: true로 API 호출된다', async () => {
+      let capturedIsTeamTask: boolean | undefined
+      server.use(
+        http.post('/api/v1/tasks', async ({ request }) => {
+          const body = await request.json() as Record<string, unknown>
+          capturedIsTeamTask = body.isTeamTask as boolean
+          const task = makeApiTask({ isTeamTask: true })
+          TASKS.push(task)
+          return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: task }, { status: 201 })
+        }),
+      )
+      const { result } = await mountHook()
+      await act(async () => {
+        await result.current.addTask({ title: '팀 할일', time: '10:00 오전', date: '2025-06-01', priority: 'medium', done: false, isTeamTask: true })
+      })
+      expect(capturedIsTeamTask).toBe(true)
+    })
+
+    it('내 할일(isTeamTask: false)은 myTasks에만 포함된다', async () => {
+      TASKS.push(makeApiTask({ isTeamTask: false }))
+      TASKS.push(makeApiTask({ isTeamTask: true }))
+      const { result } = await mountHook()
+      expect(result.current.myTasks).toHaveLength(1)
+      expect(result.current.myTasks[0].isTeamTask).toBe(false)
+    })
+
+    it('팀 할일(isTeamTask: true)은 teamTasks에만 포함된다', async () => {
+      TASKS.push(makeApiTask({ isTeamTask: false }))
+      TASKS.push(makeApiTask({ isTeamTask: true }))
+      const { result } = await mountHook()
+      expect(result.current.teamTasks).toHaveLength(1)
+      expect(result.current.teamTasks[0].isTeamTask).toBe(true)
     })
   })
 
