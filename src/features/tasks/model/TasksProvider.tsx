@@ -65,6 +65,8 @@ function displayTimeToApi(t: string): string {
   return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
 }
 
+// OpenAPI TaskResponse에 createdById 없음 → createdBy는 빈 문자열로 초기화
+// addTask 시 currentUser.id로 직접 세팅
 function toTask(api: ApiTask): Task {
   return {
     id: String(api.id),
@@ -78,8 +80,7 @@ function toTask(api: ApiTask): Task {
     assigneeName: api.assigneeName ?? undefined,
     memberIds: api.memberIds?.map(String) ?? undefined,
     memberNames: api.memberNames?.filter(Boolean) as string[] | undefined,
-    // createdById 있으면 생성자 ID 사용, 없으면 빈 문자열 (권한 체크 시 fallback)
-    createdBy: api.createdById != null ? String(api.createdById) : '',
+    createdBy: '',
   }
 }
 
@@ -128,6 +129,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (updates.date !== undefined) apiUpdates.date = updates.date
     if (updates.time !== undefined) apiUpdates.time = displayTimeToApi(updates.time)
     if (updates.priority !== undefined) apiUpdates.priority = PRIORITY_TO_API[updates.priority]
+    if (updates.memberIds !== undefined) apiUpdates.memberIds = updates.memberIds?.map(Number)
     const apiTask = await apiUpdateTask(Number(id), apiUpdates)
     setTasks((prev) => prev.map((t) => (t.id === id ? toTask(apiTask) : t)))
   }, [])

@@ -2,6 +2,7 @@ import { baseClient } from './baseClient'
 
 export type ApiTaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
 
+// TaskResponse (OpenAPI 스펙 기준) — createdById 없음
 export interface ApiTask {
   id: number
   title: string
@@ -14,7 +15,6 @@ export interface ApiTask {
   assigneeName: string | null
   memberIds?: number[] | null    // 추가 참여 멤버 ID 목록
   memberNames?: string[] | null  // 추가 참여 멤버 이름 목록
-  createdById?: number | null    // 생성자 ID (백엔드 반환 시)
 }
 
 export interface CreateTaskPayload {
@@ -45,8 +45,14 @@ export const getTasks = (params?: GetTasksParams) => {
 export const createTask = (body: CreateTaskPayload) =>
   baseClient.post<ApiTask>('/api/v1/tasks', body)
 
-// PUT 요청 시 백엔드 필수 필드(title, date, time, priority) 포함
-export type UpdateTaskPayload = Partial<Omit<CreateTaskPayload, 'isTeamTask'>>
+// TaskUpdateRequest (OpenAPI 스펙 기준) — assigneeId 없음, memberIds만 포함
+export interface UpdateTaskPayload {
+  title?: string
+  date?: string
+  time?: string
+  priority?: ApiTaskPriority
+  memberIds?: number[]
+}
 export const updateTask = (id: number, body: UpdateTaskPayload) =>
   baseClient.put<ApiTask>(`/api/v1/tasks/${id}`, body)
 

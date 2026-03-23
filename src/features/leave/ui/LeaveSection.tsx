@@ -77,10 +77,8 @@ export function LeaveSection() {
 
   const handleApprove = async (id: number) => {
     try {
-      const result = await approveLeave(id)
-      setAdminLeaves((prev) =>
-        prev.map((l) => l.id === id ? { ...l, status: result.status, reviewedAt: result.reviewedAt } : l),
-      )
+      const updated = await approveLeave(id)
+      setAdminLeaves((prev) => prev.map((l) => l.id === id ? updated : l))
       setSuccessMessage('승인되었습니다')
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '승인에 실패했습니다')
@@ -89,10 +87,8 @@ export function LeaveSection() {
 
   const handleReject = async (id: number) => {
     try {
-      const result = await rejectLeave(id)
-      setAdminLeaves((prev) =>
-        prev.map((l) => l.id === id ? { ...l, status: result.status, reviewedAt: result.reviewedAt } : l),
-      )
+      const updated = await rejectLeave(id)
+      setAdminLeaves((prev) => prev.map((l) => l.id === id ? updated : l))
       setSuccessMessage('반려되었습니다')
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '반려에 실패했습니다')

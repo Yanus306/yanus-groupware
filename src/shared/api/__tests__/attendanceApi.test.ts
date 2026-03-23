@@ -72,17 +72,6 @@ describe('attendanceApi', () => {
     expect(records[0]).toMatchObject({ id: 1, memberName: '김리더', status: 'LEFT' })
   })
 
-  it('getMyAttendance(date) 날짜 파라미터로 필터링된 기록을 반환한다', async () => {
-    const records = await getMyAttendance('2026-03-22')
-    expect(records).toHaveLength(1)
-    expect(records[0]).toMatchObject({ id: 1, memberName: '김리더', status: 'LEFT' })
-  })
-
-  it('getMyAttendance(date) 해당 날짜 기록이 없으면 빈 배열을 반환한다', async () => {
-    const records = await getMyAttendance('2026-03-01')
-    expect(records).toHaveLength(0)
-  })
-
   it('getAttendanceByDate() 날짜별 전체 기록을 반환한다', async () => {
     const records = await getAttendanceByDate('2026-03-22')
     expect(records).toHaveLength(1)

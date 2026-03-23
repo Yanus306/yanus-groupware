@@ -18,8 +18,9 @@ export const createLeave = (body: CreateLeavePayload) =>
 export const getAdminLeaves = (teamId: number) =>
   baseClient.get<Leave[]>(`/api/v1/leaves/admin?teamId=${teamId}`)
 
+// 승인/반려 모두 LeaveResponse 전체 반환 (OpenAPI 스펙 기준)
 export const approveLeave = (id: number) =>
-  baseClient.patch<Pick<Leave, 'id' | 'status' | 'reviewedAt'>>(`/api/v1/leaves/${id}/approve`, {})
+  baseClient.patch<Leave>(`/api/v1/leaves/${id}/approve`, {})
 
 export const rejectLeave = (id: number) =>
-  baseClient.patch<Pick<Leave, 'id' | 'status' | 'reviewedAt'>>(`/api/v1/leaves/${id}/reject`, {})
+  baseClient.patch<Leave>(`/api/v1/leaves/${id}/reject`, {})
