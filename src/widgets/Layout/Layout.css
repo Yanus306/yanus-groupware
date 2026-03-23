@@ -83,6 +83,27 @@
   color: inherit;
 }
 
+/* 관리자 전용 메뉴 — 구분선 + 강조색 */
+.admin-nav-item {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 14px;
+  color: var(--accent-purple) !important;
+  opacity: 0.85;
+}
+
+.admin-nav-item:hover {
+  opacity: 1;
+  background: rgba(124, 58, 237, 0.18) !important;
+  color: var(--accent-purple) !important;
+}
+
+.admin-nav-item.active {
+  opacity: 1;
+  background: var(--accent-purple) !important;
+  color: #fff !important;
+}
+
 .main-content {
   flex: 1;
   margin-left: 200px;

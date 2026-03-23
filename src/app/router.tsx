@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '../widgets/Layout'
 import { PrivateRoute } from '../shared/ui/PrivateRoute'
+import { AdminRoute } from '../shared/ui/AdminRoute'
 import { Login } from '../pages/login'
 import { Register } from '../pages/register'
 import { Dashboard } from '../pages/dashboard'
@@ -11,6 +12,7 @@ import { Drive } from '../pages/drive'
 import { AIChat } from '../pages/ai-chat'
 import { Members } from '../pages/members'
 import { Settings } from '../pages/settings'
+import { Admin } from '../pages/admin'
 
 export function AppRouter() {
   return (
@@ -29,6 +31,9 @@ export function AppRouter() {
             <Route path="ai" element={<AIChat />} />
             <Route path="members" element={<Members />} />
             <Route path="settings" element={<Settings />} />
+            <Route element={<AdminRoute />}>
+              <Route path="admin" element={<Admin />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
