@@ -7,7 +7,18 @@ import { Attendance } from '../index'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-const server = setupServer(...attendanceHandlers)
+const server = setupServer(
+  ...attendanceHandlers,
+  http.get('*/api/v1/members', () =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: [
+        { id: 1, name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE' },
+      ],
+    }),
+  ),
+)
 beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
@@ -16,6 +27,7 @@ vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND' }, users: [] },
     isAdmin: true,
+    isTeamLead: false,
   }),
 }))
 

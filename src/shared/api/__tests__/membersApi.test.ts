@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMembers, getMember, updateMemberRole, deactivateMember, activateMember, getMyProfile, updateMyProfile } from '../membersApi'
+import { getMembers, getMember, updateMemberRole, deactivateMember, activateMember, getMyProfile, updateMyProfile, updateMemberTeam } from '../membersApi'
 
 const server = setupServer(
   http.get('/api/v1/members', () =>
@@ -29,6 +29,9 @@ const server = setupServer(
     }),
   ),
   http.patch('/api/v1/members/:id/role', async () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
+  http.patch('/api/v1/members/:id/team', async () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
   ),
   http.delete('/api/v1/members/:id', () =>
@@ -60,6 +63,10 @@ describe('membersApi', () => {
 
   it('updateMemberRole() 역할을 변경한다', async () => {
     await expect(updateMemberRole('1', 'TEAM_LEAD')).resolves.not.toThrow()
+  })
+
+  it('updateMemberTeam() 팀을 변경한다', async () => {
+    await expect(updateMemberTeam('1', { teamId: 2 })).resolves.not.toThrow()
   })
 
   it('deactivateMember() 멤버를 비활성화한다', async () => {

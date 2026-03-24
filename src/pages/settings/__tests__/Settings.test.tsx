@@ -12,6 +12,7 @@ vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: { currentUser: { id: '1', name: '홍길동', role: 'member', team: '개발팀' }, users: [] },
     isAdmin: false,
+    isTeamLead: false,
     logout: mockLogout,
   }),
 }))

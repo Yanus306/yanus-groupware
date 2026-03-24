@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react'
 import type { User } from '../../../entities/user/model/types'
 import { getMe } from '../api/authClient'
+import { clearAuthTokens, getAccessToken } from '../../../shared/lib/authStorage'
 
 export type { UserRole, Team, User, UserStatus } from '../../../entities/user/model/types'
 
@@ -13,6 +14,7 @@ export interface AppState {
 const AppContext = createContext<{
   state: AppState
   isAdmin: boolean
+  isTeamLead: boolean
   isInitializing: boolean
   loadUser: (user: User) => void
   loadMembers: (users: User[]) => void
@@ -28,7 +30,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 앱 시작 시 저장된 토큰으로 currentUser 복원
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (!token) {
       setIsInitializing(false)
       return
@@ -37,13 +39,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((user) => setState((prev) => ({ ...prev, currentUser: user })))
       .catch(() => {
         // 토큰 만료 또는 유효하지 않음 — 자동 로그아웃
-        localStorage.removeItem('accessToken')
+        clearAuthTokens()
       })
       .finally(() => setIsInitializing(false))
   }, [])
 
-  const isAdmin =
-    state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
+  const isAdmin = state.currentUser?.role === 'ADMIN'
+  const isTeamLead = state.currentUser?.role === 'TEAM_LEAD'
 
   const loadUser = useCallback((user: User) => {
     setState((prev) => ({ ...prev, currentUser: user }))
@@ -54,13 +56,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('accessToken')
+    clearAuthTokens()
     setState({ currentUser: null, users: [] })
   }, [])
 
   return (
     <AppContext.Provider
-      value={{ state, isAdmin: !!isAdmin, isInitializing, loadUser, loadMembers, logout }}
+      value={{
+        state,
+        isAdmin: !!isAdmin,
+        isTeamLead: !!isTeamLead,
+        isInitializing,
+        loadUser,
+        loadMembers,
+        logout,
+      }}
     >
       {children}
     </AppContext.Provider>

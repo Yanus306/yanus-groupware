@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Crown, ChevronDown, Download } from 'lucide-react'
+import { Crown, ChevronDown, Download, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
-import { getMembers, updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
-import type { User, UserRole } from '../../entities/user/model/types'
+import { getMembers, updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
+import type { Team, User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
 import { getTodayStr } from '../../shared/lib/date'
+import { getTeams } from '../../shared/api/teamsApi'
+import type { TeamResponse } from '../../shared/api/teamsApi'
 import './admin.css'
 
 type Tab = 'attendance' | 'members'
@@ -39,21 +41,22 @@ export function Admin() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [changeRoleFor, setChangeRoleFor] = useState<{ id: string; name: string; current: UserRole } | null>(null)
+  const [changeTeamFor, setChangeTeamFor] = useState<User | null>(null)
   const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
+  const [teams, setTeams] = useState<TeamResponse[]>([])
 
   const todayStr = getTodayStr()
 
   useEffect(() => {
-    getMembers()
-      .then((data) => {
-        setMembers(data)
-        loadMembers(data)
+    Promise.all([getMembers(), getAttendanceByDate(todayStr), getTeams()])
+      .then(([memberList, attendanceList, teamList]) => {
+        setMembers(memberList)
+        loadMembers(memberList)
+        setRecords(attendanceList)
+        setTeams(teamList)
       })
-      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
-
-    getAttendanceByDate(todayStr)
-      .then(setRecords)
-      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '출근 기록을 불러오지 못했습니다'))
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '관리 데이터를 불러오지 못했습니다'))
   }, [todayStr, loadMembers])
 
   const handleOpenRoleChange = (id: string, name: string, current: UserRole) => {
@@ -120,6 +123,28 @@ export function Admin() {
       setErrorMessage(err instanceof Error ? err.message : '활성화에 실패했습니다')
     }
     setSaving(false)
+  }
+
+  const handleOpenTeamChange = (member: User) => {
+    setChangeTeamFor(member)
+    const currentTeam = teams.find((team) => team.name === member.team)
+    setSelectedTeamId(currentTeam?.id ?? null)
+  }
+
+  const handleConfirmTeamChange = async () => {
+    if (!changeTeamFor || !selectedTeamId) return
+
+    setSaving(true)
+    try {
+      await updateMemberTeam(changeTeamFor.id, { teamId: selectedTeamId })
+      const updated = await getMembers()
+      setMembers(updated)
+      loadMembers(updated)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '팀 변경에 실패했습니다')
+    }
+    setSaving(false)
+    setChangeTeamFor(null)
   }
 
   const handleExportCsv = () => {
@@ -246,6 +271,13 @@ export function Admin() {
                       <button
                         type="button"
                         className="admin-action-btn"
+                        onClick={() => handleOpenTeamChange(u)}
+                      >
+                        팀 변경 <ArrowLeftRight size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn"
                         onClick={() => handleOpenRoleChange(u.id, u.name, u.role)}
                       >
                         역할 변경 <ChevronDown size={13} />
@@ -263,6 +295,40 @@ export function Admin() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {changeTeamFor && (
+        <div className="admin-modal-overlay" onClick={() => setChangeTeamFor(null)}>
+          <div className="admin-modal glass" onClick={(e) => e.stopPropagation()}>
+            <h3>팀 변경 — {changeTeamFor.name}</h3>
+            <div className="admin-role-options">
+              {teams.map((team) => (
+                <div
+                  key={team.id}
+                  className={`admin-role-option ${selectedTeamId === team.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedTeamId(team.id)}
+                >
+                  <span className={`admin-team-tag ${team.name as Team}`}>
+                    {teamLabels[team.name as Team] ?? team.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="admin-modal-actions">
+              <button type="button" className="cancel-btn" onClick={() => setChangeTeamFor(null)}>
+                취소
+              </button>
+              <button
+                type="button"
+                className="confirm-btn"
+                disabled={saving || selectedTeamId === null}
+                onClick={handleConfirmTeamChange}
+              >
+                {saving ? '저장 중...' : '변경 확인'}
+              </button>
+            </div>
           </div>
         </div>
       )}

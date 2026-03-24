@@ -21,6 +21,7 @@ main          ← 프로덕션 (Vercel 자동 배포)
 - `develop` 머지는 작업 정리 후 진행할 수 있습니다.
 - `main` 머지는 배포 성격이므로 저장소 관리자만 진행합니다.
 - 즉, `main` 대상 PR은 `develop` 브랜치에서만 올립니다.
+- `main` 머지 후에는 GitHub Release가 자동 생성되므로, 배포 PR 제목은 반드시 `release: v0.1.10` 같은 버전 형식을 사용합니다.
 
 ### 브랜치 생성 규칙
 
@@ -106,6 +107,8 @@ feat(auth): add login, logout, signup pages
 2. 기능 구현과 테스트를 작업 브랜치에서 마칩니다.
 3. 작업 브랜치에서 `develop` 대상으로 PR을 생성합니다.
 4. `develop` 머지 후 필요할 때 `develop`에서 `main` 대상으로 배포 PR을 생성합니다.
+5. `main` 대상 배포 PR 제목은 `release: v0.1.10` 형식으로 작성합니다.
+6. `main` 머지 후 GitHub Actions가 같은 버전 태그와 GitHub Release를 자동 생성합니다.
 
 ### 금지 사항
 
@@ -120,6 +123,12 @@ feat(auth): 로그인 페이지 구현
 ```
 
 커밋 컨벤션과 동일한 형식 사용.
+
+단, `develop -> main` 배포 PR은 아래 형식을 사용합니다.
+
+```
+release: v0.1.10
+```
 
 ### PR 머지 전 체크리스트
 

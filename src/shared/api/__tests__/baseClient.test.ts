@@ -6,7 +6,10 @@ import { baseClient } from '../baseClient'
 const server = setupServer()
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  localStorage.clear()
+})
 afterAll(() => server.close())
 
 describe('baseClient', () => {
@@ -40,6 +43,60 @@ describe('baseClient', () => {
       code: 'UNAUTHORIZED',
       message: '인증 실패',
     })
+  })
+
+  it('access token 만료 시 refresh로 재발급한 뒤 요청을 다시 수행한다', async () => {
+    localStorage.setItem('accessToken', 'expired-access-token')
+    localStorage.setItem('refreshToken', 'refresh-token')
+
+    server.use(
+      http.get('/test-refresh', ({ request }) => {
+        const authorization = request.headers.get('Authorization')
+        if (authorization === 'Bearer renewed-access-token') {
+          return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { ok: true } })
+        }
+        return HttpResponse.json({ code: 'UNAUTHORIZED', message: 'access 만료', data: null }, { status: 401 })
+      }),
+      http.post('/api/v1/auth/refresh', async ({ request }) => {
+        const body = await request.json() as { refreshToken: string }
+        expect(body.refreshToken).toBe('refresh-token')
+        return HttpResponse.json({
+          code: 'SUCCESS',
+          message: 'ok',
+          data: {
+            accessToken: 'renewed-access-token',
+            refreshToken: 'renewed-refresh-token',
+            tokenType: 'Bearer',
+          },
+        })
+      }),
+    )
+
+    const result = await baseClient.get<{ ok: boolean }>('/test-refresh')
+    expect(result).toEqual({ ok: true })
+    expect(localStorage.getItem('accessToken')).toBe('renewed-access-token')
+    expect(localStorage.getItem('refreshToken')).toBe('renewed-refresh-token')
+  })
+
+  it('refresh token도 만료되면 토큰을 정리하고 ApiError를 던진다', async () => {
+    localStorage.setItem('accessToken', 'expired-access-token')
+    localStorage.setItem('refreshToken', 'expired-refresh-token')
+
+    server.use(
+      http.get('/test-refresh-expired', () =>
+        HttpResponse.json({ code: 'UNAUTHORIZED', message: 'access 만료', data: null }, { status: 401 }),
+      ),
+      http.post('/api/v1/auth/refresh', () =>
+        HttpResponse.json({ code: 'UNAUTHORIZED', message: 'refresh 만료', data: null }, { status: 401 }),
+      ),
+    )
+
+    await expect(baseClient.get('/test-refresh-expired')).rejects.toMatchObject({
+      status: 401,
+      code: 'UNAUTHORIZED',
+    })
+    expect(localStorage.getItem('accessToken')).toBeNull()
+    expect(localStorage.getItem('refreshToken')).toBeNull()
   })
 
   it('4xx 응답 시 ApiError를 던진다', async () => {

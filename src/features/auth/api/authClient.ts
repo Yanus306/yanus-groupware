@@ -1,12 +1,19 @@
 import { baseClient } from '../../../shared/api/baseClient'
 import { ApiError } from '../../../shared/api/baseClient'
 import type { User } from '../../../entities/user/model/types'
+import { clearAuthTokens, storeAuthTokens } from '../../../shared/lib/authStorage'
 
 export interface RegisterPayload {
   name: string
   email: string
   password: string
   teamId: number
+}
+
+export interface LoginTokens {
+  accessToken: string
+  refreshToken: string
+  tokenType: string
 }
 
 // OpenAPI MeResponse: id는 integer(int64) — User.id(string)로 변환 필요
@@ -20,10 +27,11 @@ interface MeResponse {
 
 export async function login(email: string, password: string): Promise<string> {
   try {
-    const data = await baseClient.post<{ accessToken: string; refreshToken: string; tokenType: string }>(
+    const data = await baseClient.post<LoginTokens>(
       '/api/v1/auth/login',
       { email, password },
     )
+    storeAuthTokens(data)
     return data.accessToken
   } catch (err) {
     if (err instanceof ApiError && err.code === 'MEMBER_INACTIVE') {
@@ -49,5 +57,9 @@ export async function getMe(): Promise<User> {
 }
 
 export async function logout(): Promise<void> {
-  await baseClient.post<null>('/api/v1/auth/logout', {})
+  try {
+    await baseClient.post<null>('/api/v1/auth/logout', {})
+  } finally {
+    clearAuthTokens()
+  }
 }

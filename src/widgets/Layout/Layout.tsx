@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon } from 'lucide-react'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon, ArrowLeftRight } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import { useTheme } from '../../shared/theme'
@@ -19,10 +19,14 @@ const navItems = [
 export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { state, isAdmin, logout } = useApp()
+  const { state, isAdmin, isTeamLead, logout } = useApp()
   const { theme, toggleTheme } = useTheme()
   const { currentUser } = state
-  const currentNav = navItems.find(({ to }) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)))
+  const visibleNavItems = [
+    ...navItems,
+    ...(isTeamLead ? [{ to: '/team-management', icon: ArrowLeftRight, label: '팀 관리' }] : []),
+  ]
+  const currentNav = visibleNavItems.find(({ to }) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)))
   const pageTitle = location.pathname === '/admin' ? '관리자' : currentNav?.label ?? '홈'
   const themeLabel = theme === 'dark' ? '라이트 모드' : '다크 모드'
 
@@ -39,7 +43,6 @@ export function Layout() {
             <img src={logoImg} alt="yANUs" className="logo-img" />
             <div className="logo-copy">
               <strong>yANUs Groupware</strong>
-              <span>클럽 운영을 더 매끄럽게</span>
             </div>
           </div>
           <button
@@ -53,7 +56,7 @@ export function Layout() {
           </button>
         </div>
         <nav className="nav">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {visibleNavItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}

@@ -16,9 +16,18 @@ const mockTeams = [
 ]
 
 export const membersHandlers = [
-  http.get('/api/v1/members', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockMembers }),
-  ),
+  http.get('/api/v1/members', ({ request }) => {
+    const url = new URL(request.url)
+    const teamName = url.searchParams.get('teamName')
+    const role = url.searchParams.get('role')
+    const filtered = mockMembers.filter((member) => {
+      const matchesTeam = !teamName || member.team === teamName
+      const matchesRole = !role || member.role === role
+      return matchesTeam && matchesRole
+    })
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
+  }),
 
   http.get('/api/v1/members/me', ({ request }) => {
     const auth = request.headers.get('Authorization') ?? ''
@@ -39,6 +48,19 @@ export const membersHandlers = [
     const body = await request.json() as { role: string }
     mockMembers = mockMembers.map((m) =>
       m.id === params.id ? { ...m, role: body.role } : m,
+    )
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+  }),
+
+  http.patch('/api/v1/members/:id/team', async ({ params, request }) => {
+    const body = await request.json() as { teamId: number }
+    const team = mockTeams.find((item) => item.id === body.teamId)
+    if (!team) {
+      return HttpResponse.json({ code: 'NOT_FOUND', message: '팀을 찾을 수 없습니다', data: null }, { status: 404 })
+    }
+
+    mockMembers = mockMembers.map((m) =>
+      m.id === params.id ? { ...m, team: team.name } : m,
     )
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),

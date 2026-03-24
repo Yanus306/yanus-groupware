@@ -66,13 +66,18 @@ describe('Login 페이지', () => {
   })
 
   it('로그인 성공 시 accessToken을 localStorage에 저장하고 /로 이동한다', async () => {
-    mockLogin.mockResolvedValue('real-token')
+    mockLogin.mockImplementation(async () => {
+      localStorage.setItem('accessToken', 'real-token')
+      localStorage.setItem('refreshToken', 'real-refresh-token')
+      return 'real-token'
+    })
     renderLogin()
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '로그인' }))
     await waitFor(() => {
       expect(localStorage.getItem('accessToken')).toBe('real-token')
+      expect(localStorage.getItem('refreshToken')).toBe('real-refresh-token')
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })
   })
