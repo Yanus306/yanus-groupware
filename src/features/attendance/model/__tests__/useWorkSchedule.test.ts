@@ -20,6 +20,9 @@ const server = setupServer(
     const body = await request.json() as Record<string, string>
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
   }),
+  http.delete('/api/v1/work-schedules/:dayOfWeek', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
 )
 
 beforeAll(() => server.listen())
@@ -37,9 +40,14 @@ async function mountHook() {
 
 describe('useWorkSchedule', () => {
   describe('초기 상태', () => {
-    it('기본 workDays는 월-금 활성, 토-일 비활성이다', async () => {
+    it('저장된 스케줄이 없으면 기본 workDays는 모두 비활성이다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+        ),
+      )
       const { result } = await mountHook()
-      expect(result.current.workDays).toEqual([true, true, true, true, true, false, false])
+      expect(result.current.workDays).toEqual([false, false, false, false, false, false, false])
     })
 
     it('마운트 시 API에서 요일별 시간을 불러온다', async () => {
@@ -55,7 +63,6 @@ describe('useWorkSchedule', () => {
 
     it('API 응답에 있는 요일만 활성화한다 (localStorage 없을 때)', async () => {
       const { result } = await mountHook()
-      // API에 MONDAY~FRIDAY만 있으므로 0~4만 true
       expect(result.current.workDays.slice(0, 5)).toEqual([true, true, true, true, true])
       expect(result.current.workDays[5]).toBe(false)
       expect(result.current.workDays[6]).toBe(false)
@@ -120,6 +127,27 @@ describe('useWorkSchedule', () => {
       const { result } = await mountHook()
       expect(result.current.workDays[0]).toBe(false)
       expect(result.current.workDays[1]).toBe(true)
+    })
+
+    it('기존에 저장된 요일을 비활성화하면 삭제 API를 호출한다', async () => {
+      let deletedDay = ''
+      server.use(
+        http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params }) => {
+          deletedDay = String(params.dayOfWeek)
+          return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+        }),
+      )
+
+      const { result } = await mountHook()
+      act(() => {
+        result.current.toggleDay(0)
+      })
+
+      await act(async () => {
+        await result.current.saveSchedule()
+      })
+
+      expect(deletedDay).toBe('MONDAY')
     })
 
     it('API 에러 시 error 메시지가 설정된다', async () => {
