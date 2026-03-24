@@ -44,9 +44,8 @@ export function AIChat() {
       <header className="ai-header">
         <div className="ai-title">
           <Bot size={24} />
-          <h1>yANUs AI</h1>
+          <p>공유 문서를 바탕으로 답변하는 팀 어시스턴트입니다.</p>
         </div>
-        <p className="ai-desc">파일 드라이브 기반 AI 어시스턴트</p>
       </header>
 
       <div className="ai-chat-area glass">

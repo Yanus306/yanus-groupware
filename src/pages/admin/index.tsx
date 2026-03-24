@@ -15,15 +15,15 @@ type Tab = 'attendance' | 'members'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 const roleLabels: Record<string, string> = {
-  ADMIN: 'Admin',
-  TEAM_LEAD: 'Team Lead',
-  MEMBER: 'Member',
+  ADMIN: '관리자',
+  TEAM_LEAD: '팀장',
+  MEMBER: '멤버',
 }
 const teamLabels: Record<string, string> = {
-  BACKEND: 'Backend',
-  FRONTEND: 'Frontend',
+  BACKEND: '백엔드',
+  FRONTEND: '프론트엔드',
   AI: 'AI',
-  SECURITY: 'Security',
+  SECURITY: '보안',
 }
 
 const statusLabels: Record<string, string> = {
@@ -146,7 +146,7 @@ export function Admin() {
       <header className="admin-header">
         <div className="admin-title-row">
           <Crown size={22} className="admin-crown-icon" />
-          <h1>관리자 대시보드</h1>
+          <p>출근 현황과 멤버 상태를 한 곳에서 관리합니다.</p>
         </div>
         <div className="admin-header-actions">
           {tab === 'attendance' && (

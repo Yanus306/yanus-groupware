@@ -17,14 +17,16 @@
 
 .admin-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+  min-width: 0;
 }
 
-.admin-title-row h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.admin-title-row p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 520px;
 }
 
 .admin-crown-icon {
@@ -124,8 +126,6 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   padding: 10px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -144,6 +144,18 @@
 
 .admin-members-table tr:hover td {
   background: rgba(255, 255, 255, 0.02);
+}
+
+:root[data-theme='light'] .admin-members-table th {
+  border-bottom-color: rgba(84, 102, 146, 0.14);
+}
+
+:root[data-theme='light'] .admin-members-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.1);
+}
+
+:root[data-theme='light'] .admin-members-table tr:hover td {
+  background: rgba(84, 102, 146, 0.05);
 }
 
 .admin-avatar {
@@ -283,8 +295,8 @@
 }
 
 .admin-modal {
-  background: #1a1a2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 28px;
   width: 360px;
@@ -439,10 +451,6 @@
 }
 
 @media (max-width: 480px) {
-  .admin-title-row h1 {
-    font-size: 1.35rem;
-  }
-
   .admin-tab-content {
     padding: 16px;
     border-radius: 20px;

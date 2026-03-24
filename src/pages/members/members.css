@@ -4,22 +4,34 @@
 }
 
 .members-header {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.members-header h1 {
-  font-size: 1.75rem;
-  margin: 0;
+.members-header-copy {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.members-header-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 540px;
 }
 
 .admin-badge {
   font-size: 0.75rem;
-  padding: 4px 10px;
-  background: var(--error);
-  border-radius: 4px;
+  padding: 6px 10px;
+  background: rgba(219, 92, 99, 0.12);
+  color: var(--error);
+  border-radius: 999px;
   font-weight: 600;
 }
 
@@ -120,13 +132,21 @@
 .members-table td {
   padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .members-table th {
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.members-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.members-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .members-table .avatar {
@@ -148,24 +168,24 @@
   font-size: 0.8rem;
 }
 
-.team-tag.design {
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--accent-blue);
+.team-tag.BACKEND {
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
 }
 
-.team-tag.dev {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--success);
+.team-tag.FRONTEND {
+  background: rgba(236, 72, 153, 0.18);
+  color: #f9a8d4;
 }
 
-.team-tag.marketing {
-  background: rgba(249, 115, 22, 0.2);
-  color: #f97316;
+.team-tag.AI {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
 }
 
-.team-tag.product {
-  background: rgba(236, 72, 153, 0.2);
-  color: var(--accent-pink);
+.team-tag.SECURITY {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
 }
 
 .role-tag {
@@ -177,17 +197,17 @@
   font-size: 0.8rem;
 }
 
-.role-tag.leader {
-  background: rgba(234, 179, 8, 0.2);
-  color: var(--warning);
-}
-
-.role-tag.team_lead {
+.role-tag.ADMIN {
   background: rgba(124, 58, 237, 0.2);
   color: var(--accent-purple-light);
 }
 
-.role-tag.member {
+.role-tag.TEAM_LEAD {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
+}
+
+.role-tag.MEMBER {
   background: rgba(148, 163, 184, 0.2);
   color: var(--text-secondary);
 }
@@ -357,19 +377,19 @@
   border: 2px solid transparent;
 }
 
-.role-pill.member {
+.role-pill.MEMBER {
   background: rgba(148, 163, 184, 0.2);
   color: var(--text-secondary);
 }
 
-.role-pill.team-lead {
-  background: rgba(124, 58, 237, 0.2);
-  color: var(--accent-purple-light);
+.role-pill.TEAM_LEAD {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
 }
 
-.role-pill.leader {
-  background: rgba(234, 179, 8, 0.2);
-  color: var(--warning);
+.role-pill.ADMIN {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple-light);
 }
 
 .modal-actions {
@@ -400,14 +420,6 @@
 }
 
 /* Invite button */
-.members-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
 .invite-btn {
   display: flex;
   align-items: center;
@@ -484,6 +496,15 @@
   background: rgba(150, 128, 204, 0.15);
 }
 
+:root[data-theme='light'] .members-table th,
+:root[data-theme='light'] .members-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.14);
+}
+
+:root[data-theme='light'] .members-table tbody tr:hover td {
+  background: rgba(84, 102, 146, 0.05);
+}
+
 @media (max-width: 900px) {
   .members-header {
     align-items: flex-start;
@@ -522,9 +543,8 @@
 }
 
 @media (max-width: 640px) {
-  .members-header h1 {
-    font-size: 1.45rem;
-    flex-wrap: wrap;
+  .members-header-copy p {
+    font-size: 0.92rem;
   }
 
   .members-table th,

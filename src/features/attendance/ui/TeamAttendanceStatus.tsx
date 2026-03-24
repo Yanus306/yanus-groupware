@@ -30,10 +30,10 @@ const STATUS_LABEL: Record<AttendStatus, string> = {
 }
 
 const TEAM_LABEL: Record<string, string> = {
-  BACKEND: 'Backend',
-  FRONTEND: 'Frontend',
+  BACKEND: '백엔드',
+  FRONTEND: '프론트엔드',
   AI: 'AI',
-  SECURITY: 'Security',
+  SECURITY: '보안',
 }
 
 const FILTER_TABS: { value: AttendStatus; label: string }[] = [

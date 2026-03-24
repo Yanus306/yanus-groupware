@@ -19,15 +19,12 @@
   gap: 12px;
 }
 
-.ai-title h1 {
-  font-size: 1.5rem;
+.ai-title p {
+  font-size: 1rem;
   margin: 0;
-}
-
-.ai-desc {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-top: 8px;
+  line-height: 1.6;
+  max-width: 420px;
 }
 
 .ai-chat-area {
@@ -164,8 +161,8 @@
     justify-content: flex-start;
   }
 
-  .ai-title h1 {
-    font-size: 1.25rem;
+  .ai-title p {
+    font-size: 0.92rem;
   }
 
   .ai-header {

@@ -32,7 +32,7 @@ vi.mock('../../../features/leave/ui/LeaveSection', () => ({
 describe('Attendance 페이지', () => {
   it('출퇴근 헤더가 렌더링된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('출퇴근')).toBeInTheDocument()
+    expect(screen.getByText('오늘 근무 현황과 개인 근무 일정을 한 화면에서 관리합니다.')).toBeInTheDocument()
   })
 
   it('관리자에게 Export CSV 버튼이 표시된다', () => {
