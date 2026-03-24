@@ -1,11 +1,10 @@
 .dashboard {
   max-width: 1200px;
-  height: calc(100vh - 48px);
+  min-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
 }
 
-/* ── 그리드: 3칸 2줄 ── */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 240px 1fr 1fr;
@@ -25,6 +24,7 @@
   justify-content: center;
   gap: 16px;
   padding: 32px 24px;
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
 }
 
 .clock-card-loading {
@@ -69,7 +69,7 @@
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  background: rgba(13, 13, 20, 0.98);
+  background: var(--bg-card-solid);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,7 +109,6 @@
   color: var(--text-secondary);
 }
 
-/* 클락 하단 영역 */
 .clock-footer {
   display: flex;
   flex-direction: column;
@@ -128,12 +127,11 @@
   color: var(--text-secondary);
 }
 
-/* 퇴근하기 버튼 */
 .clockout-btn {
   padding: 8px 24px;
-  background: rgba(224, 80, 80, 0.15);
-  color: #e05050;
-  border: 1px solid rgba(224, 80, 80, 0.3);
+  background: rgba(219, 92, 99, 0.14);
+  color: var(--error);
+  border: 1px solid rgba(219, 92, 99, 0.28);
   border-radius: 20px;
   font-size: 0.88rem;
   font-weight: 600;
@@ -143,8 +141,8 @@
 }
 
 .clockout-btn:hover:not(:disabled) {
-  background: rgba(224, 80, 80, 0.25);
-  border-color: rgba(224, 80, 80, 0.5);
+  background: rgba(219, 92, 99, 0.18);
+  border-color: rgba(219, 92, 99, 0.42);
 }
 
 .clockout-btn:disabled {
@@ -152,43 +150,39 @@
   cursor: not-allowed;
 }
 
-/* 오늘 일정: 2열 1행 */
 .schedule-card {
   grid-column: 2 / 4;
   grid-row: 1;
   min-height: 140px;
 }
 
-/* 채팅: 2열 2행 */
 .chat-preview {
   grid-column: 2;
   grid-row: 2;
   min-height: 160px;
 }
 
-/* 할 일: 3열 2행 */
 .tasks-card {
   grid-column: 3;
   grid-row: 2;
   min-height: 160px;
 }
 
-/* ── 공통 카드 ── */
 .card {
-  padding: 20px 24px;
+  padding: 22px 24px;
+  border-radius: 24px;
 }
 
 .card h3 {
-  font-size: 0.92rem;
-  font-weight: 600;
-  margin-bottom: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 18px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* ── 빈 상태 ── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -199,9 +193,9 @@
 .empty-state p {
   color: var(--text-secondary);
   font-size: 0.88rem;
+  margin: 0;
 }
 
-/* ── 일정 목록 ── */
 .schedule-card ul {
   list-style: none;
   padding: 0;
@@ -215,13 +209,13 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
 }
 
 .schedule-item.purple {
-  background: rgba(150, 128, 204, 0.1);
-  border-left: 3px solid var(--accent-purple);
+  background: var(--surface-tint);
+  border: 1px solid rgba(138, 114, 216, 0.18);
 }
 
 .schedule-icon {
@@ -246,7 +240,6 @@
   color: var(--text-primary);
 }
 
-/* ── 채팅 미리보기 ── */
 .chat-preview ul {
   list-style: none;
   padding: 0;
@@ -298,24 +291,98 @@
 .avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: var(--accent-purple);
+  border-radius: 12px;
+  background: var(--gradient-purple);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-on-accent);
   flex-shrink: 0;
 }
 
 .view-all {
   display: block;
   margin-top: 14px;
-  color: var(--accent-purple-light, #b39ddb);
+  color: var(--accent-purple-light);
   font-size: 0.85rem;
   text-decoration: none;
   transition: color 0.2s;
+}
+
+.view-all:hover {
+  color: var(--accent-purple);
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid transparent;
+}
+
+.task-item.done {
+  opacity: 0.72;
+}
+
+.task-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.task-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-done-badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: rgba(37, 164, 111, 0.14);
+  color: var(--success);
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+
+  .clock-card,
+  .schedule-card,
+  .chat-preview,
+  .tasks-card {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clock-outer {
+    width: 144px;
+    height: 144px;
+  }
 }
 
 .view-all:hover {
