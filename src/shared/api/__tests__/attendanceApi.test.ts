@@ -1,7 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, upsertWorkScheduleDay, deleteWorkScheduleDay } from '../attendanceApi'
+import {
+  getMyAttendance,
+  getAttendanceByDate,
+  clockIn,
+  clockOut,
+  getMyWorkSchedule,
+  upsertWorkScheduleDay,
+  deleteWorkScheduleDay,
+  getAllWorkSchedules,
+  getTeamWorkSchedules,
+} from '../attendanceApi'
 
 const WORK_SCHEDULES = [
   { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
@@ -9,6 +19,23 @@ const WORK_SCHEDULES = [
   { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
   { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
   { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+]
+
+const MEMBER_WORK_SCHEDULES = [
+  {
+    memberId: 1,
+    memberName: '김리더',
+    teamName: 'BACKEND',
+    workSchedules: WORK_SCHEDULES,
+  },
+  {
+    memberId: 2,
+    memberName: '박팀장',
+    teamName: 'FRONTEND',
+    workSchedules: [
+      { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
+    ],
+  },
 ]
 
 const server = setupServer(
@@ -21,6 +48,16 @@ const server = setupServer(
   }),
   http.delete('/api/v1/work-schedules/:dayOfWeek', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
+  http.get('/api/v1/work-schedules/all', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: MEMBER_WORK_SCHEDULES }),
+  ),
+  http.get('/api/v1/work-schedules/team/:teamId', ({ params }) =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: MEMBER_WORK_SCHEDULES.filter((item) => String(params.teamId) === (item.teamName === 'BACKEND' ? '1' : '2')),
+    }),
   ),
   http.get('/api/v1/attendances/me', ({ request }) => {
     const url = new URL(request.url)
@@ -110,5 +147,17 @@ describe('workScheduleApi', () => {
 
   it('deleteWorkScheduleDay() 특정 요일 근무 일정을 삭제한다', async () => {
     await expect(deleteWorkScheduleDay('MONDAY')).resolves.toBeNull()
+  })
+
+  it('getAllWorkSchedules() 전체 멤버 근무 일정을 반환한다', async () => {
+    const schedules = await getAllWorkSchedules()
+    expect(schedules).toHaveLength(2)
+    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: 'BACKEND' })
+  })
+
+  it('getTeamWorkSchedules() 특정 팀 멤버 근무 일정을 반환한다', async () => {
+    const schedules = await getTeamWorkSchedules(1)
+    expect(schedules).toHaveLength(1)
+    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: 'BACKEND' })
   })
 })
