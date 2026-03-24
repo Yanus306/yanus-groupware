@@ -1,20 +1,12 @@
 :root {
-  /* 로고 기반 핵심 색상: 하늘파랑 → 보라 → 핑크 */
   --blue: #72b8e8;
-  --purple: #9680cc;
+  --purple: #8a72d8;
   --pink: #d44a99;
+  --success: #25a46f;
+  --warning: #d89b22;
+  --error: #db5c63;
+  --sidebar-width: 232px;
 
-  /* 배경 */
-  --bg-dark: #111118;
-  --bg-card: rgba(22, 20, 34, 0.82);
-  --bg-sidebar: #0e0d16;
-
-  /* 텍스트 */
-  --text-primary: #eef0f6;
-  --text-secondary: #8e97b2;
-  --text-muted: #5a6280;
-
-  /* 액센트 (구버전 이름 호환) */
   --accent-purple: var(--purple);
   --accent-purple-light: #b09de0;
   --accent-purple-dark: #7056a8;
@@ -22,17 +14,62 @@
   --accent-cyan: #60c8e0;
   --accent-pink: var(--pink);
 
-  /* 그라데이션 - 로고색 기반, 최소화 */
-  --gradient-logo: linear-gradient(135deg, var(--blue) 0%, var(--purple) 50%, var(--pink) 100%);
-  --gradient-purple: var(--gradient-logo);
-  --gradient-purple-blue: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+  --gradient-logo: linear-gradient(135deg, #75b7ee 0%, #8b74d7 52%, #d64c9f 100%);
+  --gradient-purple: linear-gradient(135deg, #7d67cb 0%, #aa79e5 100%);
+  --gradient-purple-blue: linear-gradient(135deg, #8a72d8 0%, #72b8e8 100%);
 
-  /* 기타 */
-  --border-color: rgba(150, 160, 200, 0.1);
-  --success: #3db87a;
-  --warning: #d4a020;
-  --error: #e05050;
-  --sidebar-width: 200px;
+  --bg-app: #0f1220;
+  --bg-app-rgb: 15, 18, 32;
+  --bg-card: rgba(20, 24, 41, 0.78);
+  --bg-card-solid: #171b2f;
+  --bg-elevated: rgba(26, 31, 51, 0.9);
+  --bg-soft: rgba(255, 255, 255, 0.06);
+  --bg-soft-strong: rgba(255, 255, 255, 0.1);
+  --bg-input: rgba(10, 14, 28, 0.42);
+  --bg-sidebar: rgba(11, 15, 28, 0.88);
+  --bg-sidebar-solid: #101426;
+  --bg-overlay: rgba(6, 10, 22, 0.62);
+  --surface-tint: rgba(138, 114, 216, 0.12);
+  --surface-tint-strong: rgba(138, 114, 216, 0.18);
+  --border-color: rgba(164, 177, 214, 0.14);
+  --border-strong: rgba(164, 177, 214, 0.24);
+  --text-primary: #edf1ff;
+  --text-secondary: #a8b4d3;
+  --text-muted: #72809d;
+  --text-on-accent: #f8f7ff;
+  --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.24);
+  --shadow-strong: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --ring-color: rgba(138, 114, 216, 0.28);
+  --nav-hover: rgba(138, 114, 216, 0.12);
+  --nav-active: rgba(138, 114, 216, 0.2);
+  --bg-dark: var(--bg-app);
+}
+
+:root[data-theme='light'] {
+  --bg-app: #f4f7fb;
+  --bg-app-rgb: 244, 247, 251;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-solid: #ffffff;
+  --bg-elevated: rgba(255, 255, 255, 0.92);
+  --bg-soft: rgba(101, 117, 160, 0.08);
+  --bg-soft-strong: rgba(101, 117, 160, 0.14);
+  --bg-input: rgba(246, 248, 252, 0.96);
+  --bg-sidebar: rgba(251, 252, 255, 0.86);
+  --bg-sidebar-solid: #fbfcff;
+  --bg-overlay: rgba(116, 135, 171, 0.16);
+  --surface-tint: rgba(138, 114, 216, 0.1);
+  --surface-tint-strong: rgba(138, 114, 216, 0.16);
+  --border-color: rgba(104, 124, 166, 0.18);
+  --border-strong: rgba(104, 124, 166, 0.28);
+  --text-primary: #1f2840;
+  --text-secondary: #5d6b89;
+  --text-muted: #8893ab;
+  --text-on-accent: #ffffff;
+  --shadow-soft: 0 18px 40px rgba(126, 140, 176, 0.18);
+  --shadow-strong: 0 24px 64px rgba(116, 132, 167, 0.22);
+  --ring-color: rgba(138, 114, 216, 0.18);
+  --nav-hover: rgba(138, 114, 216, 0.08);
+  --nav-active: rgba(138, 114, 216, 0.14);
 }
 
 * {
@@ -42,17 +79,23 @@
 body {
   margin: 0;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  background: var(--bg-dark);
+  background:
+    radial-gradient(circle at top left, rgba(114, 184, 232, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(212, 74, 153, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(var(--bg-app-rgb), 0.98) 0%, rgba(var(--bg-app-rgb), 1) 100%);
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.2s ease;
 }
 
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse 70% 40% at 50% -10%, rgba(150, 128, 204, 0.1), transparent);
+  background:
+    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(150, 128, 204, 0.12), transparent),
+    linear-gradient(135deg, rgba(114, 184, 232, 0.04), transparent 32%, rgba(212, 74, 153, 0.05) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -66,12 +109,32 @@ body::before {
 a {
   color: var(--accent-purple-light);
   text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-purple);
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--ring-color);
+  outline-offset: 2px;
 }
 
 /* 아이콘/SVG - 흰색 배경 제거, 다크 테마 */
@@ -94,8 +157,36 @@ a svg,
 /* Glassmorphism - matches reference */
 .glass {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  border-radius: 20px;
+}
+
+.surface-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-heading h1,
+.section-heading h2,
+.section-heading h3,
+.section-heading p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 100%;
+  }
 }
