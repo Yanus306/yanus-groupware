@@ -90,6 +90,30 @@ export const authHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'created', data: null }, { status: 201 })
   }),
 
+  http.post('/api/v1/auth/refresh', async ({ request }) => {
+    const body = await request.json() as { refreshToken?: string }
+    const refreshToken = body.refreshToken ?? ''
+    const userId = refreshToken.replace('refresh-', '')
+    const member = mockUsers.find((user) => user.id === userId)
+
+    if (!member || member.status === 'INACTIVE') {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '리프레시 토큰이 만료되었습니다', data: null },
+        { status: 401 },
+      )
+    }
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        accessToken: `mock-token-${member.id}`,
+        refreshToken: `refresh-${member.id}`,
+        tokenType: 'Bearer',
+      },
+    })
+  }),
+
   http.get('/api/v1/auth/me', ({ request }) => {
     const authorization = request.headers.get('Authorization')
     if (!authorization?.startsWith('Bearer ')) {
