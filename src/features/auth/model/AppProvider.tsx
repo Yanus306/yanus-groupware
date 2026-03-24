@@ -13,6 +13,7 @@ export interface AppState {
 const AppContext = createContext<{
   state: AppState
   isAdmin: boolean
+  isTeamLead: boolean
   isInitializing: boolean
   loadUser: (user: User) => void
   loadMembers: (users: User[]) => void
@@ -42,8 +43,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsInitializing(false))
   }, [])
 
-  const isAdmin =
-    state.currentUser?.role === 'ADMIN' || state.currentUser?.role === 'TEAM_LEAD'
+  const isAdmin = state.currentUser?.role === 'ADMIN'
+  const isTeamLead = state.currentUser?.role === 'TEAM_LEAD'
 
   const loadUser = useCallback((user: User) => {
     setState((prev) => ({ ...prev, currentUser: user }))
@@ -60,7 +61,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider
-      value={{ state, isAdmin: !!isAdmin, isInitializing, loadUser, loadMembers, logout }}
+      value={{
+        state,
+        isAdmin: !!isAdmin,
+        isTeamLead: !!isTeamLead,
+        isInitializing,
+        loadUser,
+        loadMembers,
+        logout,
+      }}
     >
       {children}
     </AppContext.Provider>

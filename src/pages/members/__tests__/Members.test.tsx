@@ -21,6 +21,7 @@ vi.mock('../../../features/auth/model', () => ({
       ],
     },
     isAdmin: true,
+    isTeamLead: false,
     loadMembers: mockLoadMembers,
   }),
 }))

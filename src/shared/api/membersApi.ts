@@ -1,9 +1,13 @@
 import { baseClient } from './baseClient'
-import type { User, UserStatus } from '../../entities/user/model/types'
+import type { Team, User, UserRole, UserStatus } from '../../entities/user/model/types'
 
 export interface ProfileUpdatePayload {
   name?: string
   password?: string
+}
+
+export interface UpdateMemberTeamPayload {
+  teamId: number
 }
 
 // OpenAPI MemberResponse: id는 integer(int64) — User.id(string)로 변환 필요
@@ -27,8 +31,12 @@ function toUser(m: MemberResponse): User {
   }
 }
 
-export const getMembers = async (): Promise<User[]> => {
-  const list = await baseClient.get<MemberResponse[]>('/api/v1/members')
+export const getMembers = async (filters?: { teamName?: Team; role?: UserRole }): Promise<User[]> => {
+  const params = new URLSearchParams()
+  if (filters?.teamName) params.set('teamName', filters.teamName)
+  if (filters?.role) params.set('role', filters.role)
+  const query = params.toString()
+  const list = await baseClient.get<MemberResponse[]>(`/api/v1/members${query ? `?${query}` : ''}`)
   return list.map(toUser)
 }
 
@@ -44,6 +52,9 @@ export const getMyProfile = async (): Promise<User> => {
 
 export const updateMemberRole = (id: string, role: string) =>
   baseClient.patch<null>(`/api/v1/members/${id}/role`, { role })
+
+export const updateMemberTeam = (id: string, payload: UpdateMemberTeamPayload) =>
+  baseClient.patch<null>(`/api/v1/members/${id}/team`, payload)
 
 export const deactivateMember = (id: string) =>
   baseClient.delete<null>(`/api/v1/members/${id}`)
