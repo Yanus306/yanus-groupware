@@ -22,6 +22,7 @@ function handleUnauthorized() {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -30,11 +31,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   })
-
-  if (res.status === 401) {
-    handleUnauthorized()
-    throw new ApiError(401, '인증이 만료되었습니다')
-  }
 
   if (!res.ok) {
     let message = `요청 실패: ${res.status}`
@@ -45,6 +41,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       if (data.code) code = data.code
     } catch {
       // Ignore non-JSON error bodies and keep the fallback message.
+    }
+    if (res.status === 401 && hasAuthToken) {
+      handleUnauthorized()
     }
     throw new ApiError(res.status, message, code)
   }
@@ -63,26 +62,32 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 async function requestBlob(path: string): Promise<Blob> {
+  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: getAuthHeaders(),
   })
   if (res.status === 401) {
-    handleUnauthorized()
-    throw new ApiError(401, '인증이 만료되었습니다')
+    if (hasAuthToken) {
+      handleUnauthorized()
+    }
+    throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
   if (!res.ok) throw new ApiError(res.status, `다운로드 실패: ${res.status}`)
   return res.blob()
 }
 
 async function requestUpload<T>(path: string, formData: FormData): Promise<T> {
+  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: getAuthHeaders(), // Content-Type 미설정 → 브라우저가 multipart boundary 자동 지정
     body: formData,
   })
   if (res.status === 401) {
-    handleUnauthorized()
-    throw new ApiError(401, '인증이 만료되었습니다')
+    if (hasAuthToken) {
+      handleUnauthorized()
+    }
+    throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
   if (!res.ok) {
     let message = `업로드 실패: ${res.status}`

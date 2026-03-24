@@ -160,19 +160,19 @@
   color: var(--text-secondary);
 }
 
-.header-actions {
+.chat-header-actions {
   display: flex;
   gap: 8px;
 }
 
-.header-actions button {
+.chat-header-actions button {
   padding: 8px;
   color: var(--text-secondary);
   border-radius: 10px;
   background: transparent;
 }
 
-.header-actions button:hover {
+.chat-header-actions button:hover {
   background: var(--nav-hover);
   color: var(--text-primary);
 }
@@ -562,6 +562,12 @@
     padding: 16px;
     flex-wrap: wrap;
     align-items: flex-start;
+  }
+
+  .chat-header-actions {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
   }
 
   .chat-messages {

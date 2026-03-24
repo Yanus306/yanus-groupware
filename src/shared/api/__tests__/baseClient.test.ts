@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { baseClient, ApiError } from '../baseClient'
+import { baseClient } from '../baseClient'
 
 const server = setupServer()
 
@@ -30,9 +30,16 @@ describe('baseClient', () => {
 
   it('401 응답 시 ApiError를 던진다', async () => {
     server.use(
-      http.get('/test-401', () => HttpResponse.json({ message: '인증 실패' }, { status: 401 })),
+      http.get('/test-401', () =>
+        HttpResponse.json({ code: 'UNAUTHORIZED', message: '인증 실패', data: null }, { status: 401 }),
+      ),
     )
-    await expect(baseClient.get('/test-401')).rejects.toThrow(ApiError)
+    await expect(baseClient.get('/test-401')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 401,
+      code: 'UNAUTHORIZED',
+      message: '인증 실패',
+    })
   })
 
   it('4xx 응답 시 ApiError를 던진다', async () => {

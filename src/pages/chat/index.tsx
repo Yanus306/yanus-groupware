@@ -244,7 +244,7 @@ export function Chat() {
             <h3># {activeChannel?.name || 'Design Team'}</h3>
             <span className="members-count">23 members</span>
           </div>
-          <div className="header-actions">
+          <div className="chat-header-actions">
             <button><Search size={18} /></button>
             <button>⋮</button>
           </div>
