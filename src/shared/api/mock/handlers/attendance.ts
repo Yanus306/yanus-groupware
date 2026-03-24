@@ -93,4 +93,10 @@ export const attendanceHandlers = [
     }
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
+
+  http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params }) => {
+    const dayOfWeek = String(params.dayOfWeek) as DayOfWeek
+    workSchedules = workSchedules.filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
+  }),
 ]

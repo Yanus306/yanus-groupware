@@ -36,6 +36,20 @@ afterAll(() => server.close())
 const wrapper = ({ children }: { children: ReactNode }) => <AppProvider>{children}</AppProvider>
 
 describe('SetWorkDaysPersonal', () => {
+  it('저장된 스케줄이 없으면 처음에는 모든 요일이 휴무 상태다', async () => {
+    server.use(
+      http.get('/api/v1/work-schedules/me', () =>
+        HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+      ),
+    )
+
+    render(<SetWorkDaysPersonal />, { wrapper })
+
+    await waitFor(() => {
+      expect(screen.getAllByText('휴무').length).toBe(7)
+    })
+  })
+
   it('7개의 요일 이름이 렌더링된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
@@ -48,7 +62,7 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
       const checkInLabels = screen.getAllByText('출근')
-      expect(checkInLabels.length).toBe(5) // 월-금 5개
+      expect(checkInLabels.length).toBe(5)
     })
   })
 
@@ -56,7 +70,7 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
       const checkInLabels = screen.getAllByText('출근')
-      expect(checkInLabels.length).toBe(5) // 토/일 제외
+      expect(checkInLabels.length).toBe(5)
     })
   })
 
@@ -64,9 +78,8 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => expect(screen.getAllByText('출근').length).toBe(5))
 
-    // Sat 토글 클릭
     const toggleButtons = screen.getAllByRole('button').filter((btn) => btn.classList.contains('toggle'))
-    fireEvent.click(toggleButtons[5]) // index 5 = Sat
+    fireEvent.click(toggleButtons[5])
 
     await waitFor(() => {
       const checkInLabels = screen.getAllByText('출근')

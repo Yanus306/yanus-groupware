@@ -43,3 +43,6 @@ export const getMyWorkSchedule = () =>
 
 export const upsertWorkScheduleDay = (body: WorkSchedulePayload) =>
   baseClient.put<WorkScheduleItem>('/api/v1/work-schedules', body)
+
+export const deleteWorkScheduleDay = (dayOfWeek: DayOfWeek) =>
+  baseClient.delete<null>(`/api/v1/work-schedules/${dayOfWeek}`)
