@@ -58,7 +58,7 @@
 .schedule-summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 14px;
   flex-wrap: wrap;
   padding: 16px 18px;
@@ -69,9 +69,12 @@
 
 .schedule-summary p {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   color: var(--text-secondary);
   font-size: 0.83rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .summary-chip {
@@ -289,8 +292,11 @@
   font-size: 0.85rem;
 }
 
-.save-btn {
+.schedule-save-btn {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 12px 24px;
   background: var(--gradient-purple);
   color: var(--text-on-accent);
@@ -301,12 +307,12 @@
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.save-btn:disabled {
+.schedule-save-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.save-btn:hover:not(:disabled) {
+.schedule-save-btn:hover:not(:disabled) {
   opacity: 0.92;
   transform: translateY(-1px);
 }
@@ -358,7 +364,7 @@
     font-size: 0.76rem;
   }
 
-  .save-btn {
+  .schedule-save-btn {
     width: 100%;
     justify-content: center;
   }

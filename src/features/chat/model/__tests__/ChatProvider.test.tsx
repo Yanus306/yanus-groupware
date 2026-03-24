@@ -90,6 +90,16 @@ describe('ChatProvider', () => {
       })
       expect(result.current.messages.length).toBe(before + 1)
     })
+
+    it('개인 대화방에도 메시지를 추가할 수 있다', () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      act(() => {
+        result.current.setActiveChannelId('dm-2')
+        result.current.addMessage('dm-2', '개인 메시지')
+      })
+      const directMessages = result.current.getMessagesByChannel('dm-2')
+      expect(directMessages.at(-1)?.content).toBe('개인 메시지')
+    })
   })
 
   describe('getMessagesByChannel', () => {
