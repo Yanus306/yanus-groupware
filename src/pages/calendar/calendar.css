@@ -2,8 +2,10 @@
   display: flex;
   gap: 0;
   height: calc(100vh - 48px);
+  max-height: calc(100vh - 48px);
   margin: -24px;
   background: var(--bg-dark);
+  overflow: hidden;
 }
 
 .calendar-main {

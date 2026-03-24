@@ -21,7 +21,7 @@ describe('Drive 페이지', () => {
 
   it('업로드 버튼이 렌더링된다', () => {
     render(<Drive />)
-    expect(screen.getByText('업로드')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /업로드/ })).toBeInTheDocument()
   })
 
   it('파일 목록을 로드하면 파일명이 표시된다', async () => {
@@ -44,6 +44,14 @@ describe('Drive 페이지', () => {
     await waitFor(() => {
       const deleteBtns = screen.getAllByTitle('삭제')
       expect(deleteBtns.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('파일 로드 후 요약 카드에 총 파일 수가 표시된다', async () => {
+    render(<Drive />)
+    await waitFor(() => {
+      expect(screen.getByText('총 파일')).toBeInTheDocument()
+      expect(screen.getByText('3개')).toBeInTheDocument()
     })
   })
 })

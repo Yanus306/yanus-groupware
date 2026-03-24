@@ -13,6 +13,15 @@ main          ← 프로덕션 (Vercel 자동 배포)
        └─ hotfix/<이슈명>  ← main에서 분기
 ```
 
+### 머지 역할 분담
+
+- 기능 개발은 반드시 작업 브랜치에서 진행합니다.
+- 작업 브랜치에서 바로 `main`으로 PR을 올리지 않습니다.
+- 기본 흐름은 `작업 브랜치 → develop PR → develop 머지 → develop → main PR` 입니다.
+- `develop` 머지는 작업 정리 후 진행할 수 있습니다.
+- `main` 머지는 배포 성격이므로 저장소 관리자만 진행합니다.
+- 즉, `main` 대상 PR은 `develop` 브랜치에서만 올립니다.
+
 ### 브랜치 생성 규칙
 
 ```bash
@@ -90,6 +99,19 @@ feat(auth): add login, logout, signup pages
 | `fix/*` | `develop` | CI 통과 필수 |
 | `develop` | `main` | CI 통과 + 브라우저 렌더링 확인 |
 | `hotfix/*` | `main` + `develop` | CI 통과 필수 |
+
+### PR 생성 순서
+
+1. `develop`에서 작업 브랜치를 분기합니다.
+2. 기능 구현과 테스트를 작업 브랜치에서 마칩니다.
+3. 작업 브랜치에서 `develop` 대상으로 PR을 생성합니다.
+4. `develop` 머지 후 필요할 때 `develop`에서 `main` 대상으로 배포 PR을 생성합니다.
+
+### 금지 사항
+
+- 작업 브랜치에서 곧바로 `main` 대상으로 PR 생성 금지
+- `main` 직접 push 금지
+- `develop`을 거치지 않은 배포 PR 생성 금지
 
 ### PR 제목 형식
 

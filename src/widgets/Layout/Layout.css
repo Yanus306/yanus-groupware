@@ -149,6 +149,9 @@
   margin-left: var(--sidebar-width);
   padding: 24px 28px 28px;
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .content-topbar {

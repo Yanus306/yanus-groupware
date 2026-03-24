@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, upsertWorkScheduleDay } from '../attendanceApi'
+import { getMyAttendance, getAttendanceByDate, clockIn, clockOut, getMyWorkSchedule, upsertWorkScheduleDay, deleteWorkScheduleDay } from '../attendanceApi'
 
 const WORK_SCHEDULES = [
   { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
@@ -19,6 +19,9 @@ const server = setupServer(
     const body = await request.json() as Record<string, string>
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
   }),
+  http.delete('/api/v1/work-schedules/:dayOfWeek', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
   http.get('/api/v1/attendances/me', ({ request }) => {
     const url = new URL(request.url)
     const date = url.searchParams.get('date')
@@ -103,5 +106,9 @@ describe('workScheduleApi', () => {
     expect(result.dayOfWeek).toBe('MONDAY')
     expect(result.startTime).toBe('08:00:00')
     expect(result.endTime).toBe('17:00:00')
+  })
+
+  it('deleteWorkScheduleDay() 특정 요일 근무 일정을 삭제한다', async () => {
+    await expect(deleteWorkScheduleDay('MONDAY')).resolves.toBeNull()
   })
 })
