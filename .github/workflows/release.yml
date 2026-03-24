@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  publish-release:
+    name: GitHub Release 발행
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 릴리스 PR 기준으로 태그와 Release 생성
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releaseTitlePattern = /^release:\s*(v\d+\.\d+\.\d+)$/i
+            const { owner, repo } = context.repo
+            const commit_sha = context.sha
+
+            const associatedPrs = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {
+                owner,
+                repo,
+                commit_sha,
+              },
+            )
+
+            const releasePr = associatedPrs.find((pr) => {
+              if (!pr.merged_at) return false
+              return releaseTitlePattern.test(pr.title.trim())
+            })
+
+            if (!releasePr) {
+              core.notice('release: vX.Y.Z 형식의 머지된 PR을 찾지 못해 GitHub Release 생성을 건너뜁니다.')
+              return
+            }
+
+            const [, tagName] = releasePr.title.trim().match(releaseTitlePattern)
+            const releaseBody = (releasePr.body || `Release ${tagName}`).trim()
+
+            try {
+              await github.rest.git.getRef({
+                owner,
+                repo,
+                ref: `tags/${tagName}`,
+              })
+              core.notice(`태그 ${tagName} 이 이미 존재합니다.`)
+            } catch (error) {
+              if (error.status !== 404) throw error
+
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/tags/${tagName}`,
+                sha: commit_sha,
+              })
+
+              core.notice(`태그 ${tagName} 을 ${commit_sha} 에 생성했습니다.`)
+            }
+
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag: tagName,
+              })
+
+              await github.rest.repos.updateRelease({
+                owner,
+                repo,
+                release_id: existingRelease.data.id,
+                tag_name: tagName,
+                name: tagName,
+                body: releaseBody,
+                draft: false,
+                prerelease: false,
+              })
+
+              core.notice(`기존 GitHub Release ${tagName} 을 업데이트했습니다.`)
+            } catch (error) {
+              if (error.status !== 404) throw error
+
+              await github.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: tagName,
+                name: tagName,
+                body: releaseBody,
+                draft: false,
+                prerelease: false,
+                target_commitish: commit_sha,
+              })
+
+              core.notice(`GitHub Release ${tagName} 을 생성했습니다.`)
+            }
