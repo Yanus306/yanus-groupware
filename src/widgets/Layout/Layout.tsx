@@ -1,6 +1,7 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck } from 'lucide-react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon } from 'lucide-react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
+import { useTheme } from '../../shared/theme'
 import logoImg from '../../assets/logo.png'
 import './Layout.css'
 
@@ -16,9 +17,14 @@ const navItems = [
 ]
 
 export function Layout() {
+  const location = useLocation()
   const navigate = useNavigate()
   const { state, isAdmin, logout } = useApp()
+  const { theme, toggleTheme } = useTheme()
   const { currentUser } = state
+  const currentNav = navItems.find(({ to }) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)))
+  const pageTitle = location.pathname === '/admin' ? '관리자' : currentNav?.label ?? '홈'
+  const themeLabel = theme === 'dark' ? '라이트 모드' : '다크 모드'
 
   function handleLogout() {
     logout()
@@ -28,8 +34,23 @@ export function Layout() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="logo">
-          <img src={logoImg} alt="yANUs" className="logo-img" />
+        <div className="logo-panel">
+          <div className="logo">
+            <img src={logoImg} alt="yANUs" className="logo-img" />
+            <div className="logo-copy">
+              <strong>yANUs Groupware</strong>
+              <span>클럽 운영을 더 매끄럽게</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={themeLabel}
+            title={themeLabel}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
         <nav className="nav">
           {navItems.map(({ to, icon: Icon, label }) => (
@@ -73,7 +94,21 @@ export function Layout() {
         )}
       </aside>
       <main className="main-content">
-        <Outlet />
+        <header className="content-topbar">
+          <div>
+            <p className="content-kicker">Workspace</p>
+            <h1>{pageTitle}</h1>
+          </div>
+          {currentUser && (
+            <div className="content-user-chip">
+              <span className="content-user-status" />
+              <span>{currentUser.team}</span>
+            </div>
+          )}
+        </header>
+        <div className="content-body">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { Settings } from '../index'
 
 const mockUpdateMyProfile = vi.fn()
+const mockSetTheme = vi.fn()
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
@@ -13,6 +14,14 @@ vi.mock('../../../features/auth/model', () => ({
 
 vi.mock('../../../shared/api/membersApi', () => ({
   updateMyProfile: (...args: unknown[]) => mockUpdateMyProfile(...args),
+}))
+
+vi.mock('../../../shared/theme', () => ({
+  useTheme: () => ({
+    theme: 'dark',
+    setTheme: mockSetTheme,
+    toggleTheme: vi.fn(),
+  }),
 }))
 
 describe('Settings 페이지', () => {
@@ -48,6 +57,15 @@ describe('Settings 페이지', () => {
     render(<Settings />)
     fireEvent.click(screen.getByText('보안'))
     expect(screen.getByText('비밀번호 변경')).toBeInTheDocument()
+  })
+
+  it('테마 카드 클릭 시 setTheme가 호출된다', () => {
+    render(<Settings />)
+
+    fireEvent.click(screen.getByText('테마'))
+    fireEvent.click(screen.getByRole('button', { name: /라이트 모드/ }))
+
+    expect(mockSetTheme).toHaveBeenCalledWith('light')
   })
 
   describe('비밀번호 변경', () => {

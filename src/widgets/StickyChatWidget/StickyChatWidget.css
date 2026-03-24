@@ -16,7 +16,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-strong);
   display: flex;
   flex-direction: column;
 }
@@ -69,7 +69,7 @@
 
 .chat-msg.ai {
   align-self: flex-start;
-  background: rgba(148, 163, 184, 0.15);
+  background: var(--bg-soft);
 }
 
 .chat-input-wrap {
@@ -84,7 +84,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
-  background: rgba(15, 15, 26, 0.5);
+  background: var(--bg-input);
   color: var(--text-primary);
   font-size: 0.9rem;
 }
@@ -96,7 +96,7 @@
 .send-btn {
   padding: 10px 14px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 10px;
 }
 
@@ -113,11 +113,11 @@
   gap: 10px;
   padding: 14px 22px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 24px;
   font-weight: 600;
   font-size: 0.9rem;
-  box-shadow: 0 4px 28px rgba(124, 58, 237, 0.5);
+  box-shadow: var(--shadow-soft);
 }
 
 .sticky-toggle:hover {
@@ -132,12 +132,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(124, 58, 237, 0.4);
+  background: var(--surface-tint-strong);
   color: var(--text-primary);
 }
 
 .sticky-bubble:hover {
-  background: rgba(124, 58, 237, 0.6);
+  background: rgba(138, 114, 216, 0.32);
 }
 
 @media (max-width: 768px) {
