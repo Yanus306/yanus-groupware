@@ -53,8 +53,8 @@ describe('SetWorkDaysPersonal', () => {
   it('7개의 요일 이름이 렌더링된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      expect(screen.getByText('Mon')).toBeInTheDocument()
-      expect(screen.getByText('Sun')).toBeInTheDocument()
+      expect(screen.getByText('월')).toBeInTheDocument()
+      expect(screen.getByText('일')).toBeInTheDocument()
     })
   })
 

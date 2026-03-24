@@ -3,7 +3,7 @@ import { useWorkSchedule } from '../model/useWorkSchedule'
 import type { WeekPattern } from '../model/useWorkSchedule'
 import './SetWorkDaysPersonal.css'
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일']
 const WEEK_PATTERN_OPTIONS: { value: WeekPattern; label: string }[] = [
   { value: 'EVERY', label: '매주' },
   { value: 'FIRST', label: '1주차' },

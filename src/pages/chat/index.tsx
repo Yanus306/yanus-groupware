@@ -8,6 +8,17 @@ import { getMembers } from '../../shared/api/membersApi'
 import './chat.css'
 
 const EMOJIS = ['😊', '👍', '❤️', '😂', '😢', '😍', '🔥', '✨', '🎉', '🙏', '👋', '💯', '✅', '❌', '⭐', '💪']
+const CHANNEL_LABELS: Record<string, string> = {
+  General: '전체 공지',
+  'Design Team': '디자인팀',
+  'Dev Team': '개발팀',
+}
+const TEAM_LABELS: Record<string, string> = {
+  BACKEND: '백엔드',
+  FRONTEND: '프론트엔드',
+  AI: 'AI',
+  SECURITY: '보안',
+}
 
 function formatTime(date: Date): string {
   const now = new Date()
@@ -253,42 +264,42 @@ export function Chat() {
 
   const roomTitle = isDirectRoom
     ? activeDirectUser?.name ?? '대화방'
-    : `# ${activeChannel?.name || 'Design Team'}`
+    : `# ${CHANNEL_LABELS[activeChannel?.name ?? ''] ?? activeChannel?.name ?? '디자인팀'}`
 
   const roomMeta = isDirectRoom
-    ? `${activeDirectUser?.team ?? '알 수 없는 팀'} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
-    : '23 members'
+    ? `${TEAM_LABELS[activeDirectUser?.team ?? ''] ?? activeDirectUser?.team ?? '알 수 없는 팀'} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
+    : '23명 참여 중'
 
   return (
     <div className={`chat-page ${isMobileRoomOpen ? 'room-open-mobile' : 'list-open-mobile'}`}>
       <aside className="chat-sidebar glass">
         <div className="chat-list-head">
-          <h2>Messages</h2>
+          <h2>대화 목록</h2>
           <p>대화할 채널이나 대상을 먼저 선택한 뒤 대화방으로 들어갑니다.</p>
         </div>
         <div className="search-wrap">
           <Search size={18} />
           <input
-            placeholder="채널 또는 대상을 검색하세요."
+            placeholder="채널이나 대상을 검색하세요."
             value={roomQuery}
             onChange={(e) => setRoomQuery(e.target.value)}
           />
         </div>
         <section>
-          <h4>CHANNELS</h4>
+          <h4>채널</h4>
           {filteredChannels.map((ch) => (
             <div
               key={ch.id}
               className={`channel-item ${ch.id === activeChannelId ? 'active' : ''}`}
               onClick={() => openRoom(ch.id)}
             >
-              <span className="channel-name"># {ch.name}</span>
+              <span className="channel-name"># {CHANNEL_LABELS[ch.name] ?? ch.name}</span>
               <span className="channel-last">{ch.lastMessage}</span>
             </div>
           ))}
         </section>
         <section>
-          <h4>DIRECT MESSAGES</h4>
+          <h4>개인 대화</h4>
           {filteredDirectRooms.map((u) => (
             <div
               key={u.id}
@@ -298,10 +309,10 @@ export function Chat() {
               <span className="dm-avatar">{u.name[0]}</span>
               <div className="dm-copy">
                 <span className="dm-name">{u.name}</span>
-                <span className="dm-room-hint">{u.team}</span>
+                <span className="dm-room-hint">{TEAM_LABELS[u.team] ?? u.team}</span>
               </div>
               <span className={`dm-status ${u.online ? 'online' : 'offline'}`}>
-                • {u.online ? 'online' : 'away'}
+                • {u.online ? '온라인' : '자리 비움'}
               </span>
             </div>
           ))}
@@ -381,7 +392,7 @@ export function Chat() {
             />
             <button className="send-btn" onClick={handleSend}>
               <Send size={18} />
-              Send
+              보내기
             </button>
           </div>
           <div className="format-toolbar">
