@@ -57,7 +57,7 @@ function renderAdmin() {
 describe('Admin 페이지', () => {
   it('페이지 제목이 렌더링된다', () => {
     renderAdmin()
-    expect(screen.getByText('관리자 대시보드')).toBeInTheDocument()
+    expect(screen.getByText('출근 현황과 멤버 상태를 한 곳에서 관리합니다.')).toBeInTheDocument()
   })
 
   it('출근 현황 탭이 기본으로 활성화된다', () => {

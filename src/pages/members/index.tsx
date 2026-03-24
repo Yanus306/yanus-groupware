@@ -6,20 +6,20 @@ import type { UserRole } from '../../entities/user/model/types'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
-const teams = ['All Teams', 'BACKEND', 'FRONTEND', 'AI', 'SECURITY']
-const roles = ['All Roles', 'ADMIN', 'TEAM_LEAD', 'MEMBER']
+const teams = ['전체 팀', 'BACKEND', 'FRONTEND', 'AI', 'SECURITY']
+const roles = ['전체 역할', 'ADMIN', 'TEAM_LEAD', 'MEMBER']
 
 const roleLabels: Record<string, string> = {
-  ADMIN: 'Admin',
-  TEAM_LEAD: 'Team Lead',
-  MEMBER: 'Member',
+  ADMIN: '관리자',
+  TEAM_LEAD: '팀장',
+  MEMBER: '멤버',
 }
 
 const teamLabels: Record<string, string> = {
-  BACKEND: 'Backend',
-  FRONTEND: 'Frontend',
+  BACKEND: '백엔드',
+  FRONTEND: '프론트엔드',
   AI: 'AI',
-  SECURITY: 'Security',
+  SECURITY: '보안',
 }
 
 const statusLabels: Record<string, string> = {
@@ -32,8 +32,8 @@ const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 export function Members() {
   const { state, isAdmin, loadMembers } = useApp()
   const [search, setSearch] = useState('')
-  const [teamFilter, setTeamFilter] = useState('All Teams')
-  const [roleFilter, setRoleFilter] = useState('All Roles')
+  const [teamFilter, setTeamFilter] = useState('전체 팀')
+  const [roleFilter, setRoleFilter] = useState('전체 역할')
   const [changeRoleFor, setChangeRoleFor] = useState<{ id: string; name: string } | null>(null)
   const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
   const [showInvite, setShowInvite] = useState(false)
@@ -48,8 +48,8 @@ export function Members() {
 
   const filtered = state.users.filter((u) => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase())
-    const matchTeam = teamFilter === 'All Teams' || u.team === teamFilter
-    const matchRole = roleFilter === 'All Roles' || u.role === roleFilter
+    const matchTeam = teamFilter === '전체 팀' || u.team === teamFilter
+    const matchRole = roleFilter === '전체 역할' || u.role === roleFilter
     return matchSearch && matchTeam && matchRole
   })
 
@@ -132,10 +132,10 @@ export function Members() {
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
       <header className="members-header">
-        <h1>
-          {isAdmin ? 'Member Management' : '멤버 목록'}
-          {isAdmin && <span className="admin-badge">! Admin Only</span>}
-        </h1>
+        <div className="members-header-copy">
+          <p>멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.</p>
+          {isAdmin && <span className="admin-badge">관리자 전용</span>}
+        </div>
         {isAdmin && (
           <button className="invite-btn glass" onClick={() => setShowInvite(true)}>
             <UserPlus size={16} />
@@ -147,38 +147,42 @@ export function Members() {
       <div className="filters-row">
         <div className="search-wrap glass">
           <Search size={18} />
-          <input placeholder="Search Members..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input placeholder="멤버 이름 검색" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="filter-group">
-          <span className="filter-label">Team</span>
+          <span className="filter-label">팀</span>
           <div className="filter-btns">
             {teams.map((t) => (
-              <button key={t} className={teamFilter === t ? 'active' : ''} onClick={() => setTeamFilter(t)}>{t}</button>
+              <button key={t} className={teamFilter === t ? 'active' : ''} onClick={() => setTeamFilter(t)}>
+                {teamLabels[t] ?? t}
+              </button>
             ))}
           </div>
         </div>
         <div className="filter-group">
-          <span className="filter-label">Role</span>
+          <span className="filter-label">역할</span>
           <div className="filter-btns">
             {roles.map((r) => (
-              <button key={r} className={roleFilter === r ? 'active' : ''} onClick={() => setRoleFilter(r)}>{r}</button>
+              <button key={r} className={roleFilter === r ? 'active' : ''} onClick={() => setRoleFilter(r)}>
+                {roleLabels[r] ?? r}
+              </button>
             ))}
           </div>
         </div>
-        <div className="total-members glass">Total Members: {state.users.length}</div>
+        <div className="total-members glass">전체 멤버 {state.users.length}명</div>
       </div>
 
       <div className="members-content">
         <div className="table-section glass">
-          <h3>Member List Table.</h3>
+          <h3>멤버 목록</h3>
           <table className="members-table">
             <thead>
               <tr>
-                <th>Profile</th>
-                <th>Current Team</th>
-                <th>Role</th>
+                <th>프로필</th>
+                <th>팀</th>
+                <th>역할</th>
                 {isAdmin && <th>상태</th>}
-                {isAdmin && <th>Actions</th>}
+                {isAdmin && <th>관리</th>}
               </tr>
             </thead>
             <tbody>
@@ -213,7 +217,7 @@ export function Members() {
                   {isAdmin && (
                     <td className="actions-cell">
                       <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
-                        Change Role <ChevronDown size={14} />
+                        역할 변경 <ChevronDown size={14} />
                       </button>
                       <button
                         className="action-btn deactivate-btn"
@@ -231,7 +235,7 @@ export function Members() {
         </div>
 
         <aside className="stats-sidebar glass">
-          <h3>Members per Team</h3>
+          <h3>팀별 멤버 수</h3>
           <div className="bar-chart">
             {Object.entries(teamLabels).map(([key, label]) => {
               const count = state.users.filter((u) => u.team === key).length
@@ -243,11 +247,11 @@ export function Members() {
               )
             })}
           </div>
-          <h3>Role Distribution</h3>
+          <h3>역할 분포</h3>
           <div className="pie-legend">
-            <span><i style={{ background: 'var(--accent-purple)' }} /> Admin {state.users.filter((u) => u.role === 'ADMIN').length}</span>
-            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> Team Lead {state.users.filter((u) => u.role === 'TEAM_LEAD').length}</span>
-            <span><i style={{ background: 'var(--text-secondary)' }} /> Member {state.users.filter((u) => u.role === 'MEMBER').length}</span>
+            <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {state.users.filter((u) => u.role === 'ADMIN').length}</span>
+            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {state.users.filter((u) => u.role === 'TEAM_LEAD').length}</span>
+            <span><i style={{ background: 'var(--text-secondary)' }} /> 멤버 {state.users.filter((u) => u.role === 'MEMBER').length}</span>
           </div>
         </aside>
       </div>
@@ -255,7 +259,7 @@ export function Members() {
       {changeRoleFor && (
         <div className="modal-overlay" onClick={() => setChangeRoleFor(null)}>
           <div className="change-role-modal glass" onClick={(e) => e.stopPropagation()}>
-            <h3>Change Role — {changeRoleFor.name}</h3>
+            <h3>역할 변경 - {changeRoleFor.name}</h3>
             <div className="role-options">
               {ALL_ROLES.map((r) => (
                 <div key={r} className={"role-option " + (selectedRole === r ? 'selected' : '')} onClick={() => setSelectedRole(r)}>
@@ -267,9 +271,9 @@ export function Members() {
               ))}
             </div>
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setChangeRoleFor(null)}>Cancel</button>
+              <button className="cancel-btn" onClick={() => setChangeRoleFor(null)}>취소</button>
               <button className="confirm-btn" disabled={saving} onClick={handleConfirmRoleChange}>
-                {saving ? '저장 중...' : 'Confirm Change'}
+                {saving ? '저장 중...' : '변경 저장'}
               </button>
             </div>
           </div>
