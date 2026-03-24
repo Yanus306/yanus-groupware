@@ -18,13 +18,13 @@ import { getTeams } from '../../shared/api/teamsApi'
 import './attendance.css'
 
 const DAY_LABELS: Record<string, string> = {
-  MONDAY: 'Mon',
-  TUESDAY: 'Tue',
-  WEDNESDAY: 'Wed',
-  THURSDAY: 'Thu',
-  FRIDAY: 'Fri',
-  SATURDAY: 'Sat',
-  SUNDAY: 'Sun',
+  MONDAY: '월',
+  TUESDAY: '화',
+  WEDNESDAY: '수',
+  THURSDAY: '목',
+  FRIDAY: '금',
+  SATURDAY: '토',
+  SUNDAY: '일',
 }
 
 const ORDERED_WORK_DAYS = [
@@ -145,19 +145,19 @@ export function Attendance() {
           {isAdmin && (
             <button className="export-btn glass" onClick={handleExport}>
               <Download size={18} />
-              Export CSV
+              CSV 내보내기
             </button>
           )}
           <div className="date-range glass">{todayStr}</div>
           <div className="filter-tabs">
             <button className={filter === 'week' ? 'active' : ''} onClick={() => setFilter('week')}>
-              This Week
+              이번 주
             </button>
             <button className={filter === 'month' ? 'active' : ''} onClick={() => setFilter('month')}>
-              This Month
+              이번 달
             </button>
             <button className={filter === 'custom' ? 'active' : ''} onClick={() => setFilter('custom')}>
-              Custom
+              직접 선택
             </button>
           </div>
           {filter === 'custom' && (
@@ -196,17 +196,17 @@ export function Attendance() {
           </section>
           {isAdmin && (
             <section className="records-section glass">
-              <h3>Attendance Records</h3>
+              <h3>출퇴근 기록</h3>
               <div className="records-table-wrap">
                 <table className="records-table">
                   <thead>
                     <tr>
-                      <th>Member ↕</th>
-                      <th>Scheduled Days</th>
-                      <th>Check-in</th>
-                      <th>Check-out</th>
-                      <th>Date</th>
-                      <th>Status</th>
+                      <th>멤버 ↕</th>
+                      <th>근무 요일</th>
+                      <th>출근</th>
+                      <th>퇴근</th>
+                      <th>날짜</th>
+                      <th>상태</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -247,7 +247,7 @@ export function Attendance() {
               </div>
               <div className="pagination">
                 <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={18} /></button>
-                <span>Page {page} of {totalPages}</span>
+                <span>{page} / {totalPages} 페이지</span>
                 <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight size={18} /></button>
               </div>
             </section>
