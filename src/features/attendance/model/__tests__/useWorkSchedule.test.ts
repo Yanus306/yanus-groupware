@@ -56,6 +56,19 @@ describe('useWorkSchedule', () => {
       expect(result.current.daySchedules[0].checkOutTime).toBe('18:00')
     })
 
+    it('저장된 주차 패턴이 없으면 모든 요일이 매주 패턴이다', async () => {
+      const { result } = await mountHook()
+      expect(result.current.weekPatterns).toEqual([
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+      ])
+    })
+
     it('로드 완료 후 isLoading이 false가 된다', async () => {
       const { result } = await mountHook()
       expect(result.current.isLoading).toBe(false)
@@ -103,6 +116,14 @@ describe('useWorkSchedule', () => {
     })
   })
 
+  describe('setWeekPattern', () => {
+    it('특정 요일의 주차 패턴을 변경할 수 있다', async () => {
+      const { result } = await mountHook()
+      act(() => { result.current.setWeekPattern(0, 'SECOND') })
+      expect(result.current.weekPatterns[0]).toBe('SECOND')
+    })
+  })
+
   describe('saveSchedule', () => {
     it('저장 시 API를 호출하고 isSaving이 false로 돌아온다', async () => {
       const { result } = await mountHook()
@@ -120,6 +141,21 @@ describe('useWorkSchedule', () => {
       expect(parsed.length).toBe(7)
     })
 
+    it('저장 시 localStorage에 weekPatterns가 저장된다', async () => {
+      const { result } = await mountHook()
+      act(() => {
+        result.current.setWeekPattern(0, 'THIRD')
+      })
+
+      await act(async () => {
+        await result.current.saveSchedule()
+      })
+
+      const stored = localStorage.getItem('yanus-work-week-patterns')
+      expect(stored).not.toBeNull()
+      expect(JSON.parse(stored!)[0]).toBe('THIRD')
+    })
+
     it('localStorage에 저장된 workDays를 마운트 시 복원한다', async () => {
       localStorage.setItem('yanus-work-days', JSON.stringify(
         [false, true, true, true, true, false, false],
@@ -127,6 +163,21 @@ describe('useWorkSchedule', () => {
       const { result } = await mountHook()
       expect(result.current.workDays[0]).toBe(false)
       expect(result.current.workDays[1]).toBe(true)
+    })
+
+    it('localStorage에 저장된 weekPatterns를 마운트 시 복원한다', async () => {
+      localStorage.setItem('yanus-work-week-patterns', JSON.stringify([
+        'LAST',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+        'EVERY',
+      ]))
+
+      const { result } = await mountHook()
+      expect(result.current.weekPatterns[0]).toBe('LAST')
     })
 
     it('기존에 저장된 요일을 비활성화하면 삭제 API를 호출한다', async () => {

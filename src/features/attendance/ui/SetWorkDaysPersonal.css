@@ -20,6 +20,8 @@
 .set-work-days-personal .desc {
   color: var(--text-secondary);
   font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .member-info {
@@ -53,35 +55,75 @@
   padding: 12px 0;
 }
 
-/* ── 가로 배치 그리드 ── */
+.schedule-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+}
+
+.schedule-summary p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .day-schedule-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  overflow-x: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .day-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 8px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
-  transition: border-color 0.2s, background 0.2s;
-  min-width: 80px;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  min-height: 220px;
 }
 
 .day-col.active {
-  background: rgba(139, 92, 246, 0.08);
-  border-color: rgba(139, 92, 246, 0.2);
+  background: var(--surface-tint);
+  border-color: rgba(138, 114, 216, 0.28);
+  box-shadow: 0 18px 36px rgba(9, 12, 24, 0.18);
+}
+
+.day-col:hover {
+  transform: translateY(-1px);
+}
+
+.day-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .day-label {
-  font-size: 0.78rem;
-  font-weight: 600;
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--text-secondary);
 }
 
@@ -89,13 +131,34 @@
   color: var(--text-primary);
 }
 
+.day-status {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.day-status.active {
+  background: rgba(37, 164, 111, 0.16);
+  color: var(--success);
+}
+
+.day-status.inactive {
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--text-secondary);
+}
+
 .toggle {
-  width: 36px;
-  height: 20px;
-  border-radius: 10px;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
   background: rgba(148, 163, 184, 0.3);
   position: relative;
-  transition: background 0.2s;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -103,8 +166,8 @@
 .toggle::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--text-primary);
   top: 3px;
@@ -115,73 +178,122 @@
 
 .toggle.on {
   background: var(--accent-purple);
+  border-color: rgba(138, 114, 216, 0.34);
 }
 
 .toggle.on::after {
-  transform: translateX(16px);
+  transform: translateX(20px);
 }
 
-/* 시간 필드 — 세로 정렬 */
 .day-times {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .time-field {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  align-items: center;
+  gap: 6px;
 }
 
 .time-field label {
-  font-size: 0.68rem;
+  font-size: 0.76rem;
+  font-weight: 600;
   color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 .time-field input {
-  padding: 5px 6px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
-  background: rgba(15, 15, 26, 0.5);
+  background: var(--bg-input);
   color: var(--text-primary);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   width: 100%;
-  min-width: 70px;
   color-scheme: dark;
-  text-align: center;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .time-field input:focus {
   border-color: var(--accent-purple);
   outline: none;
+  background: var(--bg-card-solid);
 }
 
 .day-off-label {
-  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   color: var(--text-secondary);
-  opacity: 0.5;
-  margin-top: 4px;
+  margin-top: auto;
+}
+
+.day-off-label strong {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.day-off-label span {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.week-pattern-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.week-pattern-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.week-pattern-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.week-pattern-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.week-pattern-chip:hover {
+  background: rgba(138, 114, 216, 0.12);
+  color: var(--text-primary);
+}
+
+.week-pattern-chip.active {
+  background: var(--accent-purple);
+  color: var(--text-on-accent);
+  border-color: rgba(138, 114, 216, 0.38);
 }
 
 .schedule-error {
-  color: #f87171;
+  color: var(--error);
   font-size: 0.85rem;
 }
 
 .save-btn {
   align-self: flex-start;
-  padding: 10px 28px;
+  padding: 12px 24px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: opacity 0.2s;
+  color: var(--text-on-accent);
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow-soft);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .save-btn:disabled {
@@ -190,17 +302,27 @@
 }
 
 .save-btn:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .day-schedule-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 600px) {
-  .day-schedule-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 640px) {
+  .schedule-summary {
+    padding: 14px 16px;
+  }
+
+  .day-col {
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .day-times {
+    grid-template-columns: 1fr;
   }
 }

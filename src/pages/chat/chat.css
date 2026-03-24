@@ -1,10 +1,12 @@
 .chat-page {
   display: flex;
-  min-height: calc(100vh - 48px);
-  height: calc(100vh - 48px);
-  max-height: calc(100vh - 48px);
+  min-height: 100%;
+  height: 100%;
   gap: 0;
-  margin: -24px;
+  border-radius: 28px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
@@ -13,7 +15,7 @@
   flex-shrink: 0;
   overflow-y: auto;
   padding: 20px;
-  border-radius: 0;
+  background: var(--bg-elevated);
   border-right: 1px solid var(--border-color);
 }
 
@@ -28,8 +30,9 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(15, 15, 26, 0.5);
-  border-radius: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
   margin-bottom: 20px;
 }
 
@@ -59,14 +62,20 @@
 
 .channel-item {
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
   margin-bottom: 4px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.channel-item:hover {
+  background: var(--nav-hover);
+  transform: translateX(2px);
 }
 
 .channel-item.active {
-  background: rgba(124, 58, 237, 0.25);
-  color: var(--accent-purple-light);
+  background: var(--nav-active);
+  color: var(--text-primary);
 }
 
 .channel-name {
@@ -86,13 +95,14 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
   margin-bottom: 4px;
+  transition: background 0.2s ease;
 }
 
 .dm-item:hover {
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--nav-hover);
 }
 
 .dm-avatar {
@@ -127,15 +137,17 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  background: rgba(16, 20, 36, 0.45);
 }
 
 .chat-header {
-  padding: 16px 24px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-radius: 0;
+  background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--border-color);
+  box-shadow: none;
 }
 
 .chat-header h3 {
@@ -156,12 +168,22 @@
 .header-actions button {
   padding: 8px;
   color: var(--text-secondary);
+  border-radius: 10px;
+  background: transparent;
+}
+
+.header-actions button:hover {
+  background: var(--nav-hover);
+  color: var(--text-primary);
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(circle at top right, rgba(212, 74, 153, 0.08), transparent 30%);
 }
 
 .msg {
@@ -199,8 +221,9 @@
 .msg-content {
   max-width: 75%;
   padding: 12px 16px;
-  background: rgba(30, 27, 45, 0.6);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(164, 177, 214, 0.08);
+  border-radius: 16px;
 }
 
 .msg-meta {
@@ -309,12 +332,13 @@
 }
 
 .chat-input-area {
-  padding: 16px 24px;
+  padding: 18px 24px 22px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-radius: 0;
+  background: rgba(15, 18, 32, 0.72);
   border-top: 1px solid var(--border-color);
+  box-shadow: none;
 }
 
 .input-preview {
@@ -334,9 +358,9 @@
 .chat-input-area .chat-input {
   flex: 1;
   padding: 12px 16px;
-  background: rgba(15, 15, 26, 0.6);
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 14px;
   color: var(--text-primary);
   font-size: 0.95rem;
   resize: none;
@@ -357,9 +381,12 @@
 .format-toolbar button {
   padding: 6px 8px;
   color: var(--text-secondary);
+  border-radius: 10px;
+  background: transparent;
 }
 
 .format-toolbar button:hover {
+  background: var(--nav-hover);
   color: var(--text-primary);
 }
 
@@ -506,22 +533,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 18px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
-  border-radius: 10px;
-  font-weight: 500;
+  color: var(--text-on-accent);
+  border-radius: 14px;
+  font-weight: 700;
 }
 
 @media (max-width: 768px) {
   .chat-page {
     flex-direction: column;
+    min-height: 100%;
     height: auto;
   }
 
   .chat-sidebar {
     width: 100%;
-    max-height: 200px;
+    max-height: 240px;
   }
 
   .chat-main {

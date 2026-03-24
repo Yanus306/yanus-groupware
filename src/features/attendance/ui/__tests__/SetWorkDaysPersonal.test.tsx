@@ -87,6 +87,14 @@ describe('SetWorkDaysPersonal', () => {
     })
   })
 
+  it('활성 요일에는 반복 주차 선택 버튼이 표시된다', async () => {
+    render(<SetWorkDaysPersonal />, { wrapper })
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: '매주' }).length).toBe(5)
+    })
+  })
+
   it('저장 버튼이 존재한다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
