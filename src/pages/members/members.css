@@ -1,5 +1,6 @@
 .members-page {
   max-width: 1400px;
+  width: 100%;
 }
 
 .members-header {
@@ -109,6 +110,7 @@
 .members-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 760px;
 }
 
 .members-table th,
@@ -190,6 +192,13 @@
 .actions {
   display: flex;
   gap: 8px;
+}
+
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .action-btn {
@@ -469,4 +478,77 @@
   border-color: var(--purple, #9680cc);
   color: var(--purple, #9680cc);
   background: rgba(150, 128, 204, 0.15);
+}
+
+@media (max-width: 900px) {
+  .members-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .invite-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .members-page .search-wrap {
+    max-width: none;
+  }
+
+  .table-section,
+  .stats-sidebar {
+    padding: 18px;
+  }
+
+  .filter-btns {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .filter-btns::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-btns button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .members-header h1 {
+    font-size: 1.45rem;
+    flex-wrap: wrap;
+  }
+
+  .members-table th,
+  .members-table td {
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+
+  .table-section,
+  .stats-sidebar {
+    padding: 16px;
+  }
+
+  .invite-modal,
+  .change-role-modal {
+    width: calc(100vw - 24px);
+    min-width: 0;
+    padding: 20px 18px;
+  }
+
+  .role-btns,
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions .cancel-btn,
+  .modal-actions .confirm-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

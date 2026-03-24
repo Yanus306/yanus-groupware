@@ -110,6 +110,13 @@
 .admin-members-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 760px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
 }
 
 .admin-members-table th {
@@ -373,9 +380,51 @@
 
 /* ── 반응형 ── */
 @media (max-width: 768px) {
+  .admin-page {
+    gap: 20px;
+  }
+
+  .admin-header {
+    align-items: flex-start;
+  }
+
+  .admin-header-actions,
+  .admin-export-btn {
+    width: 100%;
+  }
+
+  .admin-export-btn {
+    justify-content: center;
+  }
+
+  .admin-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .admin-tab-content {
+    padding: 18px;
+  }
+
   .admin-members-table th:nth-child(2),
   .admin-members-table td:nth-child(2) {
     display: none;
+  }
+
+  .admin-members-table th,
+  .admin-members-table td {
+    white-space: nowrap;
   }
 
   .admin-actions-cell {
@@ -386,5 +435,24 @@
   .admin-status-cell {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-title-row h1 {
+    font-size: 1.35rem;
+  }
+
+  .admin-tab-content {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .admin-modal {
+    padding: 22px 18px;
+  }
+
+  .admin-modal-actions {
+    flex-direction: column;
   }
 }

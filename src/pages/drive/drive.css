@@ -382,6 +382,7 @@
 
   .drive-header-actions {
     width: 100%;
+    justify-content: flex-start;
   }
 
   .upload-btn {
@@ -396,5 +397,25 @@
 
   .file-side {
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .drive-page {
+    gap: 18px;
+  }
+
+  .drive-side-panel,
+  .drive-content {
+    padding: 18px;
+  }
+
+  .drive-side-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .drive-access-badge {
+    width: 100%;
+    justify-content: center;
   }
 }

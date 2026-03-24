@@ -855,12 +855,71 @@
   .calendar-page {
     flex-direction: column;
     height: auto;
+    max-height: none;
+    margin: -16px;
+  }
+
+  .calendar-main {
+    padding: 18px 16px 24px;
+  }
+
+  .fullcalendar-wrapper {
+    max-width: 100%;
+  }
+
+  .fullcalendar-wrapper .fc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .fullcalendar-wrapper .fc-toolbar-title {
+    font-size: 1.05rem;
+    text-align: center;
+  }
+
+  .fullcalendar-wrapper .fc-header-toolbar {
+    margin-bottom: 1rem;
   }
 
   .tasks-sidebar {
     width: 100%;
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 18px 16px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar-page {
+    margin: -14px;
   }
 
+  .edit-task-modal,
+  .add-task-modal,
+  .context-menu-modal {
+    min-width: 0;
+    width: calc(100vw - 24px);
+    max-width: 420px;
+  }
+
+  .add-event-datetime {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-event-datetime .add-task-date {
+    flex: 1 1 auto;
+  }
+
+  .tasks-tabs {
+    gap: 12px;
+    font-size: 0.88rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tasks-tabs::-webkit-scrollbar {
+    display: none;
+  }
 }
