@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getMyWorkSchedule, upsertWorkScheduleDay } from '../../../shared/api/attendanceApi'
+import { deleteWorkScheduleDay, getMyWorkSchedule, upsertWorkScheduleDay } from '../../../shared/api/attendanceApi'
 import type { DayOfWeek } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
 
@@ -16,7 +16,7 @@ const INDEX_TO_DOW: DayOfWeek[] = [
 const WORK_DAYS_STORAGE_KEY = 'yanus-work-days'
 const DEFAULT_CHECK_IN = '09:00'
 const DEFAULT_CHECK_OUT = '18:00'
-const DEFAULT_WORK_DAYS = [true, true, true, true, true, false, false]
+const DEFAULT_WORK_DAYS = [false, false, false, false, false, false, false]
 
 function makeDefaultDaySchedules(checkIn: string, checkOut: string): DaySchedule[] {
   return Array.from({ length: 7 }, () => ({ checkInTime: checkIn, checkOutTime: checkOut }))
@@ -30,6 +30,7 @@ export function useWorkSchedule() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedWorkDays, setSavedWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
 
   useEffect(() => {
     // localStorage에서 근무 요일 토글 상태 복원
@@ -63,7 +64,12 @@ export function useWorkSchedule() {
           const activeDays = INDEX_TO_DOW.map((dow) =>
             items.some((item) => item.dayOfWeek === dow),
           )
+          setSavedWorkDays(activeDays)
           if (activeDays.some(Boolean)) setWorkDays(activeDays)
+        } else {
+          setSavedWorkDays(
+            INDEX_TO_DOW.map((dow) => items.some((item) => item.dayOfWeek === dow)),
+          )
         }
       })
       .catch(() => {})
@@ -82,8 +88,7 @@ export function useWorkSchedule() {
     setIsSaving(true)
     setError(null)
     try {
-      // 활성화된 요일만 API에 upsert
-      const promises = workDays
+      const upsertPromises = workDays
         .map((active, i) => {
           if (!active) return null
           return upsertWorkScheduleDay({
@@ -94,7 +99,15 @@ export function useWorkSchedule() {
         })
         .filter(Boolean)
 
-      await Promise.all(promises)
+      const deletePromises = workDays
+        .map((active, i) => {
+          if (active || !savedWorkDays[i]) return null
+          return deleteWorkScheduleDay(INDEX_TO_DOW[i])
+        })
+        .filter(Boolean)
+
+      await Promise.all([...upsertPromises, ...deletePromises])
+      setSavedWorkDays([...workDays])
       localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
     } catch (err) {
       if (err instanceof ApiError) {
