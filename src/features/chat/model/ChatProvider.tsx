@@ -36,6 +36,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeChannelId, setActiveChannelId] = useState('1')
 
+  const isDirectChannel = useCallback((channelId: string) => channelId.startsWith('dm-'), [])
+
   useEffect(() => {
     getChannels()
       .then((data: ApiChannel[]) => {
@@ -46,7 +48,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!activeChannelId) return
+    if (!activeChannelId || isDirectChannel(activeChannelId)) return
     getMessages(activeChannelId)
       .then((data: ApiMessage[]) => {
         setMessages((prev) => [
@@ -55,7 +57,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         ])
       })
       .catch(() => {})
-  }, [activeChannelId])
+  }, [activeChannelId, isDirectChannel])
 
   const addMessage = useCallback(
     (channelId: string, content?: string, files?: { name: string; url: string; type: string }[]) => {
@@ -73,9 +75,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, optimistic])
+      if (isDirectChannel(channelId)) {
+        return
+      }
       apiSendMessage(channelId, content ?? '', type).catch(() => {})
     },
-    [state.currentUser?.id, state.currentUser?.name]
+    [isDirectChannel, state.currentUser?.id, state.currentUser?.name]
   )
 
   const getMessagesByChannel = useCallback(

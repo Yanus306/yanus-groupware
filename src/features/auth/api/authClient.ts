@@ -1,4 +1,5 @@
 import { baseClient } from '../../../shared/api/baseClient'
+import { ApiError } from '../../../shared/api/baseClient'
 import type { User } from '../../../entities/user/model/types'
 
 export interface RegisterPayload {
@@ -18,11 +19,18 @@ interface MeResponse {
 }
 
 export async function login(email: string, password: string): Promise<string> {
-  const data = await baseClient.post<{ accessToken: string; refreshToken: string; tokenType: string }>(
-    '/api/v1/auth/login',
-    { email, password },
-  )
-  return data.accessToken
+  try {
+    const data = await baseClient.post<{ accessToken: string; refreshToken: string; tokenType: string }>(
+      '/api/v1/auth/login',
+      { email, password },
+    )
+    return data.accessToken
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'MEMBER_INACTIVE') {
+      throw new Error('비활성화된 계정입니다. 관리자에게 문의해 주세요')
+    }
+    throw err
+  }
 }
 
 export async function register(payload: RegisterPayload): Promise<void> {

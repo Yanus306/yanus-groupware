@@ -2,9 +2,10 @@ import { http, HttpResponse } from 'msw'
 import type { User } from '../../../../entities/user/model/types'
 
 const INITIAL_USERS: User[] = [
-  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', online: true },
-  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', online: true },
-  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', status: 'ACTIVE', online: false },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', status: 'INACTIVE', online: false },
 ]
 
 let mockUsers = [...INITIAL_USERS]
@@ -13,6 +14,7 @@ const INITIAL_CREDENTIALS: Record<string, { userId: string; password: string }> 
   'admin@yanus.kr': { userId: '1', password: 'password' },
   'lead@yanus.kr': { userId: '2', password: 'password' },
   'user@yanus.kr': { userId: '3', password: 'password' },
+  'sec@yanus.kr': { userId: '5', password: 'password' },
 }
 
 let validCredentials: Record<string, { userId: string; password: string }> = { ...INITIAL_CREDENTIALS }
@@ -43,6 +45,15 @@ export const authHandlers = [
         { status: 401 },
       )
     }
+
+    const member = mockUsers.find((user) => user.id === match.userId)
+    if (member?.status === 'INACTIVE') {
+      return HttpResponse.json(
+        { code: 'MEMBER_INACTIVE', message: '비활성화된 계정입니다', data: null },
+        { status: 403 },
+      )
+    }
+
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',

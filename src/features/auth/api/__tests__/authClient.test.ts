@@ -13,6 +13,12 @@ const server = setupServer(
         data: { accessToken: 'mock-token', refreshToken: 'refresh-token', tokenType: 'Bearer' },
       })
     }
+    if (body.email === 'inactive@yanus.kr' && body.password === 'password') {
+      return HttpResponse.json(
+        { code: 'MEMBER_INACTIVE', message: '비활성화된 계정입니다', data: null },
+        { status: 403 },
+      )
+    }
     return HttpResponse.json(
       { code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다', data: null },
       { status: 401 },
@@ -52,7 +58,13 @@ describe('authClient', () => {
     })
 
     it('잘못된 자격증명이면 에러를 던진다', async () => {
-      await expect(login('wrong@test.com', 'wrong')).rejects.toThrow()
+      await expect(login('wrong@test.com', 'wrong')).rejects.toThrow('이메일 또는 비밀번호가 올바르지 않습니다')
+    })
+
+    it('비활성 계정이면 전용 안내 문구를 반환한다', async () => {
+      await expect(login('inactive@yanus.kr', 'password')).rejects.toThrow(
+        '비활성화된 계정입니다. 관리자에게 문의해 주세요',
+      )
     })
   })
 

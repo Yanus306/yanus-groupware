@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X } from 'lucide-react'
+import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X, ArrowLeft } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { useChat } from '../../features/chat/model'
 import type { ChatMessage } from '../../features/chat/model'
+import { getMembers } from '../../shared/api/membersApi'
 import './chat.css'
 
 const EMOJIS = ['😊', '👍', '❤️', '😂', '😢', '😍', '🔥', '✨', '🎉', '🙏', '👋', '💯', '✅', '❌', '⭐', '💪']
@@ -79,23 +80,54 @@ function MessageItem({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
 }
 
 export function Chat() {
-  const { state } = useApp()
+  const { state, loadMembers } = useApp()
   const { channels, activeChannelId, setActiveChannelId, addMessage, getMessagesByChannel } = useChat()
   const [message, setMessage] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string }[]>([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
+  const [roomQuery, setRoomQuery] = useState('')
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+  const [isMobileRoomOpen, setIsMobileRoomOpen] = useState(() => window.innerWidth > 768)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const emojiPickerRef = useRef<HTMLButtonElement>(null)
 
   const activeChannel = channels.find((c) => c.id === activeChannelId)
+  const currentUserId = state.currentUser?.id ?? ''
+  const directRooms = state.users.filter((user) => user.id !== currentUserId)
+  const activeDirectUser = directRooms.find((user) => `dm-${user.id}` === activeChannelId)
+  const isDirectRoom = activeChannelId.startsWith('dm-')
   const messages = getMessagesByChannel(activeChannelId)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    if (state.users.length > 0) return
+    getMembers()
+      .then(loadMembers)
+      .catch(() => {})
+  }, [loadMembers, state.users.length])
+
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth <= 768
+      setIsMobile(mobile)
+      setIsMobileRoomOpen((prev) => (mobile ? prev && !!activeChannelId : true))
+    }
+
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [activeChannelId])
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileRoomOpen(true)
+    }
+  }, [isMobile])
 
   useEffect(() => {
     if (!showEmojiPicker) return
@@ -202,23 +234,53 @@ export function Chat() {
     })
   }
 
-  const currentUserId = state.currentUser?.id ?? ''
+  const filteredChannels = channels.filter((channel) =>
+    channel.name.toLowerCase().includes(roomQuery.toLowerCase()) ||
+    (channel.lastMessage ?? '').toLowerCase().includes(roomQuery.toLowerCase()),
+  )
+
+  const filteredDirectRooms = directRooms.filter((user) =>
+    user.name.toLowerCase().includes(roomQuery.toLowerCase()) ||
+    user.team.toLowerCase().includes(roomQuery.toLowerCase()),
+  )
+
+  const openRoom = (id: string) => {
+    setActiveChannelId(id)
+    if (isMobile) {
+      setIsMobileRoomOpen(true)
+    }
+  }
+
+  const roomTitle = isDirectRoom
+    ? activeDirectUser?.name ?? '대화방'
+    : `# ${activeChannel?.name || 'Design Team'}`
+
+  const roomMeta = isDirectRoom
+    ? `${activeDirectUser?.team ?? '알 수 없는 팀'} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
+    : '23 members'
 
   return (
-    <div className="chat-page">
+    <div className={`chat-page ${isMobileRoomOpen ? 'room-open-mobile' : 'list-open-mobile'}`}>
       <aside className="chat-sidebar glass">
-        <h2>Messages</h2>
+        <div className="chat-list-head">
+          <h2>Messages</h2>
+          <p>대화할 채널이나 대상을 먼저 선택한 뒤 대화방으로 들어갑니다.</p>
+        </div>
         <div className="search-wrap">
           <Search size={18} />
-          <input placeholder="Search messages." />
+          <input
+            placeholder="채널 또는 대상을 검색하세요."
+            value={roomQuery}
+            onChange={(e) => setRoomQuery(e.target.value)}
+          />
         </div>
         <section>
           <h4>CHANNELS</h4>
-          {channels.map((ch) => (
+          {filteredChannels.map((ch) => (
             <div
               key={ch.id}
               className={`channel-item ${ch.id === activeChannelId ? 'active' : ''}`}
-              onClick={() => setActiveChannelId(ch.id)}
+              onClick={() => openRoom(ch.id)}
             >
               <span className="channel-name"># {ch.name}</span>
               <span className="channel-last">{ch.lastMessage}</span>
@@ -227,32 +289,56 @@ export function Chat() {
         </section>
         <section>
           <h4>DIRECT MESSAGES</h4>
-          {state.users.map((u) => (
-            <div key={u.id} className="dm-item">
+          {filteredDirectRooms.map((u) => (
+            <div
+              key={u.id}
+              className={`dm-item ${activeChannelId === `dm-${u.id}` ? 'active' : ''}`}
+              onClick={() => openRoom(`dm-${u.id}`)}
+            >
               <span className="dm-avatar">{u.name[0]}</span>
-              <span className="dm-name">{u.name}</span>
+              <div className="dm-copy">
+                <span className="dm-name">{u.name}</span>
+                <span className="dm-room-hint">{u.team}</span>
+              </div>
               <span className={`dm-status ${u.online ? 'online' : 'offline'}`}>
                 • {u.online ? 'online' : 'away'}
               </span>
             </div>
           ))}
+          {filteredChannels.length === 0 && filteredDirectRooms.length === 0 && (
+            <div className="chat-empty-search">검색 결과가 없습니다.</div>
+          )}
         </section>
       </aside>
       <div className="chat-main">
         <header className="chat-header glass">
-          <div>
-            <h3># {activeChannel?.name || 'Design Team'}</h3>
-            <span className="members-count">23 members</span>
+          <div className="chat-room-meta">
+            {isMobile && isMobileRoomOpen && (
+              <button type="button" className="chat-back-btn" onClick={() => setIsMobileRoomOpen(false)}>
+                <ArrowLeft size={18} />
+              </button>
+            )}
+            <div>
+              <h3>{roomTitle}</h3>
+              <span className="members-count">{roomMeta}</span>
+            </div>
           </div>
-          <div className="header-actions">
+          <div className="chat-header-actions">
             <button><Search size={18} /></button>
             <button>⋮</button>
           </div>
         </header>
         <div className="chat-messages">
-          {messages.map((msg) => (
-            <MessageItem key={msg.id} msg={msg} isOwn={msg.userId === currentUserId} />
-          ))}
+          {messages.length === 0 ? (
+            <div className="chat-empty-room">
+              <strong>{isDirectRoom ? `${activeDirectUser?.name ?? '상대방'}에게 첫 메시지를 보내보세요.` : '아직 대화가 없습니다.'}</strong>
+              <p>대상을 고른 뒤 바로 대화를 시작할 수 있도록 방 구조를 정리했습니다.</p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <MessageItem key={msg.id} msg={msg} isOwn={msg.userId === currentUserId} />
+            ))
+          )}
           <div ref={messagesEndRef} />
         </div>
         <div className="chat-input-area glass">

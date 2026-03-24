@@ -86,6 +86,15 @@ describe('Login 페이지', () => {
     expect(await screen.findByText('이메일 또는 비밀번호가 올바르지 않습니다')).toBeInTheDocument()
   })
 
+  it('비활성 계정이면 전용 안내 메시지를 표시한다', async () => {
+    mockLogin.mockRejectedValue(new Error('비활성화된 계정입니다. 관리자에게 문의해 주세요'))
+    renderLogin()
+    await userEvent.type(screen.getByLabelText('이메일'), 'inactive@yanus.kr')
+    await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: '로그인' }))
+    expect(await screen.findByText('비활성화된 계정입니다. 관리자에게 문의해 주세요')).toBeInTheDocument()
+  })
+
   it('로딩 중에는 버튼이 비활성화된다', async () => {
     mockLogin.mockImplementation(() => new Promise(() => {})) // 무한 대기
     renderLogin()

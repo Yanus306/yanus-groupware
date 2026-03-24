@@ -118,7 +118,7 @@ export function SetWorkDaysPersonal() {
 
       {error && <p className="schedule-error">{error}</p>}
 
-      <button className="save-btn" onClick={saveSchedule} disabled={isSaving}>
+      <button className="schedule-save-btn" onClick={saveSchedule} disabled={isSaving}>
         {isSaving ? '저장 중...' : '저장'}
       </button>
     </div>

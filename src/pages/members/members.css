@@ -93,13 +93,16 @@
 
 .members-content {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 24px;
+  align-items: start;
 }
 
 .table-section {
   padding: 24px;
   overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
 }
 
 .table-section h3 {
@@ -258,6 +261,7 @@
 .stats-sidebar {
   padding: 24px;
   height: fit-content;
+  min-width: 0;
 }
 
 .stats-sidebar h3 {
