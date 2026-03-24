@@ -9,8 +9,8 @@ const server = setupServer(
       code: 'SUCCESS',
       message: 'ok',
       data: [
-        { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
-        { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD' },
+        { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN' },
+        { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: '2팀', role: 'TEAM_LEAD' },
       ],
     }),
   ),
@@ -18,14 +18,14 @@ const server = setupServer(
     HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
+      data: { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN' },
     }),
   ),
   http.get('/api/v1/members/:id', ({ params }) =>
     HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: { id: params.id, name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
+      data: { id: params.id, name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN' },
     }),
   ),
   http.patch('/api/v1/members/:id/role', async () =>
@@ -53,7 +53,7 @@ describe('membersApi', () => {
   it('getMembers() 멤버 목록을 반환한다', async () => {
     const members = await getMembers()
     expect(members).toHaveLength(2)
-    expect(members[0]).toMatchObject({ name: '김리더', role: 'ADMIN', team: 'BACKEND' })
+    expect(members[0]).toMatchObject({ name: '김리더', role: 'ADMIN', team: '1팀' })
   })
 
   it('getMember() 특정 멤버 정보를 반환한다', async () => {

@@ -5,6 +5,7 @@ import { useApp } from '../../features/auth/model'
 import { useChat } from '../../features/chat/model'
 import type { ChatMessage } from '../../features/chat/model'
 import { getMembers } from '../../shared/api/membersApi'
+import { formatTeamName } from '../../shared/lib/team'
 import './chat.css'
 
 const EMOJIS = ['😊', '👍', '❤️', '😂', '😢', '😍', '🔥', '✨', '🎉', '🙏', '👋', '💯', '✅', '❌', '⭐', '💪']
@@ -13,13 +14,6 @@ const CHANNEL_LABELS: Record<string, string> = {
   'Design Team': '디자인팀',
   'Dev Team': '개발팀',
 }
-const TEAM_LABELS: Record<string, string> = {
-  BACKEND: '백엔드',
-  FRONTEND: '프론트엔드',
-  AI: 'AI',
-  SECURITY: '보안',
-}
-
 function formatTime(date: Date): string {
   const now = new Date()
   const isToday = date.toDateString() === now.toDateString()
@@ -272,7 +266,7 @@ export function Chat() {
     : `# ${CHANNEL_LABELS[activeChannel?.name ?? ''] ?? activeChannel?.name ?? '디자인팀'}`
 
   const roomMeta = isDirectRoom
-    ? `${TEAM_LABELS[activeDirectUser?.team ?? ''] ?? activeDirectUser?.team ?? '알 수 없는 팀'} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
+    ? `${formatTeamName(activeDirectUser?.team)} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
     : '23명 참여 중'
 
   return (
@@ -314,7 +308,7 @@ export function Chat() {
               <span className="dm-avatar">{u.name[0]}</span>
               <div className="dm-copy">
                 <span className="dm-name">{u.name}</span>
-                <span className="dm-room-hint">{TEAM_LABELS[u.team] ?? u.team}</span>
+                <span className="dm-room-hint">{formatTeamName(u.team)}</span>
               </div>
               <span className={`dm-status ${u.online ? 'online' : 'offline'}`}>
                 • {u.online ? '온라인' : '자리 비움'}

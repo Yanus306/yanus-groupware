@@ -1,19 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeftRight, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import type { Team, User } from '../../entities/user/model/types'
+import type { User } from '../../entities/user/model/types'
 import { getMembers, updateMemberTeam } from '../../shared/api/membersApi'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
+import { FALLBACK_TEAMS, formatTeamName, sortTeams } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './team-management.css'
-
-const teamLabels: Record<Team, string> = {
-  BACKEND: '백엔드',
-  FRONTEND: '프론트엔드',
-  AI: 'AI',
-  SECURITY: '보안',
-}
 
 const roleLabels = {
   ADMIN: '관리자',
@@ -29,7 +23,7 @@ const statusLabels = {
 export function TeamManagement() {
   const { state, loadMembers } = useApp()
   const [members, setMembers] = useState<User[]>([])
-  const [teams, setTeams] = useState<TeamResponse[]>([])
+  const [teams, setTeams] = useState<TeamResponse[]>(FALLBACK_TEAMS)
   const [search, setSearch] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -45,10 +39,10 @@ export function TeamManagement() {
     try {
       const [memberList, teamList] = await Promise.all([
         getMembers({ teamName: currentTeam }),
-        getTeams(),
+        getTeams().catch(() => FALLBACK_TEAMS),
       ])
       setMembers(memberList)
-      setTeams(teamList)
+      setTeams(sortTeams(teamList))
       loadMembers(memberList)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '팀 멤버를 불러오지 못했습니다')
@@ -81,7 +75,7 @@ export function TeamManagement() {
       const nextTeam = teams.find((team) => team.id === selectedTeamId)
       await updateMemberTeam(changeTeamFor.id, { teamId: selectedTeamId })
       await loadTeamMembers()
-      setSuccessMessage(`${changeTeamFor.name}의 팀을 ${teamLabels[nextTeam?.name as Team] ?? nextTeam?.name ?? '선택한 팀'} 팀으로 변경했습니다`)
+      setSuccessMessage(`${changeTeamFor.name}의 팀을 ${formatTeamName(nextTeam?.name)}으로 변경했습니다`)
       setChangeTeamFor(null)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '팀 변경에 실패했습니다')
@@ -105,7 +99,7 @@ export function TeamManagement() {
         </div>
         <div className="team-management-summary glass">
           <Users size={16} />
-          <span>{teamLabels[currentTeam as Team] ?? currentTeam} 팀 멤버 {members.length}명</span>
+          <span>{formatTeamName(currentTeam)} 멤버 {members.length}명</span>
         </div>
       </header>
 
@@ -149,8 +143,8 @@ export function TeamManagement() {
                     </td>
                     <td>{member.email}</td>
                     <td>
-                      <span className={`team-chip ${member.team}`}>
-                        {teamLabels[member.team]}
+                      <span className="team-chip">
+                        {formatTeamName(member.team)}
                       </span>
                     </td>
                     <td>{roleLabels[member.role]}</td>
@@ -186,7 +180,7 @@ export function TeamManagement() {
                   className={`team-select-option ${selectedTeamId === team.id ? 'selected' : ''}`}
                   onClick={() => setSelectedTeamId(team.id)}
                 >
-                  {teamLabels[team.name]}
+                  {formatTeamName(team.name)}
                 </button>
               ))}
             </div>

@@ -87,9 +87,38 @@ Base URL: `VITE_API_BASE_URL` 환경변수로 설정
 | Method | Path | 설명 | 인증 필요 |
 |--------|------|------|-----------|
 | GET | `/members` | 멤버 목록 | ✓ |
-| PUT | `/members/:id/role` | 역할 변경 (관리자) | ✓ ADMIN |
+| PATCH | `/members/:id/role` | 역할 변경 (관리자) | ✓ ADMIN |
 | PATCH | `/members/:id/team` | 팀 변경 (관리자, 팀장) | ✓ ADMIN / TEAM_LEAD |
+| PATCH | `/members/:id/activate` | 멤버 활성화 (관리자) | ✓ ADMIN |
 | DELETE | `/members/:id` | 멤버 비활성화 (관리자) | ✓ ADMIN |
+
+---
+
+## 팀
+
+> 팀 이름은 더 이상 `BACKEND`, `FRONTEND` 같은 고정 enum이 아닙니다.
+> 운영 중인 팀 목록을 기준으로 동적으로 생성·삭제됩니다. 예: `1팀`, `2팀`
+
+| Method | Path | 설명 | 인증 필요 |
+|--------|------|------|-----------|
+| GET | `/api/v1/teams` | 팀 목록 조회 | ✓ |
+| GET | `/api/v1/teams/:id` | 단일 팀 조회 | ✓ |
+| POST | `/api/v1/teams` | 팀 생성 | ✓ ADMIN |
+| DELETE | `/api/v1/teams/:teamId` | 팀 삭제 | ✓ ADMIN |
+
+### POST `/api/v1/teams`
+```json
+// Request
+{ "name": "5팀" }
+```
+
+### Team Response 예시
+```json
+{
+  "id": 5,
+  "name": "5팀"
+}
+```
 
 ---
 

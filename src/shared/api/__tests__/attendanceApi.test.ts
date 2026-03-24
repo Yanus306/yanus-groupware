@@ -25,13 +25,13 @@ const MEMBER_WORK_SCHEDULES = [
   {
     memberId: 1,
     memberName: '김리더',
-    teamName: 'BACKEND',
+    teamName: '1팀',
     workSchedules: WORK_SCHEDULES,
   },
   {
     memberId: 2,
     memberName: '박팀장',
-    teamName: 'FRONTEND',
+    teamName: '2팀',
     workSchedules: [
       { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
     ],
@@ -56,7 +56,7 @@ const server = setupServer(
     HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: MEMBER_WORK_SCHEDULES.filter((item) => String(params.teamId) === (item.teamName === 'BACKEND' ? '1' : '2')),
+      data: MEMBER_WORK_SCHEDULES.filter((item) => String(params.teamId) === (item.teamName === '1팀' ? '1' : '2')),
     }),
   ),
   http.get('/api/v1/attendances/me', ({ request }) => {
@@ -152,12 +152,12 @@ describe('workScheduleApi', () => {
   it('getAllWorkSchedules() 전체 멤버 근무 일정을 반환한다', async () => {
     const schedules = await getAllWorkSchedules()
     expect(schedules).toHaveLength(2)
-    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: 'BACKEND' })
+    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: '1팀' })
   })
 
   it('getTeamWorkSchedules() 특정 팀 멤버 근무 일정을 반환한다', async () => {
     const schedules = await getTeamWorkSchedules(1)
     expect(schedules).toHaveLength(1)
-    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: 'BACKEND' })
+    expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: '1팀' })
   })
 })

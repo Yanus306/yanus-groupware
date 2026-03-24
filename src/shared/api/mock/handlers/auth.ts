@@ -1,11 +1,12 @@
 import { http, HttpResponse } from 'msw'
 import type { User } from '../../../../entities/user/model/types'
+import { FALLBACK_TEAMS } from '../../../lib/team'
 
 const INITIAL_USERS: User[] = [
-  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE', online: true },
-  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
-  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', status: 'ACTIVE', online: false },
-  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', status: 'INACTIVE', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: '3팀', role: 'MEMBER', status: 'ACTIVE', online: false },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: '4팀', role: 'MEMBER', status: 'INACTIVE', online: false },
 ]
 
 let mockUsers = [...INITIAL_USERS]
@@ -70,13 +71,13 @@ export const authHandlers = [
       )
     }
 
-    const teamMap: Record<number, User['team']> = { 1: 'BACKEND', 2: 'FRONTEND', 3: 'AI', 4: 'SECURITY' }
+    const teamMap = Object.fromEntries(FALLBACK_TEAMS.map((team) => [team.id, team.name])) as Record<number, User['team']>
     const newId = String(mockUsers.length + 1)
     const newUser: User = {
       id: newId,
       name: body.name,
       email: body.email,
-      team: teamMap[body.teamId] ?? 'BACKEND',
+      team: teamMap[body.teamId] ?? FALLBACK_TEAMS[0].name,
       role: 'MEMBER',
       online: true,
     }

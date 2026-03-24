@@ -16,8 +16,8 @@ vi.mock('../../../features/auth/model', () => ({
     state: {
       currentUser: { id: '1', name: '김리더', role: 'ADMIN' },
       users: [
-        { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND', email: 'leader@test.com' },
-        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: 'FRONTEND', email: 'teamlead@test.com' },
+        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'leader@test.com' },
+        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'teamlead@test.com' },
       ],
     },
     isAdmin: true,

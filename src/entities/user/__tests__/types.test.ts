@@ -8,11 +8,10 @@ describe('User 엔티티 타입', () => {
     expectTypeOf<'TEAM_LEAD'>().toMatchTypeOf<UserRole>()
   })
 
-  it('Team은 백엔드 팀 enum 값을 포함한다', () => {
-    expectTypeOf<'BACKEND'>().toMatchTypeOf<Team>()
-    expectTypeOf<'FRONTEND'>().toMatchTypeOf<Team>()
-    expectTypeOf<'AI'>().toMatchTypeOf<Team>()
-    expectTypeOf<'SECURITY'>().toMatchTypeOf<Team>()
+  it('Team은 동적으로 생성되는 문자열 팀명을 포함한다', () => {
+    expectTypeOf<'1팀'>().toMatchTypeOf<Team>()
+    expectTypeOf<'2팀'>().toMatchTypeOf<Team>()
+    expectTypeOf<string>().toMatchTypeOf<Team>()
   })
 
   it('User는 백엔드 MemberResponse 필드를 포함한다', () => {

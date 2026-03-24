@@ -25,7 +25,7 @@ let memberWorkSchedules: MemberWorkScheduleItem[] = [
   {
     memberId: 1,
     memberName: '김리더',
-    teamName: 'BACKEND',
+    teamName: '1팀',
     workSchedules: [
       { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
       { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
@@ -35,7 +35,7 @@ let memberWorkSchedules: MemberWorkScheduleItem[] = [
   {
     memberId: 2,
     memberName: '박팀장',
-    teamName: 'FRONTEND',
+    teamName: '2팀',
     workSchedules: [
       { id: 4, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
       { id: 5, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00' },
@@ -44,7 +44,7 @@ let memberWorkSchedules: MemberWorkScheduleItem[] = [
   {
     memberId: 4,
     memberName: '최개발',
-    teamName: 'BACKEND',
+    teamName: '1팀',
     workSchedules: [
       { id: 6, dayOfWeek: 'FRIDAY', startTime: '09:30:00', endTime: '18:30:00' },
     ],
@@ -117,10 +117,10 @@ export const attendanceHandlers = [
   http.get('/api/v1/work-schedules/team/:teamId', ({ params }) => {
     const teamId = Number(params.teamId)
     const teamName =
-      teamId === 1 ? 'BACKEND' :
-      teamId === 2 ? 'FRONTEND' :
-      teamId === 3 ? 'AI' :
-      'SECURITY'
+      teamId === 1 ? '1팀' :
+      teamId === 2 ? '2팀' :
+      teamId === 3 ? '3팀' :
+      '4팀'
 
     return HttpResponse.json({
       code: 'SUCCESS',
