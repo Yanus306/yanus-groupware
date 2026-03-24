@@ -29,9 +29,9 @@ describe('Settings 페이지', () => {
     vi.clearAllMocks()
   })
 
-  it('설정 페이지 제목이 렌더링된다', () => {
+  it('설정 페이지 설명이 렌더링된다', () => {
     render(<Settings />)
-    expect(screen.getByText('설정')).toBeInTheDocument()
+    expect(screen.getByText('프로필, 알림, 테마, 보안 환경을 한 곳에서 관리하세요.')).toBeInTheDocument()
   })
 
   it('4개의 탭이 렌더링된다', () => {
