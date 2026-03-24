@@ -25,10 +25,11 @@ describe('AppProvider', () => {
     })
   })
 
-  describe('isAdmin', () => {
+  describe('권한 플래그', () => {
     it('currentUser가 없으면 isAdmin은 false이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
       expect(result.current.isAdmin).toBe(false)
+      expect(result.current.isTeamLead).toBe(false)
     })
 
     it('loadUser로 ADMIN 역할을 로드하면 isAdmin은 true이다', () => {
@@ -47,6 +48,17 @@ describe('AppProvider', () => {
         result.current.loadUser(memberUser)
       })
       expect(result.current.isAdmin).toBe(false)
+      expect(result.current.isTeamLead).toBe(false)
+    })
+
+    it('loadUser로 TEAM_LEAD 역할을 로드하면 팀장 플래그만 true이다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      const teamLeadUser: User = { id: '3', name: '박팀장', email: 'lead@test.com', team: 'FRONTEND', role: 'TEAM_LEAD', online: true }
+      act(() => {
+        result.current.loadUser(teamLeadUser)
+      })
+      expect(result.current.isAdmin).toBe(false)
+      expect(result.current.isTeamLead).toBe(true)
     })
   })
 

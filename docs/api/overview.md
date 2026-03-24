@@ -88,6 +88,7 @@ Base URL: `VITE_API_BASE_URL` 환경변수로 설정
 |--------|------|------|-----------|
 | GET | `/members` | 멤버 목록 | ✓ |
 | PUT | `/members/:id/role` | 역할 변경 (관리자) | ✓ ADMIN |
+| PATCH | `/members/:id/team` | 팀 변경 (관리자, 팀장) | ✓ ADMIN / TEAM_LEAD |
 | DELETE | `/members/:id` | 멤버 비활성화 (관리자) | ✓ ADMIN |
 
 ---

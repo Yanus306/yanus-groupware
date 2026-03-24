@@ -38,6 +38,18 @@ const server = setupServer(
   http.get('/api/v1/attendances', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockRecords }),
   ),
+  http.get('/api/v1/teams', () =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: [
+        { id: 1, name: 'BACKEND' },
+        { id: 2, name: 'FRONTEND' },
+        { id: 3, name: 'AI' },
+        { id: 4, name: 'SECURITY' },
+      ],
+    }),
+  ),
 )
 
 beforeAll(() => server.listen())
