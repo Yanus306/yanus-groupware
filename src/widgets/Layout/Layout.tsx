@@ -43,7 +43,6 @@ export function Layout() {
             <img src={logoImg} alt="yANUs" className="logo-img" />
             <div className="logo-copy">
               <strong>yANUs Groupware</strong>
-              <span>클럽 운영을 더 매끄럽게</span>
             </div>
           </div>
           <button

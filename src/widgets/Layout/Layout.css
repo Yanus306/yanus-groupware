@@ -45,26 +45,18 @@
 
 .logo-copy {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
   min-width: 0;
 }
 
 .logo-copy strong {
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   color: var(--text-primary);
   line-height: 1.1;
   word-break: keep-all;
-}
-
-.logo-copy span {
-  color: var(--text-secondary);
-  font-size: 0.76rem;
-  line-height: 1.35;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .theme-toggle {
