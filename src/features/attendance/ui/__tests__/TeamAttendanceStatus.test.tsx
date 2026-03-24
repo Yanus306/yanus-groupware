@@ -7,9 +7,9 @@ import type { AttendanceRecord } from '../../../../shared/api/attendanceApi'
 const TODAY = '2026-03-23'
 
 const members: User[] = [
-  { id: '1', name: '김리더', email: 'a@test.com', team: 'BACKEND', role: 'ADMIN' },
-  { id: '2', name: '박팀장', email: 'b@test.com', team: 'FRONTEND', role: 'TEAM_LEAD' },
-  { id: '3', name: '이개발', email: 'c@test.com', team: 'AI', role: 'MEMBER' },
+  { id: '1', name: '김리더', email: 'a@test.com', team: '1팀', role: 'ADMIN' },
+  { id: '2', name: '박팀장', email: 'b@test.com', team: '2팀', role: 'TEAM_LEAD' },
+  { id: '3', name: '이개발', email: 'c@test.com', team: '3팀', role: 'MEMBER' },
 ]
 
 const records: AttendanceRecord[] = [

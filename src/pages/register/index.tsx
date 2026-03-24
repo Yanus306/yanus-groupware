@@ -5,6 +5,7 @@ import { getMe, login, register } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
+import { FALLBACK_TEAMS, formatTeamName, sortTeams } from '../../shared/lib/team'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -14,13 +15,6 @@ interface FormErrors {
   password?: string
   confirmPassword?: string
   team?: string
-}
-
-const TEAM_LABELS: Record<string, string> = {
-  BACKEND: '백엔드팀',
-  FRONTEND: '프론트엔드팀',
-  AI: 'AI팀',
-  SECURITY: '보안팀',
 }
 
 function validate(name: string, email: string, password: string, confirmPassword: string, team: string): FormErrors {
@@ -66,15 +60,9 @@ export function Register() {
 
   useEffect(() => {
     getTeams()
-      .then(setTeamOptions)
+      .then((teams) => setTeamOptions(sortTeams(teams)))
       .catch(() => {
-        // fallback: 정적 목록
-        setTeamOptions([
-          { id: 1, name: 'BACKEND' },
-          { id: 2, name: 'FRONTEND' },
-          { id: 3, name: 'AI' },
-          { id: 4, name: 'SECURITY' },
-        ])
+        setTeamOptions(FALLBACK_TEAMS)
       })
   }, [])
 
@@ -168,7 +156,7 @@ export function Register() {
                 <option value="">팀을 선택해 주세요</option>
                 {teamOptions.map((item) => (
                   <option key={item.id} value={item.name}>
-                    {TEAM_LABELS[item.name] ?? item.name}
+                    {formatTeamName(item.name)}
                   </option>
                 ))}
               </select>

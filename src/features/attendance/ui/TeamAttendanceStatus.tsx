@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { User } from '../../../entities/user/model/types'
 import type { AttendanceRecord } from '../../../shared/api/attendanceApi'
+import { formatTeamName } from '../../../shared/lib/team'
 import './TeamAttendanceStatus.css'
 
 interface Props {
@@ -27,13 +28,6 @@ const STATUS_LABEL: Record<AttendStatus, string> = {
   working: '근무 중',
   left: '퇴근',
   absent: '미출근',
-}
-
-const TEAM_LABEL: Record<string, string> = {
-  BACKEND: '백엔드',
-  FRONTEND: '프론트엔드',
-  AI: 'AI',
-  SECURITY: '보안',
 }
 
 const FILTER_TABS: { value: AttendStatus; label: string }[] = [
@@ -88,7 +82,7 @@ export function TeamAttendanceStatus({ members, records, date }: Props) {
                 <div className="attend-member-avatar">{member.name[0]}</div>
                 <div className="attend-member-info">
                   <span className="attend-member-name">{member.name}</span>
-                  <span className="attend-member-team">{TEAM_LABEL[member.team] ?? member.team}</span>
+                  <span className="attend-member-team">{formatTeamName(member.team)}</span>
                 </div>
                 <div className="attend-member-right">
                   <span className={`attend-status-badge ${status}`}>

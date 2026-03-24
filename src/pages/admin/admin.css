@@ -174,16 +174,118 @@
 }
 
 .admin-team-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 150px;
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 18%, transparent);
 }
 
-.admin-team-tag.BACKEND  { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
-.admin-team-tag.FRONTEND { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; }
-.admin-team-tag.AI       { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
-.admin-team-tag.SECURITY { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+.admin-team-manager-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.admin-team-manager-copy {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+}
+
+.admin-team-create {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-team-create input {
+  min-width: 220px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.admin-create-team-btn,
+.admin-team-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-create-team-btn {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: transparent;
+}
+
+.admin-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.admin-team-card {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-team-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-team-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-team-card-body p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.admin-team-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.admin-team-delete-btn {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.2);
+}
 
 .admin-role-tag {
   display: inline-flex;
@@ -427,6 +529,12 @@
 
   .admin-tab-content {
     padding: 18px;
+  }
+
+  .admin-team-create,
+  .admin-team-create input,
+  .admin-create-team-btn {
+    width: 100%;
   }
 
   .admin-members-table th:nth-child(2),

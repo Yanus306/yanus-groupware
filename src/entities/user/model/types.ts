@@ -1,5 +1,5 @@
 export type UserRole = 'MEMBER' | 'ADMIN' | 'TEAM_LEAD'
-export type Team = 'BACKEND' | 'FRONTEND' | 'AI' | 'SECURITY'
+export type Team = string
 export type UserStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface User {

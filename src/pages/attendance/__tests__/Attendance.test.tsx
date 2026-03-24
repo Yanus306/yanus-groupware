@@ -14,7 +14,7 @@ const server = setupServer(
       code: 'SUCCESS',
       message: 'ok',
       data: [
-        { id: 1, name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE' },
+        { id: 1, name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE' },
       ],
     }),
   ),
@@ -25,7 +25,7 @@ afterAll(() => server.close())
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
-    state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND' }, users: [] },
+    state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: '1팀' }, users: [] },
     isAdmin: true,
     isTeamLead: false,
   }),

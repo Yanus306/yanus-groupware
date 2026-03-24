@@ -7,7 +7,7 @@ const schedules: MemberWorkScheduleItem[] = [
   {
     memberId: 1,
     memberName: '김리더',
-    teamName: 'BACKEND',
+    teamName: '1팀',
     workSchedules: [
       { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
       { id: 2, dayOfWeek: 'FRIDAY', startTime: '09:30:00', endTime: '18:30:00' },
@@ -19,7 +19,7 @@ describe('TeamWorkSchedulePanel', () => {
   it('멤버 이름과 팀명이 렌더링된다', () => {
     render(<TeamWorkSchedulePanel schedules={schedules} />)
     expect(screen.getByText('김리더')).toBeInTheDocument()
-    expect(screen.getByText('BACKEND')).toBeInTheDocument()
+    expect(screen.getByText('1팀')).toBeInTheDocument()
   })
 
   it('요일별 근무 시간 배지가 렌더링된다', () => {
