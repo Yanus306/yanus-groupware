@@ -86,7 +86,6 @@ export function Drive() {
       <header className="drive-header">
         <div className="drive-header-copy">
           <p className="drive-kicker">Shared Library</p>
-          <h1>파일 드라이브</h1>
           <p className="drive-subtitle">
             최근 산출물과 문서를 한눈에 보고, 바로 업로드와 다운로드를 이어갈 수 있게 정리했습니다.
           </p>
