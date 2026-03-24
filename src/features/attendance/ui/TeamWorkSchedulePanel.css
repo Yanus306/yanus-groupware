@@ -34,15 +34,16 @@
 }
 
 .team-work-schedule-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .team-work-schedule-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
   padding: 18px;
   border-radius: 20px;
   background: var(--bg-soft);
@@ -83,20 +84,31 @@
   font-size: 0.8rem;
 }
 
-.team-work-badges {
-  display: flex;
-  flex-wrap: wrap;
+.team-work-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(82px, 1fr));
   gap: 10px;
 }
 
-.team-work-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+.team-work-day-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 16px;
   border: 1px solid rgba(138, 114, 216, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.team-work-day-card.active {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(138, 114, 216, 0.26);
+}
+
+.team-work-day-card.off {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.12);
 }
 
 .team-work-day {
@@ -109,6 +121,7 @@
   font-size: 0.8rem;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .team-work-schedule-empty {
@@ -118,8 +131,20 @@
   color: var(--text-secondary);
 }
 
-@media (max-width: 900px) {
-  .team-work-schedule-list {
+@media (max-width: 1200px) {
+  .team-work-schedule-card {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .team-work-week-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .team-work-week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

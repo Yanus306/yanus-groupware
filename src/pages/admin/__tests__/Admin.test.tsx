@@ -8,8 +8,8 @@ import { AppProvider } from '../../../features/auth/model'
 import { Admin } from '../index'
 
 const mockMembers = [
-  { id: '1', name: '김민준', email: 'min@yanus.kr', team: 'BACKEND', role: 'MEMBER' },
-  { id: '2', name: '이서연', email: 'seo@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD' },
+  { id: '1', name: '김민준', email: 'min@yanus.kr', team: 'BACKEND', role: 'MEMBER', status: 'ACTIVE' },
+  { id: '2', name: '이서연', email: 'seo@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE' },
 ]
 
 const mockRecords = [
@@ -76,6 +76,7 @@ describe('Admin 페이지', () => {
     renderAdmin()
     await user.click(screen.getByRole('button', { name: '멤버 관리' }))
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: '퇴출' }).length).toBeGreaterThan(0)
   })
 
   it('출근 현황 탭에 요약 카운트가 표시된다', async () => {
