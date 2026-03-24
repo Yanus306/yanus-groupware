@@ -552,11 +552,48 @@
 }
 
 @media (max-width: 640px) {
+  .settings-page {
+    gap: 18px;
+  }
+
   .settings-content {
     padding: 22px 18px;
   }
 
   .profile-avatar-row {
+    flex-direction: column;
     align-items: flex-start;
+  }
+
+  .settings-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .settings-content .save-btn,
+  .danger-zone .danger-btn,
+  .danger-zone .danger-confirm-btn,
+  .danger-zone .danger-cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .danger-zone-head {
+    flex-direction: column;
   }
 }

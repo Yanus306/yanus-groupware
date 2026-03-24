@@ -91,6 +91,7 @@
   gap: 14px;
   overflow-x: auto;
   padding-bottom: 6px;
+  scroll-snap-type: x proximity;
 }
 
 .day-col {
@@ -104,6 +105,7 @@
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   min-height: 240px;
   min-width: 170px;
+  scroll-snap-align: start;
 }
 
 .day-col.active {
@@ -315,17 +317,85 @@
   }
 }
 
+@media (max-width: 960px) {
+  .member-info {
+    width: 100%;
+  }
+
+  .day-schedule-grid {
+    grid-template-columns: repeat(7, minmax(150px, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .schedule-summary {
     padding: 14px 16px;
+    align-items: flex-start;
+  }
+
+  .day-schedule-grid {
+    grid-template-columns: repeat(7, minmax(138px, 1fr));
+    gap: 10px;
   }
 
   .day-col {
     padding: 16px;
     min-height: 0;
+    min-width: 138px;
+    border-radius: 18px;
   }
 
   .day-times {
     grid-template-columns: 1fr;
+  }
+
+  .week-pattern-options {
+    gap: 6px;
+  }
+
+  .week-pattern-chip {
+    padding: 7px 10px;
+    font-size: 0.76rem;
+  }
+
+  .save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .set-work-days-personal h3 {
+    font-size: 1rem;
+  }
+
+  .set-work-days-personal .desc,
+  .schedule-summary p,
+  .day-off-label span {
+    font-size: 0.8rem;
+  }
+
+  .day-schedule-grid {
+    grid-template-columns: repeat(7, minmax(132px, 1fr));
+  }
+
+  .day-col {
+    padding: 14px;
+    min-width: 132px;
+    gap: 14px;
+  }
+
+  .toggle {
+    width: 44px;
+    height: 26px;
+  }
+
+  .toggle::after {
+    width: 18px;
+    height: 18px;
+  }
+
+  .toggle.on::after {
+    transform: translateX(18px);
   }
 }

@@ -142,4 +142,48 @@
   .ai-chat-area {
     padding: 18px;
   }
+
+  .msg-bubble {
+    max-width: 100%;
+  }
+
+  .input-area {
+    flex-direction: column;
+  }
+
+  .input-area .send-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-title {
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .ai-title h1 {
+    font-size: 1.25rem;
+  }
+
+  .ai-header {
+    text-align: left;
+    padding-inline: 0;
+  }
+
+  .ai-chat-area {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .suggestions {
+    padding: 14px;
+  }
+
+  .input-area input,
+  .input-area .send-btn {
+    padding: 12px 14px;
+  }
 }

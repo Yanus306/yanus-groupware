@@ -1,7 +1,7 @@
 .dashboard {
   max-width: 1200px;
   min-height: calc(100vh - 180px);
-  height: calc(100vh - 180px);
+  height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -376,13 +376,23 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard {
+    min-height: auto;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .clock-outer {
     width: 144px;
     height: 144px;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 20px;
   }
 }
 
@@ -440,6 +450,7 @@
 @media (max-width: 900px) {
   .dashboard {
     height: auto;
+    min-height: auto;
   }
 
   .dashboard-grid {
