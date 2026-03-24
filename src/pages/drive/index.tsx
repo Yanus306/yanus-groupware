@@ -2,18 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { FileText, Image, Upload, Trash2, Download, Files, HardDrive, Clock3, Sparkles } from 'lucide-react'
 import { getFiles, uploadFile, deleteFile, downloadFile } from '../../shared/api/driveApi'
 import type { DriveFile } from '../../shared/api/driveApi'
+import { useApp } from '../../features/auth/model'
 import { Toast } from '../../shared/ui/Toast'
 import './drive.css'
 
 export function Drive() {
+  const { state } = useApp()
   const [files, setFiles] = useState<DriveFile[]>([])
   const [uploading, setUploading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const sortFilesByNewest = (items: DriveFile[]) =>
+    [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
   useEffect(() => {
     getFiles()
-      .then(setFiles)
+      .then((items) => setFiles(sortFilesByNewest(items)))
       .catch(() => setErrorMessage('파일 목록을 불러오지 못했습니다'))
   }, [])
 
@@ -23,7 +28,7 @@ export function Drive() {
     setUploading(true)
     try {
       const newFile = await uploadFile(file)
-      setFiles((prev) => [...prev, newFile])
+      setFiles((prev) => sortFilesByNewest([...prev, newFile]))
     } catch {
       setErrorMessage('파일 업로드에 실패했습니다')
     } finally {
@@ -38,7 +43,7 @@ export function Drive() {
       await deleteFile(id)
     } catch {
       setErrorMessage('파일 삭제에 실패했습니다')
-      getFiles().then(setFiles).catch(() => {})
+      getFiles().then((items) => setFiles(sortFilesByNewest(items))).catch(() => {})
     }
   }
 
@@ -76,6 +81,7 @@ export function Drive() {
   const totalSize = files.reduce((sum, file) => sum + file.size, 0)
   const latestFile = [...files].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
   const uploaderCount = new Set(files.map((file) => file.uploadedById)).size
+  const currentUserName = state.currentUser?.name ?? '모든 멤버'
 
   return (
     <div className="drive-page">
@@ -87,17 +93,18 @@ export function Drive() {
         <div className="drive-header-copy">
           <p className="drive-kicker">Shared Library</p>
           <p className="drive-subtitle">
-            최근 산출물과 문서를 한눈에 보고, 바로 업로드와 다운로드를 이어갈 수 있게 정리했습니다.
+            모든 멤버가 함께 쓰는 공용 문서함입니다. 업로드한 파일은 팀 전체가 바로 확인할 수 있습니다.
           </p>
         </div>
         <div className="drive-header-actions">
+          <span className="drive-access-badge">전체 멤버 공유</span>
           <button
             className="upload-btn"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
           >
             <Upload size={18} />
-            {uploading ? '업로드 중...' : '파일 업로드'}
+            {uploading ? '업로드 중...' : '공용 파일 업로드'}
           </button>
         </div>
         <input
@@ -143,10 +150,10 @@ export function Drive() {
           <div className="drive-panel-head">
             <span className="drive-panel-badge">
               <Sparkles size={14} />
-              정리된 업로드 흐름
+              팀 공유 라이브러리
             </span>
-            <h3>빠른 업로드</h3>
-            <p>회의록, 산출물, 참고 자료를 바로 올리고 팀원이 즉시 확인할 수 있게 구성했습니다.</p>
+            <h3>빠른 공유 업로드</h3>
+            <p>회의록, 산출물, 참고 자료를 올리면 일반 멤버를 포함한 팀 전체가 바로 같은 파일을 확인합니다.</p>
           </div>
           <button
             className="upload-cta"
@@ -154,8 +161,13 @@ export function Drive() {
             disabled={uploading}
           >
             <Upload size={18} />
-            {uploading ? '업로드 중...' : '새 파일 추가'}
+            {uploading ? '업로드 중...' : '새 공유 파일 추가'}
           </button>
+          <div className="drive-access-note">
+            <span>현재 업로드 가능 계정</span>
+            <strong>{currentUserName}</strong>
+            <p>일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.</p>
+          </div>
           <div className="drive-side-stats">
             <div>
               <span>업로드 참여자</span>

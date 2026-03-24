@@ -1,13 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from '../index'
+import { resetDriveMockData } from '../drive'
 
 // auth, members, attendance, calendar — 실제 백엔드 사용 (mock 핸들러 테스트 제외)
 // chat, drive mock 핸들러만 테스트
 const server = setupServer(...handlers)
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetDriveMockData()
+})
 afterAll(() => server.close())
 
 describe('MSW 핸들러 — 채팅', () => {
@@ -57,5 +61,26 @@ describe('MSW 핸들러 — 드라이브', () => {
       headers: { Authorization: 'Bearer mock-token' },
     })
     expect(res.status).toBe(200)
+  })
+
+  it('POST /api/v1/drive/upload 성공 시 로그인한 멤버 업로더를 반환한다', async () => {
+    const formData = new FormData()
+    formData.append('file', new File(['hello'], 'shared-guide.txt', { type: 'text/plain' }))
+
+    const res = await fetch('/api/v1/drive/upload', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer mock-token-3' },
+      body: formData,
+    })
+
+    const body = await res.json() as {
+      code: string
+      data: { uploadedById: number; uploadedByName: string }
+    }
+
+    expect(res.status).toBe(201)
+    expect(body.code).toBe('SUCCESS')
+    expect(body.data.uploadedById).toBe(3)
+    expect(body.data.uploadedByName).toBe('이멤버')
   })
 })
