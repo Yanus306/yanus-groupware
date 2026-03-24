@@ -3,17 +3,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { Settings } from '../index'
 
 const mockUpdateMyProfile = vi.fn()
+const mockDeactivateMember = vi.fn()
 const mockSetTheme = vi.fn()
+const mockLogout = vi.fn()
+const mockNavigate = vi.fn()
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: { currentUser: { id: '1', name: '홍길동', role: 'member', team: '개발팀' }, users: [] },
     isAdmin: false,
+    logout: mockLogout,
   }),
 }))
 
 vi.mock('../../../shared/api/membersApi', () => ({
   updateMyProfile: (...args: unknown[]) => mockUpdateMyProfile(...args),
+  deactivateMember: (...args: unknown[]) => mockDeactivateMember(...args),
 }))
 
 vi.mock('../../../shared/theme', () => ({
@@ -23,6 +28,14 @@ vi.mock('../../../shared/theme', () => ({
     toggleTheme: vi.fn(),
   }),
 }))
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
 
 describe('Settings 페이지', () => {
   beforeEach(() => {
@@ -143,6 +156,23 @@ describe('Settings 페이지', () => {
 
       await waitFor(() => {
         expect(screen.getByText('서버 오류')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('회원 탈퇴', () => {
+    it('회원 탈퇴 확인 후 deactivateMember와 logout이 호출된다', async () => {
+      mockDeactivateMember.mockResolvedValueOnce(null)
+
+      render(<Settings />)
+      fireEvent.click(screen.getByText('보안'))
+      fireEvent.click(screen.getByRole('button', { name: '회원 탈퇴' }))
+      fireEvent.click(screen.getByRole('button', { name: '탈퇴 진행' }))
+
+      await waitFor(() => {
+        expect(mockDeactivateMember).toHaveBeenCalledWith('1')
+        expect(mockLogout).toHaveBeenCalled()
+        expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
       })
     })
   })

@@ -47,15 +47,22 @@ export function TeamWorkSchedulePanel({ schedules, title = '팀 근무 일정' }
                 </div>
               </div>
 
-              <div className="team-work-badges">
-                {[...member.workSchedules]
-                  .sort((a, b) => DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek))
-                  .map((schedule) => (
-                    <div key={`${member.memberId}-${schedule.dayOfWeek}`} className="team-work-badge">
-                      <span className="team-work-day">{DAY_LABEL[schedule.dayOfWeek] ?? schedule.dayOfWeek}</span>
-                      <span className="team-work-time">{formatTimeRange(schedule.startTime, schedule.endTime)}</span>
+              <div className="team-work-week-grid">
+                {DAY_ORDER.map((dayOfWeek) => {
+                  const schedule = member.workSchedules.find((item) => item.dayOfWeek === dayOfWeek)
+
+                  return (
+                    <div
+                      key={`${member.memberId}-${dayOfWeek}`}
+                      className={`team-work-day-card ${schedule ? 'active' : 'off'}`}
+                    >
+                      <span className="team-work-day">{DAY_LABEL[dayOfWeek] ?? dayOfWeek}</span>
+                      <span className="team-work-time">
+                        {schedule ? formatTimeRange(schedule.startTime, schedule.endTime) : '휴무'}
+                      </span>
                     </div>
-                  ))}
+                  )
+                })}
               </div>
             </article>
           ))}

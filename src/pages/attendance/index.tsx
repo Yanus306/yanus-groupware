@@ -37,6 +37,11 @@ const ORDERED_WORK_DAYS = [
   'SUNDAY',
 ] as const
 
+const ATTENDANCE_STATUS_LABEL = {
+  LEFT: '퇴근',
+  WORKING: '근무 중',
+} as const
+
 export function Attendance() {
   const { isAdmin, state } = useApp()
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
@@ -232,7 +237,7 @@ export function Attendance() {
                         <td>{r.workDate}</td>
                         <td>
                           <span className={`status-badge ${r.status === 'LEFT' ? 'present' : 'late'}`}>
-                            {r.status === 'LEFT' ? 'Present' : 'Working'}
+                            {ATTENDANCE_STATUS_LABEL[r.status]}
                           </span>
                         </td>
                       </tr>
@@ -273,7 +278,7 @@ export function Attendance() {
                       <td>{r.checkOutTime?.slice(11, 16) ?? '-'}</td>
                       <td>
                         <span className={`status-badge ${r.status === 'LEFT' ? 'present' : 'late'}`}>
-                          {r.status === 'LEFT' ? 'Present' : 'Working'}
+                          {ATTENDANCE_STATUS_LABEL[r.status]}
                         </span>
                       </td>
                     </tr>
@@ -291,15 +296,15 @@ export function Attendance() {
               <span className="value">{todayRecords.length}</span>
             </div>
             <div className="stat-card glass">
-              <span className="label">Present</span>
+              <span className="label">퇴근</span>
               <span className="value green">{todayRecords.filter((r) => r.status === 'LEFT').length}</span>
             </div>
             <div className="stat-card glass">
-              <span className="label">Working</span>
+              <span className="label">근무 중</span>
               <span className="value yellow">{todayRecords.filter((r) => r.status === 'WORKING').length}</span>
             </div>
             <div className="stat-card glass">
-              <span className="label">Absent</span>
+              <span className="label">미출근</span>
               <span className="value red">{todayRecords.filter((r) => r.checkInTime === null).length}</span>
             </div>
           </div>
