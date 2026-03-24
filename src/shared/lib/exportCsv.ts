@@ -17,7 +17,7 @@ export function exportAttendanceToCsv(records: AttendanceExportRow[], filename: 
     r.date,
     r.clockIn,
     r.clockOut ?? '-',
-    r.status === 'done' ? 'Present' : 'Working',
+    r.status === 'done' ? '퇴근' : '근무 중',
   ])
 
   const csvContent = [header, ...rows]

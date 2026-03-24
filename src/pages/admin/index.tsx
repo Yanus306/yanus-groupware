@@ -74,6 +74,11 @@ export function Admin() {
   }
 
   const handleDeactivate = async (id: string) => {
+    const member = members.find((item) => item.id === id)
+    if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
+      return
+    }
+
     setSaving(true)
     try {
       await deactivateMember(id)
@@ -206,7 +211,7 @@ export function Admin() {
                         disabled={saving}
                         onClick={() => handleActivate(u.id)}
                       >
-                        활성화
+                        복구
                       </button>
                     ) : (
                       <button
@@ -215,7 +220,7 @@ export function Admin() {
                         disabled={saving}
                         onClick={() => handleDeactivate(u.id)}
                       >
-                        비활성화
+                        퇴출
                       </button>
                     )}
                   </td>

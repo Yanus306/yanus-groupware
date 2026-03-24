@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { attendanceHandlers } from '../../../shared/api/mock/handlers/attendance'
@@ -14,7 +14,7 @@ afterAll(() => server.close())
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
-    state: { currentUser: { id: '1', name: '김리더', role: 'admin' }, users: [] },
+    state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND' }, users: [] },
     isAdmin: true,
   }),
 }))
@@ -63,6 +63,25 @@ describe('Attendance 페이지', () => {
     render(<Attendance />)
     await waitFor(() => {
       expect(screen.getAllByText('김리더').length).toBeGreaterThan(0)
+    })
+  })
+
+  it('Attendance Records의 Scheduled Days에 멤버 근무 일정이 반영된다', async () => {
+    server.use(
+      http.get('/api/v1/attendances', () =>
+        HttpResponse.json({
+          code: 'SUCCESS', message: 'ok',
+          data: [{ id: 1, memberId: 1, memberName: '김리더', workDate: TODAY, checkInTime: `${TODAY}T09:00:00`, checkOutTime: `${TODAY}T18:00:00`, status: 'LEFT' }],
+        }),
+      ),
+    )
+
+    render(<Attendance />)
+
+    await waitFor(() => {
+      const scheduledDaysCell = screen.getByTestId('scheduled-days-1')
+      expect(within(scheduledDaysCell).getAllByLabelText(/근무 예정/)).toHaveLength(3)
+      expect(within(scheduledDaysCell).getAllByLabelText(/휴무/)).toHaveLength(4)
     })
   })
 })

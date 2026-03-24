@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun } from 'lucide-react'
+import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun, AlertTriangle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import { useTheme, type ThemeMode } from '../../shared/theme'
-import { updateMyProfile } from '../../shared/api/membersApi'
+import { updateMyProfile, deactivateMember } from '../../shared/api/membersApi'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
 type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security'
 
 export function Settings() {
-  const { state } = useApp()
+  const navigate = useNavigate()
+  const { state, logout } = useApp()
   const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const [notifications, setNotifications] = useState({
@@ -26,6 +28,8 @@ export function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSaved, setPasswordSaved] = useState(false)
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
 
   const handleSave = async () => {
     try {
@@ -56,6 +60,22 @@ export function Settings() {
       setTimeout(() => setPasswordSaved(false), 2000)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다')
+    }
+  }
+
+  const handleWithdraw = async () => {
+    if (!state.currentUser?.id) return
+
+    setIsWithdrawing(true)
+    try {
+      await deactivateMember(state.currentUser.id)
+      logout()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '회원 탈퇴에 실패했습니다')
+    } finally {
+      setIsWithdrawing(false)
+      setShowWithdrawConfirm(false)
     }
   }
 
@@ -241,6 +261,48 @@ export function Settings() {
                 <Save size={16} />
                 {passwordSaved ? '변경됨!' : '비밀번호 변경'}
               </button>
+
+              <div className="danger-zone">
+                <div className="danger-zone-head">
+                  <span className="danger-zone-icon">
+                    <AlertTriangle size={16} />
+                  </span>
+                  <div>
+                    <h4>회원 탈퇴</h4>
+                    <p>탈퇴하면 계정이 비활성화되고 현재 세션이 종료됩니다. 다시 사용하려면 관리자 도움이 필요합니다.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="danger-btn"
+                  onClick={() => setShowWithdrawConfirm((prev) => !prev)}
+                >
+                  회원 탈퇴
+                </button>
+
+                {showWithdrawConfirm && (
+                  <div className="danger-confirm-box">
+                    <p>정말 탈퇴하시겠습니까? 현재 계정이 즉시 비활성화됩니다.</p>
+                    <div className="danger-confirm-actions">
+                      <button
+                        type="button"
+                        className="danger-cancel-btn"
+                        onClick={() => setShowWithdrawConfirm(false)}
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-confirm-btn"
+                        onClick={handleWithdraw}
+                        disabled={isWithdrawing}
+                      >
+                        {isWithdrawing ? '탈퇴 처리 중...' : '탈퇴 진행'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
           )}
         </div>
