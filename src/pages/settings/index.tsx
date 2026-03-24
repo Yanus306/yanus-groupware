@@ -76,9 +76,8 @@ export function Settings() {
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
       <header className="settings-header">
-        <div>
-          <p className="settings-kicker">Preferences</p>
-          <h1>설정</h1>
+        <div className="settings-header-copy">
+          <p className="settings-kicker">환경 관리</p>
           <p className="settings-subtitle">프로필, 알림, 테마, 보안 환경을 한 곳에서 관리하세요.</p>
         </div>
         <div className="settings-summary-card glass">

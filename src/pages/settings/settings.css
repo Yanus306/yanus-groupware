@@ -12,23 +12,23 @@
   gap: 20px;
 }
 
+.settings-header-copy {
+  max-width: 620px;
+}
+
 .settings-kicker {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: var(--text-muted);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.settings-header h1 {
-  margin: 0;
-  font-size: 2rem;
-}
-
 .settings-subtitle {
-  margin: 10px 0 0;
+  margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
+  font-size: 1rem;
 }
 
 .settings-summary-card {
