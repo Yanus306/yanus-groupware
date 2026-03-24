@@ -1,19 +1,26 @@
 import { http, HttpResponse } from 'msw'
+import { FALLBACK_TEAMS, sortTeams } from '../../../lib/team'
 
 let mockMembers = [
-  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN', status: 'ACTIVE', online: true },
-  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
-  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: 'AI', role: 'MEMBER', status: 'ACTIVE', online: false },
-  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: 'BACKEND', role: 'MEMBER', status: 'ACTIVE', online: true },
-  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: 'SECURITY', role: 'MEMBER', status: 'INACTIVE', online: false },
+  { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE', online: true },
+  { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
+  { id: '3', name: '이멤버', email: 'user@yanus.kr', team: '3팀', role: 'MEMBER', status: 'ACTIVE', online: false },
+  { id: '4', name: '최개발', email: 'dev@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE', online: true },
+  { id: '5', name: '정보안', email: 'sec@yanus.kr', team: '4팀', role: 'MEMBER', status: 'INACTIVE', online: false },
 ]
 
-const mockTeams = [
-  { id: 1, name: 'BACKEND' },
-  { id: 2, name: 'FRONTEND' },
-  { id: 3, name: 'AI' },
-  { id: 4, name: 'SECURITY' },
-]
+let mockTeams = [...FALLBACK_TEAMS]
+
+export function resetMembersMockData() {
+  mockMembers = [
+    { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE', online: true },
+    { id: '2', name: '박팀장', email: 'lead@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE', online: true },
+    { id: '3', name: '이멤버', email: 'user@yanus.kr', team: '3팀', role: 'MEMBER', status: 'ACTIVE', online: false },
+    { id: '4', name: '최개발', email: 'dev@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE', online: true },
+    { id: '5', name: '정보안', email: 'sec@yanus.kr', team: '4팀', role: 'MEMBER', status: 'INACTIVE', online: false },
+  ]
+  mockTeams = [...FALLBACK_TEAMS]
+}
 
 export const membersHandlers = [
   http.get('/api/v1/members', ({ request }) => {
@@ -92,7 +99,7 @@ export const membersHandlers = [
   }),
 
   http.get('/api/v1/teams', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockTeams }),
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: sortTeams(mockTeams) }),
   ),
 
   http.get('/api/v1/teams/:id', ({ params }) => {
@@ -101,5 +108,46 @@ export const membersHandlers = [
       return HttpResponse.json({ code: 'NOT_FOUND', message: '팀을 찾을 수 없습니다', data: null }, { status: 404 })
     }
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: team })
+  }),
+
+  http.post('/api/v1/teams', async ({ request }) => {
+    const body = await request.json() as { name?: string }
+    const name = body.name?.trim()
+
+    if (!name) {
+      return HttpResponse.json({ code: 'BAD_REQUEST', message: '팀 이름을 입력해 주세요', data: null }, { status: 400 })
+    }
+
+    if (mockTeams.some((team) => team.name === name)) {
+      return HttpResponse.json({ code: 'CONFLICT', message: '이미 존재하는 팀입니다', data: null }, { status: 409 })
+    }
+
+    const nextTeam = {
+      id: Math.max(0, ...mockTeams.map((team) => team.id)) + 1,
+      name,
+    }
+
+    mockTeams = [...mockTeams, nextTeam]
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: nextTeam })
+  }),
+
+  http.delete('/api/v1/teams/:teamId', ({ params }) => {
+    const teamId = Number(params.teamId)
+    const team = mockTeams.find((item) => item.id === teamId)
+
+    if (!team) {
+      return HttpResponse.json({ code: 'NOT_FOUND', message: '팀을 찾을 수 없습니다', data: null }, { status: 404 })
+    }
+
+    if (mockMembers.some((member) => member.team === team.name)) {
+      return HttpResponse.json(
+        { code: 'TEAM_IN_USE', message: '멤버가 남아 있는 팀은 삭제할 수 없습니다', data: null },
+        { status: 409 },
+      )
+    }
+
+    mockTeams = mockTeams.filter((item) => item.id !== teamId)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 ]

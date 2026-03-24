@@ -181,29 +181,19 @@
 }
 
 .team-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 140px;
   padding: 4px 12px;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 0.8rem;
-}
-
-.team-tag.BACKEND {
-  background: rgba(99, 102, 241, 0.18);
-  color: #a5b4fc;
-}
-
-.team-tag.FRONTEND {
-  background: rgba(236, 72, 153, 0.18);
-  color: #f9a8d4;
-}
-
-.team-tag.AI {
-  background: rgba(16, 185, 129, 0.18);
-  color: #6ee7b7;
-}
-
-.team-tag.SECURITY {
-  background: rgba(245, 158, 11, 0.18);
-  color: #fcd34d;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 18%, transparent);
 }
 
 .role-tag {
@@ -326,6 +316,15 @@
   justify-content: flex-start;
   padding-top: 8px;
   font-size: 0.7rem;
+  text-align: center;
+  min-width: 0;
+}
+
+.bar span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pie-legend span {

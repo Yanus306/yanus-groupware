@@ -2,24 +2,19 @@ import { useState, useEffect } from 'react'
 import { Search, Crown, ChevronDown, UserPlus, X } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { getMembers, updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
+import { getTeams } from '../../shared/api/teamsApi'
+import type { TeamResponse } from '../../shared/api/teamsApi'
 import type { UserRole } from '../../entities/user/model/types'
+import { FALLBACK_TEAMS, formatTeamName, getTeamOptions } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
-const teams = ['전체 팀', 'BACKEND', 'FRONTEND', 'AI', 'SECURITY']
 const roles = ['전체 역할', 'ADMIN', 'TEAM_LEAD', 'MEMBER']
 
 const roleLabels: Record<string, string> = {
   ADMIN: '관리자',
   TEAM_LEAD: '팀장',
   MEMBER: '멤버',
-}
-
-const teamLabels: Record<string, string> = {
-  BACKEND: '백엔드',
-  FRONTEND: '프론트엔드',
-  AI: 'AI',
-  SECURITY: '보안',
 }
 
 const statusLabels: Record<string, string> = {
@@ -41,15 +36,26 @@ export function Members() {
   const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER')
   const [saving, setSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [teams, setTeams] = useState<TeamResponse[]>(FALLBACK_TEAMS)
 
   useEffect(() => {
-    getMembers().then(loadMembers).catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
+    Promise.all([
+      getMembers(),
+      getTeams().catch(() => FALLBACK_TEAMS),
+    ])
+      .then(([members, teamOptions]) => {
+        loadMembers(members)
+        setTeams(teamOptions)
+      })
+      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
   }, [loadMembers])
 
-  const filtered = state.users.filter((u) => {
-    const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase())
-    const matchTeam = teamFilter === '전체 팀' || u.team === teamFilter
-    const matchRole = roleFilter === '전체 역할' || u.role === roleFilter
+  const teamOptions = getTeamOptions(state.users, teams)
+
+  const filtered = state.users.filter((user) => {
+    const matchSearch = !search || user.name.toLowerCase().includes(search.toLowerCase())
+    const matchTeam = teamFilter === '전체 팀' || user.team === teamFilter
+    const matchRole = roleFilter === '전체 역할' || user.role === roleFilter
     return matchSearch && matchTeam && matchRole
   })
 
@@ -60,10 +66,11 @@ export function Members() {
 
   const handleConfirmRoleChange = async () => {
     if (!changeRoleFor) return
+
     setSaving(true)
     try {
       await updateMemberRole(changeRoleFor.id, selectedRole)
-      loadMembers(state.users.map((u) => u.id === changeRoleFor.id ? { ...u, role: selectedRole } : u))
+      loadMembers(state.users.map((user) => user.id === changeRoleFor.id ? { ...user, role: selectedRole } : user))
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '역할 변경에 실패했습니다')
     }
@@ -114,6 +121,7 @@ export function Members() {
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return
+
     setSaving(true)
     try {
       const updated = await getMembers()
@@ -131,6 +139,7 @@ export function Members() {
       {errorMessage && (
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
+
       <header className="members-header">
         <div className="members-header-copy">
           <p>멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.</p>
@@ -147,14 +156,17 @@ export function Members() {
       <div className="filters-row">
         <div className="search-wrap glass">
           <Search size={18} />
-          <input placeholder="멤버 이름 검색" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input placeholder="멤버 이름 검색" value={search} onChange={(event) => setSearch(event.target.value)} />
         </div>
         <div className="filter-group">
           <span className="filter-label">팀</span>
           <div className="filter-btns">
-            {teams.map((t) => (
-              <button key={t} className={teamFilter === t ? 'active' : ''} onClick={() => setTeamFilter(t)}>
-                {teamLabels[t] ?? t}
+            <button className={teamFilter === '전체 팀' ? 'active' : ''} onClick={() => setTeamFilter('전체 팀')}>
+              전체 팀
+            </button>
+            {teamOptions.map((team) => (
+              <button key={team.id} className={teamFilter === team.name ? 'active' : ''} onClick={() => setTeamFilter(team.name)}>
+                {formatTeamName(team.name)}
               </button>
             ))}
           </div>
@@ -162,9 +174,9 @@ export function Members() {
         <div className="filter-group">
           <span className="filter-label">역할</span>
           <div className="filter-btns">
-            {roles.map((r) => (
-              <button key={r} className={roleFilter === r ? 'active' : ''} onClick={() => setRoleFilter(r)}>
-                {roleLabels[r] ?? r}
+            {roles.map((role) => (
+              <button key={role} className={roleFilter === role ? 'active' : ''} onClick={() => setRoleFilter(role)}>
+                {roleLabels[role] ?? role}
               </button>
             ))}
           </div>
@@ -187,28 +199,28 @@ export function Members() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id}>
-                    <td><span className="avatar">{u.name[0]}</span>{u.name}</td>
-                    <td><span className={"team-tag " + u.team}>{teamLabels[u.team] ?? u.team}</span></td>
+                {filtered.map((user) => (
+                  <tr key={user.id}>
+                    <td><span className="avatar">{user.name[0]}</span>{user.name}</td>
+                    <td><span className="team-tag">{formatTeamName(user.team)}</span></td>
                     <td>
-                      <span className={"role-tag " + u.role}>
-                        {u.role === 'ADMIN' && <Crown size={14} />}
-                        {roleLabels[u.role] ?? u.role}
+                      <span className={`role-tag ${user.role}`}>
+                        {user.role === 'ADMIN' && <Crown size={14} />}
+                        {roleLabels[user.role] ?? user.role}
                       </span>
                     </td>
                     {isAdmin && (
                       <td>
                         <div className="member-status-cell">
-                          <span className={`member-status-tag ${u.status ?? 'ACTIVE'}`}>
-                            {statusLabels[u.status ?? 'ACTIVE'] ?? (u.status ?? 'ACTIVE')}
+                          <span className={`member-status-tag ${user.status ?? 'ACTIVE'}`}>
+                            {statusLabels[user.status ?? 'ACTIVE'] ?? (user.status ?? 'ACTIVE')}
                           </span>
-                          {u.status === 'INACTIVE' ? (
-                            <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
+                          {user.status === 'INACTIVE' ? (
+                            <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(user.id)}>
                               활성화
                             </button>
                           ) : (
-                            <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
+                            <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(user.id)}>
                               비활성화
                             </button>
                           )}
@@ -217,15 +229,15 @@ export function Members() {
                     )}
                     {isAdmin && (
                       <td className="actions-cell">
-                        <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
+                        <button className="action-btn" onClick={() => handleOpenChangeRole(user.id, user.name, user.role)}>
                           역할 변경 <ChevronDown size={14} />
                         </button>
                         <button
                           className="action-btn deactivate-btn"
-                          disabled={saving || u.status === 'INACTIVE'}
-                          onClick={() => handleExpel(u.id)}
+                          disabled={saving || user.status === 'INACTIVE'}
+                          onClick={() => handleExpel(user.id)}
                         >
-                          {u.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
+                          {user.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
                         </button>
                       </td>
                     )}
@@ -239,35 +251,36 @@ export function Members() {
         <aside className="stats-sidebar glass">
           <h3>팀별 멤버 수</h3>
           <div className="bar-chart">
-            {Object.entries(teamLabels).map(([key, label]) => {
-              const count = state.users.filter((u) => u.team === key).length
-              const max = Math.max(...Object.keys(teamLabels).map((k) => state.users.filter((u) => u.team === k).length), 1)
+            {teamOptions.map((team) => {
+              const count = state.users.filter((user) => user.team === team.name).length
+              const max = Math.max(...teamOptions.map((item) => state.users.filter((user) => user.team === item.name).length), 1)
               return (
-                <div key={key} className="bar" style={{ height: Math.max((count / max) * 100, 8) + '%' }}>
-                  <span>{label.split(' ')[0]}</span><span>{count}</span>
+                <div key={team.id} className="bar" style={{ height: `${Math.max((count / max) * 100, 8)}%` }}>
+                  <span>{formatTeamName(team.name)}</span>
+                  <span>{count}</span>
                 </div>
               )
             })}
           </div>
           <h3>역할 분포</h3>
           <div className="pie-legend">
-            <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {state.users.filter((u) => u.role === 'ADMIN').length}</span>
-            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {state.users.filter((u) => u.role === 'TEAM_LEAD').length}</span>
-            <span><i style={{ background: 'var(--text-secondary)' }} /> 멤버 {state.users.filter((u) => u.role === 'MEMBER').length}</span>
+            <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {state.users.filter((user) => user.role === 'ADMIN').length}</span>
+            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {state.users.filter((user) => user.role === 'TEAM_LEAD').length}</span>
+            <span><i style={{ background: 'var(--text-secondary)' }} /> 멤버 {state.users.filter((user) => user.role === 'MEMBER').length}</span>
           </div>
         </aside>
       </div>
 
       {changeRoleFor && (
         <div className="modal-overlay" onClick={() => setChangeRoleFor(null)}>
-          <div className="change-role-modal glass" onClick={(e) => e.stopPropagation()}>
+          <div className="change-role-modal glass" onClick={(event) => event.stopPropagation()}>
             <h3>역할 변경 - {changeRoleFor.name}</h3>
             <div className="role-options">
-              {ALL_ROLES.map((r) => (
-                <div key={r} className={"role-option " + (selectedRole === r ? 'selected' : '')} onClick={() => setSelectedRole(r)}>
-                  <span className={"role-pill " + r}>
-                    {r === 'ADMIN' && <Crown size={14} />}
-                    {roleLabels[r]}
+              {ALL_ROLES.map((role) => (
+                <div key={role} className={`role-option ${selectedRole === role ? 'selected' : ''}`} onClick={() => setSelectedRole(role)}>
+                  <span className={`role-pill ${role}`}>
+                    {role === 'ADMIN' && <Crown size={14} />}
+                    {roleLabels[role]}
                   </span>
                 </div>
               ))}
@@ -284,7 +297,7 @@ export function Members() {
 
       {showInvite && (
         <div className="modal-overlay" onClick={() => setShowInvite(false)}>
-          <div className="invite-modal glass" onClick={(e) => e.stopPropagation()}>
+          <div className="invite-modal glass" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header-row">
               <h3>멤버 초대</h3>
               <button className="close-btn" onClick={() => setShowInvite(false)}><X size={18} /></button>
@@ -295,16 +308,16 @@ export function Members() {
                 type="email"
                 placeholder="user@yanus.kr"
                 value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                onChange={(event) => setInviteEmail(event.target.value)}
                 className="setting-input"
               />
             </div>
             <div className="setting-field">
               <label>역할</label>
               <div className="role-btns">
-                {ALL_ROLES.map((r) => (
-                  <button key={r} className={"role-btn " + (inviteRole === r ? 'active' : '')} onClick={() => setInviteRole(r)}>
-                    {roleLabels[r]}
+                {ALL_ROLES.map((role) => (
+                  <button key={role} className={`role-btn ${inviteRole === role ? 'active' : ''}`} onClick={() => setInviteRole(role)}>
+                    {roleLabels[role]}
                   </button>
                 ))}
               </div>

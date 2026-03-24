@@ -222,7 +222,7 @@ export function Attendance() {
                   <thead>
                     <tr>
                       <th>멤버 ↕</th>
-                      <th>근무 요일</th>
+                      <th>근무 일정</th>
                       <th>출근</th>
                       <th>퇴근</th>
                       <th>날짜</th>
