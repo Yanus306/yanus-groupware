@@ -77,6 +77,7 @@ describe('Admin 페이지', () => {
     await user.click(screen.getByRole('button', { name: '멤버 관리' }))
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: '퇴출' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
   })
 
   it('출근 현황 탭에 요약 카운트가 표시된다', async () => {
