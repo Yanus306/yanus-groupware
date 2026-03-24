@@ -190,7 +190,7 @@ export function Attendance() {
           </section>
         )}
 
-        <div className={`two-cards-row ${!isAdmin ? 'single' : ''}`}>
+        <div className={`two-cards-row ${isAdmin ? 'admin-wide' : 'single'}`}>
           <section className="set-work-days-section glass">
             <SetWorkDaysPersonal />
           </section>

@@ -187,6 +187,34 @@
   flex-wrap: wrap;
 }
 
+.admin-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-status-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.admin-status-tag.ACTIVE {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+}
+
+.admin-status-tag.INACTIVE {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-secondary);
+}
+
 .admin-action-btn {
   display: inline-flex;
   align-items: center;
@@ -224,6 +252,15 @@
 
 .admin-action-btn.activate-btn:hover {
   background: rgba(34, 197, 94, 0.1);
+}
+
+.admin-action-btn.mute-btn {
+  color: #fbbf24;
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
+.admin-action-btn.mute-btn:hover {
+  background: rgba(234, 179, 8, 0.1);
 }
 
 /* ── 역할 변경 모달 ── */
@@ -344,5 +381,10 @@
   .admin-actions-cell {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .admin-status-cell {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

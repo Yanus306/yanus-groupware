@@ -26,6 +26,11 @@ const teamLabels: Record<string, string> = {
   SECURITY: 'Security',
 }
 
+const statusLabels: Record<string, string> = {
+  ACTIVE: '활성',
+  INACTIVE: '비활성',
+}
+
 export function Admin() {
   const { loadMembers } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
@@ -74,6 +79,19 @@ export function Admin() {
   }
 
   const handleDeactivate = async (id: string) => {
+    setSaving(true)
+    try {
+      await deactivateMember(id)
+      const updated = await getMembers()
+      setMembers(updated)
+      loadMembers(updated)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+    }
+    setSaving(false)
+  }
+
+  const handleExpel = async (id: string) => {
     const member = members.find((item) => item.id === id)
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
@@ -86,7 +104,7 @@ export function Admin() {
       setMembers(updated)
       loadMembers(updated)
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+      setErrorMessage(err instanceof Error ? err.message : '퇴출에 실패했습니다')
     }
     setSaving(false)
   }
@@ -175,6 +193,7 @@ export function Admin() {
                 <th>이름</th>
                 <th>팀</th>
                 <th>역할</th>
+                <th>상태</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -196,6 +215,32 @@ export function Admin() {
                       {roleLabels[u.role] ?? u.role}
                     </span>
                   </td>
+                  <td>
+                    <div className="admin-status-cell">
+                      <span className={`admin-status-tag ${u.status ?? 'ACTIVE'}`}>
+                        {statusLabels[u.status ?? 'ACTIVE'] ?? (u.status ?? 'ACTIVE')}
+                      </span>
+                      {u.status === 'INACTIVE' ? (
+                        <button
+                          type="button"
+                          className="admin-action-btn activate-btn"
+                          disabled={saving}
+                          onClick={() => handleActivate(u.id)}
+                        >
+                          활성화
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="admin-action-btn mute-btn"
+                          disabled={saving}
+                          onClick={() => handleDeactivate(u.id)}
+                        >
+                          비활성화
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td className="admin-actions-cell">
                     <button
                       type="button"
@@ -204,25 +249,14 @@ export function Admin() {
                     >
                       역할 변경 <ChevronDown size={13} />
                     </button>
-                    {u.status === 'INACTIVE' ? (
-                      <button
-                        type="button"
-                        className="admin-action-btn activate-btn"
-                        disabled={saving}
-                        onClick={() => handleActivate(u.id)}
-                      >
-                        복구
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="admin-action-btn deactivate-btn"
-                        disabled={saving}
-                        onClick={() => handleDeactivate(u.id)}
-                      >
-                        퇴출
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="admin-action-btn deactivate-btn"
+                      disabled={saving || u.status === 'INACTIVE'}
+                      onClick={() => handleExpel(u.id)}
+                    >
+                      {u.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
+                    </button>
                   </td>
                 </tr>
               ))}

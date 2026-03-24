@@ -80,6 +80,10 @@
   grid-template-columns: 1fr;
 }
 
+.two-cards-row.admin-wide {
+  grid-template-columns: 1fr;
+}
+
 .set-work-days-section {
   padding: 24px;
 }
