@@ -8,8 +8,8 @@ import { AppProvider } from '../../../features/auth/model'
 import { Admin } from '../index'
 
 const mockMembers = [
-  { id: '1', name: '김민준', email: 'min@yanus.kr', team: 'BACKEND', role: 'MEMBER', status: 'ACTIVE' },
-  { id: '2', name: '이서연', email: 'seo@yanus.kr', team: 'FRONTEND', role: 'TEAM_LEAD', status: 'ACTIVE' },
+  { id: '1', name: '김민준', email: 'min@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
+  { id: '2', name: '이서연', email: 'seo@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE' },
 ]
 
 const mockRecords = [
@@ -29,7 +29,7 @@ const server = setupServer(
     HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: { id: '99', name: '관리자', email: 'admin@yanus.kr', team: 'BACKEND', role: 'ADMIN' },
+      data: { id: '99', name: '관리자', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN' },
     }),
   ),
   http.get('/api/v1/members', () =>
@@ -43,10 +43,10 @@ const server = setupServer(
       code: 'SUCCESS',
       message: 'ok',
       data: [
-        { id: 1, name: 'BACKEND' },
-        { id: 2, name: 'FRONTEND' },
-        { id: 3, name: 'AI' },
-        { id: 4, name: 'SECURITY' },
+        { id: 1, name: '1팀' },
+        { id: 2, name: '2팀' },
+        { id: 3, name: '3팀' },
+        { id: 4, name: '4팀' },
       ],
     }),
   ),
@@ -81,6 +81,7 @@ describe('Admin 페이지', () => {
   it('멤버 관리 탭이 존재한다', () => {
     renderAdmin()
     expect(screen.getByRole('button', { name: '멤버 관리' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '팀 관리' })).toBeInTheDocument()
   })
 
   it('멤버 관리 탭 클릭 시 멤버 테이블이 표시된다', async () => {

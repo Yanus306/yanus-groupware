@@ -15,7 +15,7 @@ const mockLoadMembers = vi.fn()
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: {
-      currentUser: { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: 'FRONTEND', email: 'lead@test.com' },
+      currentUser: { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'lead@test.com' },
       users: [],
     },
     isAdmin: false,
@@ -58,11 +58,11 @@ describe('TeamManagement 페이지', () => {
     })
 
     await user.click(screen.getByRole('button', { name: /팀 변경/ }))
-    await user.click(screen.getByRole('button', { name: 'AI' }))
+    await user.click(screen.getByRole('button', { name: '3팀' }))
     await user.click(screen.getByRole('button', { name: '팀 변경 저장' }))
 
     await waitFor(() => {
-      expect(screen.getByText(/박팀장의 팀을 AI 팀으로 변경했습니다/)).toBeInTheDocument()
+      expect(screen.getByText(/박팀장의 팀을 3팀으로 변경했습니다/)).toBeInTheDocument()
     })
   })
 })

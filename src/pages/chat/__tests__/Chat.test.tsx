@@ -10,11 +10,11 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn()
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: {
-      currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND' },
+      currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: '1팀' },
       users: [
-        { id: '1', name: '김리더', role: 'ADMIN', team: 'BACKEND', email: 'admin@yanus.kr', status: 'ACTIVE', online: true },
-        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: 'FRONTEND', email: 'lead@yanus.kr', status: 'ACTIVE', online: true },
-        { id: '5', name: '비활성멤버', role: 'MEMBER', team: 'SECURITY', email: 'inactive@yanus.kr', status: 'INACTIVE', online: false },
+        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE', online: true },
+        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'lead@yanus.kr', status: 'ACTIVE', online: true },
+        { id: '5', name: '비활성멤버', role: 'MEMBER', team: '4팀', email: 'inactive@yanus.kr', status: 'INACTIVE', online: false },
       ],
     },
     loadMembers: vi.fn(),
