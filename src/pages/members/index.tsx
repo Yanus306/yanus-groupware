@@ -175,63 +175,65 @@ export function Members() {
       <div className="members-content">
         <div className="table-section glass">
           <h3>멤버 목록</h3>
-          <table className="members-table">
-            <thead>
-              <tr>
-                <th>프로필</th>
-                <th>팀</th>
-                <th>역할</th>
-                {isAdmin && <th>상태</th>}
-                {isAdmin && <th>관리</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id}>
-                  <td><span className="avatar">{u.name[0]}</span>{u.name}</td>
-                  <td><span className={"team-tag " + u.team}>{teamLabels[u.team] ?? u.team}</span></td>
-                  <td>
-                    <span className={"role-tag " + u.role}>
-                      {u.role === 'ADMIN' && <Crown size={14} />}
-                      {roleLabels[u.role] ?? u.role}
-                    </span>
-                  </td>
-                  {isAdmin && (
-                    <td>
-                      <div className="member-status-cell">
-                        <span className={`member-status-tag ${u.status ?? 'ACTIVE'}`}>
-                          {statusLabels[u.status ?? 'ACTIVE'] ?? (u.status ?? 'ACTIVE')}
-                        </span>
-                        {u.status === 'INACTIVE' ? (
-                          <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
-                            활성화
-                          </button>
-                        ) : (
-                          <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
-                            비활성화
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                  {isAdmin && (
-                    <td className="actions-cell">
-                      <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
-                        역할 변경 <ChevronDown size={14} />
-                      </button>
-                      <button
-                        className="action-btn deactivate-btn"
-                        disabled={saving || u.status === 'INACTIVE'}
-                        onClick={() => handleExpel(u.id)}
-                      >
-                        {u.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
-                      </button>
-                    </td>
-                  )}
+          <div className="members-table-wrap">
+            <table className="members-table">
+              <thead>
+                <tr>
+                  <th>프로필</th>
+                  <th>팀</th>
+                  <th>역할</th>
+                  {isAdmin && <th>상태</th>}
+                  {isAdmin && <th>관리</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((u) => (
+                  <tr key={u.id}>
+                    <td><span className="avatar">{u.name[0]}</span>{u.name}</td>
+                    <td><span className={"team-tag " + u.team}>{teamLabels[u.team] ?? u.team}</span></td>
+                    <td>
+                      <span className={"role-tag " + u.role}>
+                        {u.role === 'ADMIN' && <Crown size={14} />}
+                        {roleLabels[u.role] ?? u.role}
+                      </span>
+                    </td>
+                    {isAdmin && (
+                      <td>
+                        <div className="member-status-cell">
+                          <span className={`member-status-tag ${u.status ?? 'ACTIVE'}`}>
+                            {statusLabels[u.status ?? 'ACTIVE'] ?? (u.status ?? 'ACTIVE')}
+                          </span>
+                          {u.status === 'INACTIVE' ? (
+                            <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
+                              활성화
+                            </button>
+                          ) : (
+                            <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
+                              비활성화
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                    {isAdmin && (
+                      <td className="actions-cell">
+                        <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
+                          역할 변경 <ChevronDown size={14} />
+                        </button>
+                        <button
+                          className="action-btn deactivate-btn"
+                          disabled={saving || u.status === 'INACTIVE'}
+                          onClick={() => handleExpel(u.id)}
+                        >
+                          {u.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <aside className="stats-sidebar glass">
