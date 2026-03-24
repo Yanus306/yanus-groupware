@@ -22,6 +22,7 @@ vi.mock('../../../features/auth/model', () => ({
 vi.mock('../../../features/attendance/ui', () => ({
   SetWorkDaysPersonal: () => <div data-testid="set-work-days" />,
   TeamAttendanceStatus: () => <div data-testid="team-attendance-status" />,
+  TeamWorkSchedulePanel: () => <div data-testid="team-work-schedule-panel" />,
 }))
 
 vi.mock('../../../features/leave/ui/LeaveSection', () => ({
@@ -43,6 +44,11 @@ describe('Attendance 페이지', () => {
     render(<Attendance />)
     expect(screen.getByText('This Week')).toBeInTheDocument()
     expect(screen.getByText('This Month')).toBeInTheDocument()
+  })
+
+  it('관리자에게 팀 근무 일정 패널이 표시된다', () => {
+    render(<Attendance />)
+    expect(screen.getByTestId('team-work-schedule-panel')).toBeInTheDocument()
   })
 
   it('출퇴근 기록을 로드한다', async () => {
