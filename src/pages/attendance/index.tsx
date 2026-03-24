@@ -1,24 +1,31 @@
 import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { SetWorkDaysPersonal, TeamAttendanceStatus } from '../../features/attendance/ui'
+import { SetWorkDaysPersonal, TeamAttendanceStatus, TeamWorkSchedulePanel } from '../../features/attendance/ui'
 import { LeaveSection } from '../../features/leave/ui/LeaveSection'
-import { getAttendanceByDate, getMyAttendance } from '../../shared/api/attendanceApi'
-import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import {
+  getAttendanceByDate,
+  getMyAttendance,
+  getAllWorkSchedules,
+  getTeamWorkSchedules,
+} from '../../shared/api/attendanceApi'
+import type { AttendanceRecord, MemberWorkScheduleItem } from '../../shared/api/attendanceApi'
 import { getMembers } from '../../shared/api/membersApi'
 import type { User } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
+import { getTeams } from '../../shared/api/teamsApi'
 import './attendance.css'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function Attendance() {
-  const { isAdmin } = useApp()
+  const { isAdmin, state } = useApp()
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
   const [members, setMembers] = useState<User[]>([])
+  const [teamSchedules, setTeamSchedules] = useState<MemberWorkScheduleItem[]>([])
   const [page, setPage] = useState(1)
   const [dateInput, setDateInput] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -43,6 +50,35 @@ export function Attendance() {
       .then(setMyRecords)
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '내 출퇴근 이력을 불러오지 못했습니다'))
   }, [])
+
+  useEffect(() => {
+    if (!isAdmin || !state.currentUser) return
+
+    const loadSchedules = async () => {
+      try {
+        if (state.currentUser?.role === 'ADMIN') {
+          const schedules = await getAllWorkSchedules()
+          setTeamSchedules(schedules)
+          return
+        }
+
+        if (state.currentUser?.role === 'TEAM_LEAD') {
+          const teams = await getTeams()
+          const currentTeam = teams.find((team) => team.name === state.currentUser?.team)
+          if (!currentTeam) {
+            setTeamSchedules([])
+            return
+          }
+          const schedules = await getTeamWorkSchedules(currentTeam.id)
+          setTeamSchedules(schedules)
+        }
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : '팀 근무 일정을 불러오지 못했습니다')
+      }
+    }
+
+    loadSchedules()
+  }, [isAdmin, state.currentUser])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
@@ -114,6 +150,15 @@ export function Attendance() {
         {isAdmin && members.length > 0 && (
           <section className="team-status-section glass">
             <TeamAttendanceStatus members={members} records={records} date={todayStr} />
+          </section>
+        )}
+
+        {isAdmin && (
+          <section className="team-schedule-section glass">
+            <TeamWorkSchedulePanel
+              schedules={teamSchedules}
+              title={state.currentUser?.role === 'ADMIN' ? '전체 근무 일정' : '팀 근무 일정'}
+            />
           </section>
         )}
 

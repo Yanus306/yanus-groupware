@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type { DayOfWeek, WorkScheduleItem } from '../../attendanceApi'
+import type { DayOfWeek, MemberWorkScheduleItem, WorkScheduleItem } from '../../attendanceApi'
 
 function todayStr() {
   const d = new Date()
@@ -19,6 +19,36 @@ let workSchedules: WorkScheduleItem[] = [
   { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
   { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
   { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+]
+
+let memberWorkSchedules: MemberWorkScheduleItem[] = [
+  {
+    memberId: 1,
+    memberName: '김리더',
+    teamName: 'BACKEND',
+    workSchedules: [
+      { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
+      { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+      { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
+    ],
+  },
+  {
+    memberId: 2,
+    memberName: '박팀장',
+    teamName: 'FRONTEND',
+    workSchedules: [
+      { id: 4, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
+      { id: 5, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00' },
+    ],
+  },
+  {
+    memberId: 4,
+    memberName: '최개발',
+    teamName: 'BACKEND',
+    workSchedules: [
+      { id: 6, dayOfWeek: 'FRIDAY', startTime: '09:30:00', endTime: '18:30:00' },
+    ],
+  },
 ]
 
 export function resetAttendanceMockData() {
@@ -79,6 +109,25 @@ export const attendanceHandlers = [
   http.get('/api/v1/work-schedules/me', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: workSchedules }),
   ),
+
+  http.get('/api/v1/work-schedules/all', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: memberWorkSchedules }),
+  ),
+
+  http.get('/api/v1/work-schedules/team/:teamId', ({ params }) => {
+    const teamId = Number(params.teamId)
+    const teamName =
+      teamId === 1 ? 'BACKEND' :
+      teamId === 2 ? 'FRONTEND' :
+      teamId === 3 ? 'AI' :
+      'SECURITY'
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: memberWorkSchedules.filter((item) => item.teamName === teamName),
+    })
+  }),
 
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as { dayOfWeek: DayOfWeek; startTime: string; endTime: string }

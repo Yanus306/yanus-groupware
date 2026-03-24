@@ -38,6 +38,13 @@ export interface WorkSchedulePayload {
   endTime: string    // HH:mm:ss
 }
 
+export interface MemberWorkScheduleItem {
+  memberId: number
+  memberName: string
+  teamName: string
+  workSchedules: WorkScheduleItem[]
+}
+
 export const getMyWorkSchedule = () =>
   baseClient.get<WorkScheduleItem[]>('/api/v1/work-schedules/me')
 
@@ -46,3 +53,9 @@ export const upsertWorkScheduleDay = (body: WorkSchedulePayload) =>
 
 export const deleteWorkScheduleDay = (dayOfWeek: DayOfWeek) =>
   baseClient.delete<null>(`/api/v1/work-schedules/${dayOfWeek}`)
+
+export const getAllWorkSchedules = () =>
+  baseClient.get<MemberWorkScheduleItem[]>('/api/v1/work-schedules/all')
+
+export const getTeamWorkSchedules = (teamId: number) =>
+  baseClient.get<MemberWorkScheduleItem[]>(`/api/v1/work-schedules/team/${teamId}`)
