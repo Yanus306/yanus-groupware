@@ -99,12 +99,6 @@ export function Layout() {
             <p className="content-kicker">Workspace</p>
             <h1>{pageTitle}</h1>
           </div>
-          {currentUser && (
-            <div className="content-user-chip">
-              <span className="content-user-status" />
-              <span>{currentUser.team}</span>
-            </div>
-          )}
         </header>
         <div className="content-body">
           <Outlet />
