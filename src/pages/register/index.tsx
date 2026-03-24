@@ -93,8 +93,7 @@ export function Register() {
     try {
       const teamId = teamOptions.find((t) => t.name === team)?.id ?? 1
       await register({ name, email, password, teamId })
-      const token = await login(email, password)
-      localStorage.setItem('accessToken', token)
+      await login(email, password)
       const user = await getMe()
       loadUser(user)
       navigate('/')

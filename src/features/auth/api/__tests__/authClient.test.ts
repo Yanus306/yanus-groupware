@@ -47,7 +47,10 @@ const server = setupServer(
 )
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  localStorage.clear()
+})
 afterAll(() => server.close())
 
 describe('authClient', () => {
@@ -55,6 +58,8 @@ describe('authClient', () => {
     it('성공 시 accessToken을 반환한다', async () => {
       const token = await login('admin@yanus.kr', 'password')
       expect(token).toBe('mock-token')
+      expect(localStorage.getItem('accessToken')).toBe('mock-token')
+      expect(localStorage.getItem('refreshToken')).toBe('refresh-token')
     })
 
     it('잘못된 자격증명이면 에러를 던진다', async () => {
@@ -97,7 +102,11 @@ describe('authClient', () => {
 
   describe('logout()', () => {
     it('로그아웃 요청이 성공한다', async () => {
+      localStorage.setItem('accessToken', 'mock-token')
+      localStorage.setItem('refreshToken', 'refresh-token')
       await expect(logout()).resolves.not.toThrow()
+      expect(localStorage.getItem('accessToken')).toBeNull()
+      expect(localStorage.getItem('refreshToken')).toBeNull()
     })
   })
 })

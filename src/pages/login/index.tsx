@@ -47,8 +47,7 @@ export function Login() {
 
     setLoading(true)
     try {
-      const token = await login(email, password)
-      localStorage.setItem('accessToken', token)
+      await login(email, password)
       const user = await getMe()
       loadUser(user)
       navigate('/')

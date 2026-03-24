@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react'
 import type { User } from '../../../entities/user/model/types'
 import { getMe } from '../api/authClient'
+import { clearAuthTokens, getAccessToken } from '../../../shared/lib/authStorage'
 
 export type { UserRole, Team, User, UserStatus } from '../../../entities/user/model/types'
 
@@ -29,7 +30,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 앱 시작 시 저장된 토큰으로 currentUser 복원
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (!token) {
       setIsInitializing(false)
       return
@@ -38,7 +39,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((user) => setState((prev) => ({ ...prev, currentUser: user })))
       .catch(() => {
         // 토큰 만료 또는 유효하지 않음 — 자동 로그아웃
-        localStorage.removeItem('accessToken')
+        clearAuthTokens()
       })
       .finally(() => setIsInitializing(false))
   }, [])
@@ -55,7 +56,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('accessToken')
+    clearAuthTokens()
     setState({ currentUser: null, users: [] })
   }, [])
 

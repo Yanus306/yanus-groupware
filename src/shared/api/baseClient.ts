@@ -1,4 +1,5 @@
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+import { clearAuthTokens, getAccessToken, getRefreshToken, storeAuthTokens } from '../lib/authStorage'
 
 export class ApiError extends Error {
   status: number
@@ -12,17 +13,67 @@ export class ApiError extends Error {
 }
 
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('accessToken')
+  const token = getAccessToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 function handleUnauthorized() {
-  localStorage.removeItem('accessToken')
+  clearAuthTokens()
   window.location.href = '/login'
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
+let refreshPromise: Promise<boolean> | null = null
+
+async function tryRefreshToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) return false
+
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        })
+
+        if (!res.ok) {
+          clearAuthTokens()
+          return false
+        }
+
+        const body = await res.json() as unknown
+        const data =
+          body !== null &&
+          typeof body === 'object' &&
+          'data' in body &&
+          'code' in body
+            ? (body as { data: { accessToken: string; refreshToken: string; tokenType: string } }).data
+            : body as { accessToken: string; refreshToken: string; tokenType: string }
+
+        if (!data?.accessToken || !data?.refreshToken) {
+          clearAuthTokens()
+          return false
+        }
+
+        storeAuthTokens(data)
+        return true
+      } catch {
+        clearAuthTokens()
+        return false
+      } finally {
+        refreshPromise = null
+      }
+    })()
+  }
+
+  return refreshPromise
+}
+
+async function request<T>(path: string, options: RequestInit = {}, canRetry = true): Promise<T> {
+  const hasAuthToken = Boolean(getAccessToken())
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -42,7 +93,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     } catch {
       // Ignore non-JSON error bodies and keep the fallback message.
     }
-    if (res.status === 401 && hasAuthToken) {
+    if (res.status === 401 && hasAuthToken && canRetry) {
+      const refreshed = await tryRefreshToken()
+      if (refreshed) {
+        return request<T>(path, options, false)
+      }
       handleUnauthorized()
     }
     throw new ApiError(res.status, message, code)
@@ -61,13 +116,17 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T
 }
 
-async function requestBlob(path: string): Promise<Blob> {
-  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
+async function requestBlob(path: string, canRetry = true): Promise<Blob> {
+  const hasAuthToken = Boolean(getAccessToken())
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: getAuthHeaders(),
   })
   if (res.status === 401) {
-    if (hasAuthToken) {
+    if (hasAuthToken && canRetry) {
+      const refreshed = await tryRefreshToken()
+      if (refreshed) {
+        return requestBlob(path, false)
+      }
       handleUnauthorized()
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
@@ -76,15 +135,19 @@ async function requestBlob(path: string): Promise<Blob> {
   return res.blob()
 }
 
-async function requestUpload<T>(path: string, formData: FormData): Promise<T> {
-  const hasAuthToken = Boolean(localStorage.getItem('accessToken'))
+async function requestUpload<T>(path: string, formData: FormData, canRetry = true): Promise<T> {
+  const hasAuthToken = Boolean(getAccessToken())
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: getAuthHeaders(), // Content-Type 미설정 → 브라우저가 multipart boundary 자동 지정
     body: formData,
   })
   if (res.status === 401) {
-    if (hasAuthToken) {
+    if (hasAuthToken && canRetry) {
+      const refreshed = await tryRefreshToken()
+      if (refreshed) {
+        return requestUpload<T>(path, formData, false)
+      }
       handleUnauthorized()
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')

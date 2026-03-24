@@ -37,7 +37,11 @@ describe('Register 페이지', () => {
     vi.clearAllMocks()
     localStorage.clear()
     mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', email: 'new@yanus.kr', team: 'BACKEND', role: 'MEMBER', online: true })
-    mockLogin.mockResolvedValue('mock-login-token')
+    mockLogin.mockImplementation(async () => {
+      localStorage.setItem('accessToken', 'mock-login-token')
+      localStorage.setItem('refreshToken', 'mock-refresh-token')
+      return 'mock-login-token'
+    })
   })
 
   it('이름, 이메일, 팀, 비밀번호 필드와 회원가입 버튼이 렌더링된다', () => {
@@ -82,6 +86,7 @@ describe('Register 페이지', () => {
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
     await waitFor(() => {
       expect(localStorage.getItem('accessToken')).toBe('mock-login-token')
+      expect(localStorage.getItem('refreshToken')).toBe('mock-refresh-token')
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })
   })
