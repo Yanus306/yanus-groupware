@@ -37,13 +37,13 @@ describe('Attendance 페이지', () => {
 
   it('관리자에게 Export CSV 버튼이 표시된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('Export CSV')).toBeInTheDocument()
+    expect(screen.getByText('CSV 내보내기')).toBeInTheDocument()
   })
 
   it('필터 탭이 렌더링된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('This Week')).toBeInTheDocument()
-    expect(screen.getByText('This Month')).toBeInTheDocument()
+    expect(screen.getByText('이번 주')).toBeInTheDocument()
+    expect(screen.getByText('이번 달')).toBeInTheDocument()
   })
 
   it('관리자에게 팀 근무 일정 패널이 표시된다', () => {
@@ -66,7 +66,7 @@ describe('Attendance 페이지', () => {
     })
   })
 
-  it('Attendance Records의 Scheduled Days에 멤버 근무 일정이 반영된다', async () => {
+  it('출퇴근 기록의 근무 요일에 멤버 근무 일정이 반영된다', async () => {
     server.use(
       http.get('/api/v1/attendances', () =>
         HttpResponse.json({

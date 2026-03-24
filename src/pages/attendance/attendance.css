@@ -86,23 +86,29 @@
 .team-status-section {
   padding: 20px 24px;
   border-radius: 14px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .team-schedule-section {
   padding: 20px 24px;
   border-radius: 14px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .attendance-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 .two-cards-row {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: 24px;
+  min-width: 0;
 }
 
 .two-cards-row.single {
@@ -113,12 +119,21 @@
   grid-template-columns: 1fr;
 }
 
+.two-cards-row > * {
+  min-width: 0;
+  width: 100%;
+}
+
 .set-work-days-section {
   padding: 24px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .records-section {
   padding: 24px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .records-section h3 {
@@ -128,6 +143,8 @@
 
 .records-table-wrap {
   overflow-x: auto;
+  max-width: 100%;
+  width: 100%;
   padding-bottom: 6px;
   scrollbar-width: thin;
 }
@@ -136,6 +153,14 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
+}
+
+.set-work-days-section .set-work-days-personal {
+  min-width: 0;
+}
+
+.set-work-days-section .day-schedule-grid {
+  max-width: 100%;
 }
 
 .records-table th,
@@ -211,6 +236,7 @@
   margin-top: 16px;
   font-size: 0.875rem;
   color: var(--text-secondary);
+  min-width: 0;
 }
 
 .pagination button {
@@ -222,6 +248,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+  min-width: 0;
 }
 
 .stat-card {
