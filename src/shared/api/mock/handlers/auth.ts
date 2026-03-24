@@ -22,6 +22,17 @@ export function resetAuthMockData() {
   validCredentials = { ...INITIAL_CREDENTIALS }
 }
 
+export function getAuthMockUserByAuthorization(authorization: string | null): User {
+  if (!authorization?.startsWith('Bearer ')) {
+    return mockUsers[0]
+  }
+
+  const token = authorization.replace('Bearer ', '')
+  const userId = token.replace('mock-token-', '')
+
+  return mockUsers.find((user) => user.id === userId) ?? mockUsers[0]
+}
+
 export const authHandlers = [
   http.post('/api/v1/auth/login', async ({ request }) => {
     const body = await request.json() as { email: string; password: string }
@@ -69,15 +80,14 @@ export const authHandlers = [
   }),
 
   http.get('/api/v1/auth/me', ({ request }) => {
-    const auth = request.headers.get('Authorization') ?? ''
-    if (!auth.startsWith('Bearer ')) {
+    const authorization = request.headers.get('Authorization')
+    if (!authorization?.startsWith('Bearer ')) {
       return HttpResponse.json(
         { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
         { status: 401 },
       )
     }
-    const userId = auth.replace('Bearer mock-token-', '')
-    const user = mockUsers.find((u) => u.id === userId) ?? mockUsers[0]
+    const user = getAuthMockUserByAuthorization(authorization)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: user })
   }),
 
