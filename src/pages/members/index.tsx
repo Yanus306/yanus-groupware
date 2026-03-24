@@ -22,6 +22,11 @@ const teamLabels: Record<string, string> = {
   SECURITY: 'Security',
 }
 
+const statusLabels: Record<string, string> = {
+  ACTIVE: '활성',
+  INACTIVE: '비활성',
+}
+
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 
 export function Members() {
@@ -67,6 +72,18 @@ export function Members() {
   }
 
   const handleDeactivate = async (id: string) => {
+    setSaving(true)
+    try {
+      await deactivateMember(id)
+      const updated = await getMembers()
+      loadMembers(updated)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+    }
+    setSaving(false)
+  }
+
+  const handleExpel = async (id: string) => {
     const member = state.users.find((item) => item.id === id)
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
@@ -78,7 +95,7 @@ export function Members() {
       const updated = await getMembers()
       loadMembers(updated)
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+      setErrorMessage(err instanceof Error ? err.message : '퇴출에 실패했습니다')
     }
     setSaving(false)
   }
@@ -160,6 +177,7 @@ export function Members() {
                 <th>Profile</th>
                 <th>Current Team</th>
                 <th>Role</th>
+                {isAdmin && <th>상태</th>}
                 {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
@@ -175,19 +193,35 @@ export function Members() {
                     </span>
                   </td>
                   {isAdmin && (
+                    <td>
+                      <div className="member-status-cell">
+                        <span className={`member-status-tag ${u.status ?? 'ACTIVE'}`}>
+                          {statusLabels[u.status ?? 'ACTIVE'] ?? (u.status ?? 'ACTIVE')}
+                        </span>
+                        {u.status === 'INACTIVE' ? (
+                          <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
+                            활성화
+                          </button>
+                        ) : (
+                          <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
+                            비활성화
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                  {isAdmin && (
                     <td className="actions-cell">
                       <button className="action-btn" onClick={() => handleOpenChangeRole(u.id, u.name, u.role)}>
                         Change Role <ChevronDown size={14} />
                       </button>
-                      {u.status === 'INACTIVE' ? (
-                        <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(u.id)}>
-                          복구
-                        </button>
-                      ) : (
-                        <button className="action-btn deactivate-btn" disabled={saving} onClick={() => handleDeactivate(u.id)}>
-                          퇴출
-                        </button>
-                      )}
+                      <button
+                        className="action-btn deactivate-btn"
+                        disabled={saving || u.status === 'INACTIVE'}
+                        onClick={() => handleExpel(u.id)}
+                      >
+                        {u.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
+                      </button>
                     </td>
                   )}
                 </tr>
