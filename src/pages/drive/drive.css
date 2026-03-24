@@ -18,22 +18,18 @@
 }
 
 .drive-kicker {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: var(--text-muted);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.drive-header h1 {
-  font-size: 2rem;
-  margin: 0;
-}
-
 .drive-subtitle {
-  margin: 10px 0 0;
+  margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
+  font-size: 1rem;
 }
 
 .drive-header-actions {

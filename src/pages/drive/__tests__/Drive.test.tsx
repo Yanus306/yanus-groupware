@@ -14,9 +14,9 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('Drive 페이지', () => {
-  it('파일 드라이브 제목이 렌더링된다', () => {
+  it('드라이브 안내 문구가 렌더링된다', () => {
     render(<Drive />)
-    expect(screen.getByText('파일 드라이브')).toBeInTheDocument()
+    expect(screen.getByText('최근 산출물과 문서를 한눈에 보고, 바로 업로드와 다운로드를 이어갈 수 있게 정리했습니다.')).toBeInTheDocument()
   })
 
   it('업로드 버튼이 렌더링된다', () => {
