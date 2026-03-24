@@ -112,7 +112,7 @@
 
 .table-section {
   padding: 24px;
-  overflow-x: auto;
+  overflow: hidden;
   overflow-y: hidden;
   min-width: 0;
 }
@@ -120,6 +120,13 @@
 .table-section h3 {
   margin-bottom: 16px;
   font-size: 1rem;
+}
+
+.members-table-wrap {
+  overflow-x: auto;
+  padding-bottom: 6px;
+  min-width: 0;
+  scrollbar-width: thin;
 }
 
 .members-table {
@@ -133,6 +140,8 @@
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .members-table th {
@@ -147,6 +156,15 @@
 
 .members-table tbody tr:hover td {
   background: rgba(255, 255, 255, 0.02);
+}
+
+.members-table td:first-child {
+  min-width: 180px;
+}
+
+.members-table td:last-child,
+.members-table th:last-child {
+  min-width: 190px;
 }
 
 .members-table .avatar {
@@ -222,6 +240,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .action-btn {
@@ -503,6 +522,10 @@
 
 :root[data-theme='light'] .members-table tbody tr:hover td {
   background: rgba(84, 102, 146, 0.05);
+}
+
+:root[data-theme='light'] .members-table-wrap {
+  scrollbar-color: rgba(84, 102, 146, 0.32) transparent;
 }
 
 @media (max-width: 900px) {

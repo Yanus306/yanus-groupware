@@ -4,7 +4,8 @@
   height: calc(100vh - 48px);
   max-height: calc(100vh - 48px);
   margin: -24px;
-  background: var(--bg-dark);
+  background:
+    linear-gradient(180deg, var(--bg-card) 0%, rgba(var(--bg-app-rgb), 0.72) 100%);
   overflow: hidden;
 }
 
@@ -79,7 +80,7 @@
   --fc-button-active-bg-color: var(--accent-purple);
   --fc-today-bg-color: rgba(124, 58, 237, 0.08);
   --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: var(--bg-dark);
+  --fc-neutral-bg-color: var(--bg-card-solid);
   --fc-list-event-hover-bg-color: rgba(124, 58, 237, 0.15);
 }
 
@@ -93,7 +94,7 @@
 }
 
 .fullcalendar-wrapper .fc-col-header-cell {
-  background: rgba(18, 16, 28, 0.6);
+  background: var(--bg-soft);
   color: var(--text-secondary);
   font-size: 0.8rem;
 }
@@ -224,10 +225,10 @@
   margin-top: 6px;
   padding: 10px 14px;
   min-width: 180px;
-  background: rgba(55, 48, 80, 0.95);
-  border: 1px solid rgba(124, 58, 237, 0.35);
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-soft);
   z-index: 10;
 }
 
@@ -268,16 +269,16 @@
 .fc-popover,
 .fc .fc-popover,
 .fc-more-popover {
-  background: rgba(25, 23, 40, 0.98) !important;
-  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  background: var(--bg-card-solid) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-soft);
 }
 
 .fc-popover .fc-popover-header,
 .fc .fc-popover-header {
-  background: rgba(30, 28, 40, 0.98) !important;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: var(--bg-elevated) !important;
+  border-bottom: 1px solid var(--border-color);
   padding: 10px 14px;
 }
 
@@ -293,7 +294,7 @@
 
 .fc-popover .fc-popover-body,
 .fc .fc-popover-body {
-  background: rgba(25, 23, 40, 0.98) !important;
+  background: var(--bg-card-solid) !important;
   color: var(--text-primary) !important;
   padding: 12px;
 }
@@ -434,8 +435,8 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 13, 26, 0.5);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
   color: var(--text-primary);
   font-size: 0.9rem;
   margin-bottom: 16px;
@@ -481,8 +482,8 @@
   padding: 24px;
   overflow-y: auto;
   flex-shrink: 0;
-  background: rgba(18, 16, 28, 0.95);
-  border-left: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--border-color);
 }
 
 .tasks-tabs {
@@ -540,8 +541,8 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 13, 26, 0.5);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
   color: var(--text-primary);
   font-size: 0.9rem;
 }
@@ -557,8 +558,8 @@
   min-width: 0;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 13, 26, 0.5);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
   color: var(--text-primary);
   font-size: 0.8rem;
 }
@@ -874,6 +875,35 @@
   font-weight: 500;
 }
 
+:root[data-theme='light'] .calendar-page {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(238, 243, 251, 0.96) 100%);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc {
+  --fc-border-color: rgba(84, 102, 146, 0.14);
+  --fc-today-bg-color: rgba(107, 79, 196, 0.08);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc-col-header-cell {
+  background: rgba(84, 102, 146, 0.08);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc-daygrid-day:hover {
+  background: rgba(107, 79, 196, 0.04);
+}
+
+:root[data-theme='light'] .add-task-time::-webkit-calendar-picker-indicator,
+:root[data-theme='light'] .add-task-date::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.8;
+}
+
+:root[data-theme='light'] .task-item:hover,
+:root[data-theme='light'] .event-item:hover {
+  background: rgba(107, 79, 196, 0.05);
+}
+
 @media (max-width: 900px) {
   .calendar-page {
     flex-direction: column;
@@ -908,7 +938,7 @@
   .tasks-sidebar {
     width: 100%;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-color);
     padding: 18px 16px 24px;
   }
 }
