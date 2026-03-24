@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AppProvider } from '../../../features/auth/model'
+import { ThemeProvider } from '../../../shared/theme'
 import { Layout } from '../Layout'
 import type { User } from '../../../entities/user/model/types'
 import { renderHook, act } from '@testing-library/react'
@@ -10,16 +11,18 @@ import type { ReactNode } from 'react'
 
 function renderLayout(initialPath = '/') {
   return render(
-    <AppProvider>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<div>홈 페이지</div>} />
-            <Route path="chat" element={<div>채팅 페이지</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </AppProvider>,
+    <ThemeProvider>
+      <AppProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<div>홈 페이지</div>} />
+              <Route path="chat" element={<div>채팅 페이지</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AppProvider>
+    </ThemeProvider>,
   )
 }
 
@@ -69,15 +72,17 @@ describe('Layout', () => {
     act(() => { result.current.loadUser(user) })
 
     render(
-      <AppProvider>
-        <MemoryRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<div />} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
-      </AppProvider>,
+      <ThemeProvider>
+        <AppProvider>
+          <MemoryRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<div />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </AppProvider>
+      </ThemeProvider>,
     )
     // 새 AppProvider는 currentUser가 없으므로 로그아웃 버튼 없음 확인
     expect(screen.queryByText('로그아웃')).not.toBeInTheDocument()

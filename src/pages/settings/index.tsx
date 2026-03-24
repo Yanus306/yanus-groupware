@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { User, Bell, Palette, Shield, Save } from 'lucide-react'
+import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
+import { useTheme, type ThemeMode } from '../../shared/theme'
 import { updateMyProfile } from '../../shared/api/membersApi'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
@@ -9,6 +10,7 @@ type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security'
 
 export function Settings() {
   const { state } = useApp()
+  const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const [notifications, setNotifications] = useState({
     chat: true,
@@ -63,6 +65,10 @@ export function Settings() {
     { id: 'appearance', label: '테마', icon: <Palette size={18} /> },
     { id: 'security', label: '보안', icon: <Shield size={18} /> },
   ]
+  const themeOptions: { id: ThemeMode; label: string; description: string; icon: React.ReactNode }[] = [
+    { id: 'light', label: '라이트 모드', description: '밝고 선명한 작업 환경', icon: <Sun size={18} /> },
+    { id: 'dark', label: '다크 모드', description: '집중감을 높이는 어두운 화면', icon: <Moon size={18} /> },
+  ]
 
   return (
     <div className="settings-page">
@@ -70,7 +76,20 @@ export function Settings() {
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
       <header className="settings-header">
-        <h1>설정</h1>
+        <div>
+          <p className="settings-kicker">Preferences</p>
+          <h1>설정</h1>
+          <p className="settings-subtitle">프로필, 알림, 테마, 보안 환경을 한 곳에서 관리하세요.</p>
+        </div>
+        <div className="settings-summary-card glass">
+          <div className="settings-summary-icon">
+            <Monitor size={18} />
+          </div>
+          <div>
+            <strong>{theme === 'dark' ? '다크 모드 사용 중' : '라이트 모드 사용 중'}</strong>
+            <span>선택한 테마는 브라우저에 저장되어 다음 방문에도 유지됩니다.</span>
+          </div>
+        </div>
       </header>
 
       <div className="settings-layout">
@@ -151,28 +170,34 @@ export function Settings() {
           {activeTab === 'appearance' && (
             <section className="settings-section">
               <h3>테마 설정</h3>
-              <div className="setting-row">
-                <div className="setting-row-info">
-                  <span className="setting-row-label">다크 모드</span>
-                  <span className="setting-row-desc">현재 yANUs는 다크 모드만 지원합니다</span>
-                </div>
-                <label className="toggle-switch">
-                  <input type="checkbox" checked disabled />
-                  <span className="toggle-slider" />
-                </label>
+              <div className="theme-options-grid">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`theme-option-card ${theme === option.id ? 'active' : ''}`}
+                    onClick={() => setTheme(option.id)}
+                    aria-pressed={theme === option.id}
+                  >
+                    <div className="theme-option-header">
+                      <span className="theme-option-icon">{option.icon}</span>
+                      <div>
+                        <strong>{option.label}</strong>
+                        <p>{option.description}</p>
+                      </div>
+                    </div>
+                    <div className={`theme-preview theme-preview-${option.id}`}>
+                      <span className="theme-preview-chip" />
+                      <span className="theme-preview-line short" />
+                      <span className="theme-preview-line" />
+                      <span className="theme-preview-line muted" />
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="color-swatches">
-                <h4>액센트 컬러</h4>
-                <div className="swatches-row">
-                  {['#9680cc', '#72b8e8', '#d44a99', '#22c55e', '#f59e0b'].map((color) => (
-                    <button
-                      key={color}
-                      className="swatch"
-                      style={{ background: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
+              <div className="appearance-note">
+                <h4>테마 전환 안내</h4>
+                <p>레이아웃, 카드, 입력창, 플로팅 UI까지 모두 선택한 테마에 맞춰 함께 전환됩니다.</p>
               </div>
             </section>
           )}
