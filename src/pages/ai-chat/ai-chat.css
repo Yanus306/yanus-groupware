@@ -1,16 +1,14 @@
 .ai-chat-page {
-  margin: -24px;
-  min-height: calc(100vh - 48px);
-  height: calc(100vh - 48px);
-  max-height: calc(100vh - 48px);
+  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 18px;
 }
 
 .ai-header {
   text-align: center;
-  padding: 16px 24px;
+  padding: 6px 12px 0;
   flex-shrink: 0;
 }
 
@@ -33,11 +31,12 @@
 }
 
 .ai-chat-area {
-  padding: 0 24px 24px;
+  padding: 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  border-radius: 28px;
 }
 
 .messages {
@@ -45,6 +44,7 @@
   overflow-y: auto;
   min-height: 200px;
   margin-bottom: 20px;
+  padding: 4px 4px 0;
 }
 
 .msg-bubble {
@@ -61,15 +61,16 @@
 
 .msg-bubble.user span {
   background: var(--accent-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   padding: 12px 18px;
-  border-radius: 16px;
+  border-radius: 18px;
 }
 
 .msg-bubble.ai span {
-  background: rgba(148, 163, 184, 0.15);
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
   padding: 12px 18px;
-  border-radius: 16px;
+  border-radius: 18px;
 }
 
 .msg-icon {
@@ -79,6 +80,10 @@
 
 .suggestions {
   margin-bottom: 20px;
+  padding: 16px 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
 }
 
 .suggestions p {
@@ -93,27 +98,31 @@
   padding: 12px 16px;
   margin-bottom: 8px;
   text-align: left;
-  background: rgba(124, 58, 237, 0.15);
-  color: var(--accent-purple-light);
-  border-radius: 10px;
+  background: rgba(138, 114, 216, 0.1);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: 14px;
   font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
 .suggestions button:hover {
-  background: rgba(124, 58, 237, 0.25);
+  background: rgba(138, 114, 216, 0.18);
+  border-color: rgba(138, 114, 216, 0.22);
 }
 
 .input-area {
   display: flex;
   gap: 12px;
+  padding-top: 4px;
 }
 
 .input-area input {
   flex: 1;
   padding: 14px 18px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
-  background: rgba(15, 15, 26, 0.6);
+  background: var(--bg-input);
   color: var(--text-primary);
   font-size: 1rem;
 }
@@ -125,12 +134,12 @@
 .input-area .send-btn {
   padding: 14px 20px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
-  border-radius: 12px;
+  color: var(--text-on-accent);
+  border-radius: 16px;
 }
 
 @media (max-width: 768px) {
-  .ai-chat-page {
-    margin: -16px;
+  .ai-chat-area {
+    padding: 18px;
   }
 }
