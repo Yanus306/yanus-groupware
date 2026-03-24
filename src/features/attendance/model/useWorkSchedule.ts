@@ -8,15 +8,19 @@ export interface DaySchedule {
   checkOutTime: string  // "HH:mm"
 }
 
+export type WeekPattern = 'EVERY' | 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'LAST'
+
 // 배열 인덱스 ↔ DayOfWeek 매핑 (0=Mon, 1=Tue, ..., 6=Sun)
 const INDEX_TO_DOW: DayOfWeek[] = [
   'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
 ]
 
 const WORK_DAYS_STORAGE_KEY = 'yanus-work-days'
+const WORK_WEEK_PATTERNS_STORAGE_KEY = 'yanus-work-week-patterns'
 const DEFAULT_CHECK_IN = '09:00'
 const DEFAULT_CHECK_OUT = '18:00'
 const DEFAULT_WORK_DAYS = [false, false, false, false, false, false, false]
+const DEFAULT_WEEK_PATTERNS: WeekPattern[] = Array.from({ length: 7 }, () => 'EVERY')
 
 function makeDefaultDaySchedules(checkIn: string, checkOut: string): DaySchedule[] {
   return Array.from({ length: 7 }, () => ({ checkInTime: checkIn, checkOutTime: checkOut }))
@@ -27,6 +31,7 @@ export function useWorkSchedule() {
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(
     makeDefaultDaySchedules(DEFAULT_CHECK_IN, DEFAULT_CHECK_OUT),
   )
+  const [weekPatterns, setWeekPatterns] = useState<WeekPattern[]>(DEFAULT_WEEK_PATTERNS)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +44,14 @@ export function useWorkSchedule() {
       try {
         const parsed = JSON.parse(storedDays) as boolean[]
         if (Array.isArray(parsed) && parsed.length === 7) setWorkDays(parsed)
+      } catch {}
+    }
+
+    const storedWeekPatterns = localStorage.getItem(WORK_WEEK_PATTERNS_STORAGE_KEY)
+    if (storedWeekPatterns) {
+      try {
+        const parsed = JSON.parse(storedWeekPatterns) as WeekPattern[]
+        if (Array.isArray(parsed) && parsed.length === 7) setWeekPatterns(parsed)
       } catch {}
     }
 
@@ -84,6 +97,10 @@ export function useWorkSchedule() {
     setDaySchedules((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
   }
 
+  const setWeekPattern = (index: number, value: WeekPattern) => {
+    setWeekPatterns((prev) => prev.map((pattern, i) => (i === index ? value : pattern)))
+  }
+
   const saveSchedule = async () => {
     setIsSaving(true)
     setError(null)
@@ -109,6 +126,7 @@ export function useWorkSchedule() {
       await Promise.all([...upsertPromises, ...deletePromises])
       setSavedWorkDays([...workDays])
       localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
+      localStorage.setItem(WORK_WEEK_PATTERNS_STORAGE_KEY, JSON.stringify(weekPatterns))
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
@@ -120,5 +138,16 @@ export function useWorkSchedule() {
     }
   }
 
-  return { workDays, daySchedules, isLoading, isSaving, error, toggleDay, setDayTime, saveSchedule }
+  return {
+    workDays,
+    daySchedules,
+    weekPatterns,
+    isLoading,
+    isSaving,
+    error,
+    toggleDay,
+    setDayTime,
+    setWeekPattern,
+    saveSchedule,
+  }
 }
