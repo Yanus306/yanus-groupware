@@ -219,7 +219,7 @@
   color: var(--text-primary);
   font-size: 0.88rem;
   width: 100%;
-  color-scheme: dark;
+  color-scheme: dark light;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -257,6 +257,10 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .time-field input {
+  color-scheme: light;
 }
 
 .week-pattern-options {

@@ -163,3 +163,11 @@
   font-size: 0.85rem;
   padding: 32px 0;
 }
+
+:root[data-theme='light'] .summary-item.left {
+  background: rgba(84, 102, 146, 0.1);
+}
+
+:root[data-theme='light'] .attend-member-card {
+  background: rgba(84, 102, 146, 0.04);
+}

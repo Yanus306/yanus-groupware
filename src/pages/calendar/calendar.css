@@ -315,15 +315,18 @@
 }
 
 .edit-task-modal {
-  background: rgba(30, 28, 40, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
-  min-width: 320px;
+  width: min(480px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  min-width: 0;
+  box-shadow: var(--shadow-strong);
 }
 
 .add-task-modal {
-  min-width: 360px;
+  width: min(520px, calc(100vw - 32px));
 }
 
 .add-task-modal .add-task-inline {
@@ -333,7 +336,7 @@
 .add-task-modal-actions {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border-color);
 }
 
 /* Context menu modal (할일/일정 선택) */
@@ -442,6 +445,12 @@
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.edit-task-actions button {
+  min-width: 88px;
+  white-space: nowrap;
 }
 
 .edit-task-actions .cancel-btn {
@@ -773,6 +782,9 @@
 
 .event-detail-view {
   padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .event-detail-title {
@@ -828,7 +840,18 @@
   color: var(--text-secondary);
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-color);
+}
+
+.event-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  justify-content: stretch;
+}
+
+.event-detail-actions .cancel-btn,
+.event-detail-actions .add-btn {
+  width: 100%;
 }
 
 .add-task-modal-actions .delete-btn {
@@ -921,5 +944,9 @@
 
   .tasks-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  .event-detail-actions {
+    grid-template-columns: 1fr;
   }
 }

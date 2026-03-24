@@ -26,9 +26,9 @@ vi.mock('../../../features/auth/model', () => ({
 }))
 
 describe('Members 페이지', () => {
-  it('Member Management 제목이 렌더링된다', () => {
+  it('멤버 관리 안내 문구가 렌더링된다', () => {
     render(<Members />)
-    expect(screen.getByText('Member Management')).toBeInTheDocument()
+    expect(screen.getByText('멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.')).toBeInTheDocument()
   })
 
   it('관리자에게 멤버 초대 버튼이 표시된다', () => {
@@ -44,8 +44,8 @@ describe('Members 페이지', () => {
     })
   })
 
-  it('관리자에게 Actions 컬럼이 표시된다', () => {
+  it('관리자에게 관리 컬럼이 표시된다', () => {
     render(<Members />)
-    expect(screen.getByText('Actions')).toBeInTheDocument()
+    expect(screen.getByText('관리')).toBeInTheDocument()
   })
 })

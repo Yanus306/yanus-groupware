@@ -140,7 +140,9 @@ export function Attendance() {
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
       <header className="attendance-header">
-        <h1>출퇴근</h1>
+        <div className="attendance-header-copy">
+          <p>오늘 근무 현황과 개인 근무 일정을 한 화면에서 관리합니다.</p>
+        </div>
         <div className="header-actions">
           {isAdmin && (
             <button className="export-btn glass" onClick={handleExport}>
