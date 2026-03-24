@@ -1,5 +1,8 @@
 # 기여 가이드
 
+> 최신 Git / GitHub 네이밍 및 리뷰 규칙은 [git-conventions.md](./git-conventions.md)를 우선합니다.  
+> 이 문서는 개발 흐름과 일반 가이드 중심으로 참고합니다.
+
 ## 브랜치 전략
 
 ```
