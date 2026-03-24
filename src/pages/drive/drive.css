@@ -35,6 +35,21 @@
 .drive-header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.drive-access-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.24);
+  color: var(--accent-purple-light);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .upload-btn {
@@ -135,6 +150,32 @@
   color: var(--text-primary);
   font-weight: 700;
   border: 1px solid rgba(124, 58, 237, 0.24);
+}
+
+.drive-access-note {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(129, 140, 248, 0.16);
+}
+
+.drive-access-note span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.drive-access-note strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.drive-access-note p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 .drive-side-stats {

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest'
 import { setupServer } from 'msw/node'
-import { driveHandlers } from '../mock/handlers/drive'
+import { driveHandlers, resetDriveMockData } from '../mock/handlers/drive'
 import { getFiles, uploadFile, deleteFile, downloadFile } from '../driveApi'
 
 // jsdom에서 URL.createObjectURL 미구현 → 메서드만 스텁
@@ -10,6 +10,10 @@ URL.revokeObjectURL = vi.fn()
 const server = setupServer(...driveHandlers)
 
 beforeAll(() => server.listen())
+beforeEach(() => {
+  localStorage.clear()
+  resetDriveMockData()
+})
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
@@ -28,6 +32,16 @@ describe('driveApi', () => {
     expect(result).toHaveProperty('id')
     expect(result).toHaveProperty('originalName')
     expect(result).toHaveProperty('contentType')
+  })
+
+  it('uploadFile()은 로그인한 멤버 이름으로 업로더를 기록한다', async () => {
+    localStorage.setItem('accessToken', 'mock-token-3')
+
+    const file = new File(['content'], 'shared-notes.md', { type: 'text/markdown' })
+    const result = await uploadFile(file)
+
+    expect(result.uploadedById).toBe(3)
+    expect(result.uploadedByName).toBe('이멤버')
   })
 
   it('deleteFile() 파일을 삭제한다', async () => {

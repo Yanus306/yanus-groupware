@@ -1,8 +1,18 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { setupServer } from 'msw/node'
-import { driveHandlers } from '../../../shared/api/mock/handlers/drive'
+import { driveHandlers, resetDriveMockData } from '../../../shared/api/mock/handlers/drive'
 import { Drive } from '../index'
+
+vi.mock('../../../features/auth/model', () => ({
+  useApp: () => ({
+    state: {
+      currentUser: { id: '3', name: '이멤버', role: 'MEMBER', team: 'AI' },
+      users: [],
+    },
+    isAdmin: false,
+  }),
+}))
 
 // jsdom에서 URL.createObjectURL 미구현 → 스텁
 URL.createObjectURL = vi.fn(() => 'blob:mock-url')
@@ -10,13 +20,23 @@ URL.revokeObjectURL = vi.fn()
 
 const server = setupServer(...driveHandlers)
 beforeAll(() => server.listen())
+beforeEach(() => {
+  localStorage.clear()
+  resetDriveMockData()
+})
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('Drive 페이지', () => {
   it('드라이브 안내 문구가 렌더링된다', () => {
     render(<Drive />)
-    expect(screen.getByText('최근 산출물과 문서를 한눈에 보고, 바로 업로드와 다운로드를 이어갈 수 있게 정리했습니다.')).toBeInTheDocument()
+    expect(screen.getByText('모든 멤버가 함께 쓰는 공용 문서함입니다. 업로드한 파일은 팀 전체가 바로 확인할 수 있습니다.')).toBeInTheDocument()
+  })
+
+  it('일반 멤버에게도 공용 업로드 버튼이 표시된다', () => {
+    render(<Drive />)
+    expect(screen.getByRole('button', { name: '공용 파일 업로드' })).toBeInTheDocument()
+    expect(screen.getByText('일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.')).toBeInTheDocument()
   })
 
   it('업로드 버튼이 렌더링된다', () => {

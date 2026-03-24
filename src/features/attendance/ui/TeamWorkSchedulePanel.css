@@ -1,0 +1,125 @@
+.team-work-schedule-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.team-work-schedule-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.team-work-schedule-header h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.team-work-schedule-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.team-work-schedule-count {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.team-work-schedule-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.team-work-schedule-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+}
+
+.team-work-member-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-work-member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--gradient-purple);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.team-work-member-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-work-member-copy strong {
+  font-size: 0.95rem;
+}
+
+.team-work-member-copy span {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.team-work-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.team-work-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(138, 114, 216, 0.16);
+}
+
+.team-work-day {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent-purple-light);
+}
+
+.team-work-time {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.team-work-schedule-empty {
+  margin: 0;
+  padding: 28px 0;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .team-work-schedule-list {
+    grid-template-columns: 1fr;
+  }
+}
