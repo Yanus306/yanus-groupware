@@ -17,7 +17,25 @@ import { Toast } from '../../shared/ui/Toast'
 import { getTeams } from '../../shared/api/teamsApi'
 import './attendance.css'
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_LABELS: Record<string, string> = {
+  MONDAY: 'Mon',
+  TUESDAY: 'Tue',
+  WEDNESDAY: 'Wed',
+  THURSDAY: 'Thu',
+  FRIDAY: 'Fri',
+  SATURDAY: 'Sat',
+  SUNDAY: 'Sun',
+}
+
+const ORDERED_WORK_DAYS = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const
 
 export function Attendance() {
   const { isAdmin, state } = useApp()
@@ -83,6 +101,11 @@ export function Attendance() {
   const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
   const pageRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const getScheduledDays = (memberId: number) => {
+    const memberSchedule = teamSchedules.find((schedule) => schedule.memberId === memberId)
+    return new Set(memberSchedule?.workSchedules.map((schedule) => schedule.dayOfWeek) ?? [])
+  }
 
   const handleDateFilter = () => {
     if (!dateInput) return
@@ -188,10 +211,21 @@ export function Attendance() {
                           <span className="record-avatar">{r.memberName[0]}</span>
                           {r.memberName}
                         </td>
-                        <td>
-                          {DAYS.map((_, i) => (
-                            <span key={i} className={`dot ${i < 5 ? 'on' : ''}`} />
-                          ))}
+                        <td data-testid={`scheduled-days-${r.memberId}`}>
+                          {ORDERED_WORK_DAYS.map((dayOfWeek) => {
+                            const scheduledDays = getScheduledDays(r.memberId)
+                            const isScheduled = scheduledDays.has(dayOfWeek)
+                            const dayLabel = DAY_LABELS[dayOfWeek]
+
+                            return (
+                              <span
+                                key={`${r.memberId}-${dayOfWeek}`}
+                                className={`dot ${isScheduled ? 'on' : ''}`}
+                                title={`${dayLabel} ${isScheduled ? '근무 예정' : '휴무'}`}
+                                aria-label={`${dayLabel} ${isScheduled ? '근무 예정' : '휴무'}`}
+                              />
+                            )
+                          })}
                         </td>
                         <td>{r.checkInTime?.slice(11, 16) ?? '-'}</td>
                         <td>{r.checkOutTime?.slice(11, 16) ?? '-'}</td>
