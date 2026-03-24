@@ -107,7 +107,7 @@ export function Chat() {
 
   const activeChannel = channels.find((c) => c.id === activeChannelId)
   const currentUserId = state.currentUser?.id ?? ''
-  const directRooms = state.users.filter((user) => user.id !== currentUserId)
+  const directRooms = state.users.filter((user) => user.id !== currentUserId && user.status !== 'INACTIVE')
   const activeDirectUser = directRooms.find((user) => `dm-${user.id}` === activeChannelId)
   const isDirectRoom = activeChannelId.startsWith('dm-')
   const messages = getMessagesByChannel(activeChannelId)
@@ -139,6 +139,11 @@ export function Chat() {
       setIsMobileRoomOpen(true)
     }
   }, [isMobile])
+
+  useEffect(() => {
+    if (!isDirectRoom || activeDirectUser || channels.length === 0) return
+    setActiveChannelId(channels[0].id)
+  }, [activeDirectUser, channels, isDirectRoom, setActiveChannelId])
 
   useEffect(() => {
     if (!showEmojiPicker) return
