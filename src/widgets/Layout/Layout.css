@@ -109,6 +109,9 @@
   margin-left: 200px;
   padding: 24px;
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-auth {

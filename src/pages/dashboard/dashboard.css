@@ -1,5 +1,6 @@
 .dashboard {
   max-width: 1200px;
+  min-height: calc(100vh - 48px);
   height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
