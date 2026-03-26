@@ -16,8 +16,9 @@ vi.mock('../../../features/auth/model', () => ({
     state: {
       currentUser: { id: '1', name: '김리더', role: 'ADMIN' },
       users: [
-        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'leader@test.com' },
-        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'teamlead@test.com' },
+        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'leader@test.com', status: 'ACTIVE' },
+        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'teamlead@test.com', status: 'ACTIVE' },
+        { id: '3', name: '비활성멤버', role: 'MEMBER', team: '1팀', email: 'inactive@test.com', status: 'INACTIVE' },
       ],
     },
     isAdmin: true,
@@ -43,6 +44,8 @@ describe('Members 페이지', () => {
       expect(screen.getByText('김리더')).toBeInTheDocument()
       expect(screen.getByText('박팀장')).toBeInTheDocument()
     })
+
+    expect(screen.queryByText('비활성멤버')).not.toBeInTheDocument()
   })
 
   it('관리자에게 관리 컬럼이 표시된다', () => {
@@ -57,5 +60,14 @@ describe('Members 페이지', () => {
       expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
       expect(screen.getAllByRole('button', { name: '퇴출' }).length).toBeGreaterThan(0)
     })
+  })
+
+  it('팀별 멤버 수는 활성 멤버만 집계한다', () => {
+    render(<Members />)
+
+    expect(screen.getByText('비활성 멤버는 집계에서 제외됩니다.')).toBeInTheDocument()
+    expect(screen.getByText('전체 멤버 2명')).toBeInTheDocument()
+    expect(screen.getByLabelText('1팀 활성 멤버 1명')).toBeInTheDocument()
+    expect(screen.getByLabelText('2팀 활성 멤버 1명')).toBeInTheDocument()
   })
 })
