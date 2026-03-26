@@ -11,7 +11,7 @@ import { Toast } from '../../shared/ui/Toast'
 import { getTodayStr } from '../../shared/lib/date'
 import { createTeam, deleteTeam, getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams } from '../../shared/lib/team'
+import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
 import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams'
@@ -53,8 +53,9 @@ export function Admin() {
       getTeams().catch(() => FALLBACK_TEAMS),
     ])
       .then(([memberList, attendanceList, teamList]) => {
-        setMembers(memberList)
-        loadMembers(memberList)
+        const sortedMembers = sortUsersByTeamAndName(memberList)
+        setMembers(sortedMembers)
+        loadMembers(sortedMembers)
         setRecords(attendanceList)
         setTeams(sortTeams(teamList))
       })
@@ -66,8 +67,9 @@ export function Admin() {
       getMembers(),
       getTeams().catch(() => FALLBACK_TEAMS),
     ])
-    setMembers(memberList)
-    loadMembers(memberList)
+    const sortedMembers = sortUsersByTeamAndName(memberList)
+    setMembers(sortedMembers)
+    loadMembers(sortedMembers)
     setTeams(sortTeams(teamList))
   }
 
@@ -82,9 +84,9 @@ export function Admin() {
     setSaving(true)
     try {
       await updateMemberRole(changeRoleFor.id, selectedRole)
-      const updated = members.map((member) =>
+      const updated = sortUsersByTeamAndName(members.map((member) =>
         member.id === changeRoleFor.id ? { ...member, role: selectedRole } : member,
-      )
+      ))
       setMembers(updated)
       loadMembers(updated)
       setSuccessMessage(`${changeRoleFor.name}의 역할을 ${roleLabels[selectedRole]}로 변경했습니다`)

@@ -8,15 +8,17 @@ import { AppProvider } from '../../../features/auth/model'
 import { Admin } from '../index'
 
 const mockMembers = [
-  { id: '1', name: '김민준', email: 'min@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
-  { id: '2', name: '이서연', email: 'seo@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE' },
+  { id: '1', name: '이서연', email: 'seo@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE' },
+  { id: '2', name: '강민준', email: 'kang@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
+  { id: '3', name: '김민준', email: 'min@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
+  { id: '4', name: '한비활성', email: 'inactive@yanus.kr', team: '1팀', role: 'MEMBER', status: 'INACTIVE' },
 ]
 
 const mockRecords = [
   {
     id: 1,
     memberId: 1,
-    memberName: '김민준',
+    memberName: '이서연',
     workDate: '2026-03-23',
     checkInTime: '2026-03-23T09:00:00',
     checkOutTime: null,
@@ -93,6 +95,28 @@ describe('Admin 페이지', () => {
     expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
   })
 
+  it('멤버 목록은 팀 순, 이름 순이며 비활성 멤버는 마지막에 표시된다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '멤버 관리' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('강민준')).toBeInTheDocument()
+      expect(screen.getByText('김민준')).toBeInTheDocument()
+      expect(screen.getByText('이서연')).toBeInTheDocument()
+      expect(screen.getByText('한비활성')).toBeInTheDocument()
+    })
+
+    const activeFirst = screen.getByText('강민준')
+    const activeSecond = screen.getByText('김민준')
+    const otherTeam = screen.getByText('이서연')
+    const inactiveLast = screen.getByText('한비활성')
+
+    expect(activeFirst.compareDocumentPosition(activeSecond) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(activeSecond.compareDocumentPosition(otherTeam) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(otherTeam.compareDocumentPosition(inactiveLast) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('출근 현황 탭에 요약 카운트가 표시된다', async () => {
     renderAdmin()
     await waitFor(() => {
@@ -105,8 +129,8 @@ describe('Admin 페이지', () => {
   it('출근 현황 탭 기본 필터(근무 중)에 근무 중인 팀원만 표시된다', async () => {
     renderAdmin()
     await waitFor(() => {
-      expect(screen.getByText('김민준')).toBeInTheDocument()
+      expect(screen.getByText('이서연')).toBeInTheDocument()
     })
-    expect(screen.queryByText('이서연')).not.toBeInTheDocument()
+    expect(screen.queryByText('김민준')).not.toBeInTheDocument()
   })
 })
