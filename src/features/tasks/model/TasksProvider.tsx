@@ -25,6 +25,7 @@ type TasksContextValue = {
   getTasksByDate: (date: string) => Task[]
   getTasksForDateRange: (start: string, end: string) => Task[]
   isLoading: boolean
+  refreshTasks: () => Promise<void>
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null)
@@ -95,17 +96,25 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
       return
     }
+  }, [state.currentUser?.id])
+
+  const refreshTasks = useCallback(async () => {
+    if (!state.currentUser?.id) {
+      setTasks([])
+      setIsLoading(false)
+      return
+    }
 
     setIsLoading(true)
-    Promise.all([
-      apiGetTasks({ type: 'MY' }),
-      apiGetTasks({ type: 'TEAM' }),
-    ])
-      .then(([myApiTasks, teamApiTasks]) => {
-        setTasks([...myApiTasks.map(toTask), ...teamApiTasks.map(toTask)])
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
+    try {
+      const [myApiTasks, teamApiTasks] = await Promise.all([
+        apiGetTasks({ type: 'MY' }),
+        apiGetTasks({ type: 'TEAM' }),
+      ])
+      setTasks([...myApiTasks.map(toTask), ...teamApiTasks.map(toTask)])
+    } finally {
+      setIsLoading(false)
+    }
   }, [state.currentUser?.id])
 
   const myTasks = useMemo(() => tasks.filter((t) => !t.isTeamTask), [tasks])
@@ -171,6 +180,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         getTasksByDate,
         getTasksForDateRange,
         isLoading,
+        refreshTasks,
       }}
     >
       {children}

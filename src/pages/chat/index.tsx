@@ -4,7 +4,6 @@ import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as Li
 import { useApp } from '../../features/auth/model'
 import { useChat } from '../../features/chat/model'
 import type { ChatMessage } from '../../features/chat/model'
-import { getMembers } from '../../shared/api/membersApi'
 import { formatTeamName } from '../../shared/lib/team'
 import './chat.css'
 
@@ -85,7 +84,7 @@ function MessageItem({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
 }
 
 export function Chat() {
-  const { state, loadMembers } = useApp()
+  const { state } = useApp()
   const { channels, activeChannelId, setActiveChannelId, addMessage, getMessagesByChannel } = useChat()
   const [message, setMessage] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string }[]>([])
@@ -109,13 +108,6 @@ export function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  useEffect(() => {
-    if (state.users.length > 0) return
-    getMembers()
-      .then(loadMembers)
-      .catch(() => {})
-  }, [loadMembers, state.users.length])
 
   useEffect(() => {
     const onResize = () => {

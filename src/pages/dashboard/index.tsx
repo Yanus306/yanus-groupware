@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Calendar, CheckSquare } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Calendar, CheckSquare, X } from 'lucide-react'
 import { AnimatedClockRing } from '../../features/attendance/ui'
 import { useWorkSession } from '../../features/attendance/model/useWorkSession'
+import { useWorkSchedule } from '../../features/attendance/model/useWorkSchedule'
 import { useEvents } from '../../features/calendar/model/EventsProvider'
+import type { CalendarEvent } from '../../features/calendar/model'
 import { useChat } from '../../features/chat/model/ChatProvider'
 import { useTasks } from '../../features/tasks/model/TasksProvider'
 import { getTodayStr } from '../../shared/lib/date'
@@ -40,25 +42,30 @@ const priorityColors: Record<string, string> = {
 }
 
 export function Dashboard() {
+  const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError, isLoading } =
     useWorkSession()
+  const { workDays, daySchedules } = useWorkSchedule()
   const { getEventsByDate } = useEvents()
   const { channels, getMessagesByChannel, activeChannelId } = useChat()
-  const { getTasksByDate } = useTasks()
+  const { getTasksByDate, toggleTaskDone } = useTasks()
 
   const today = getTodayStr()
   const todayEvents = getEventsByDate(today)
   const recentMessages = getMessagesByChannel(activeChannelId).slice(-3)
   const todayTasks = getTasksByDate(today)
-  const activeChannel = channels.find((c) => c.id === activeChannelId)
+  const activeChannel = channels.find((channel) => channel.id === activeChannelId)
+  const todayIndex = (new Date().getDay() + 6) % 7
+  const todayWorkEnabled = workDays[todayIndex]
+  const todayWorkSchedule = daySchedules[todayIndex]
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  // 클락 카드 중앙 텍스트
   let centerText = ''
   let centerClass = 'clock-time'
 
@@ -69,16 +76,24 @@ export function Dashboard() {
     centerText = '출근'
     centerClass += ' clock-time-start'
   } else if (status === 'working') {
-    // working 상태: 경과 시간 표시
     centerText = clockIn ? formatDuration(now.getTime() - clockIn.getTime()) : '00:00'
     centerClass += ' clock-time-elapsed'
   } else {
-    // done 상태: 총 근무 시간 표시
     centerText = clockIn && clockOut
       ? formatDuration(clockOut.getTime() - clockIn.getTime())
       : '완료'
     centerClass += ' clock-time-done'
   }
+
+  const todayScheduleSummary = todayWorkEnabled
+    ? `오늘 근무 예정 ${todayWorkSchedule.checkInTime} - ${todayWorkSchedule.checkOutTime}`
+    : '오늘은 휴무입니다'
+
+  const todayScheduleCaption = status === 'working'
+    ? '현재 출근 상태와 함께 근무 일정을 확인할 수 있습니다.'
+    : status === 'done'
+      ? '오늘 근무가 종료되어 예정 시간과 함께 비교할 수 있습니다.'
+      : '출근 전에도 오늘 근무 예정 시간을 바로 확인할 수 있습니다.'
 
   return (
     <div className="dashboard">
@@ -86,7 +101,6 @@ export function Dashboard() {
         <Toast message={errorMessage} type={toastType} onClose={clearError} />
       )}
       <div className="dashboard-grid">
-        {/* 출퇴근 버튼 */}
         <div className={`card clock-card glass ${isLoading ? 'clock-card-loading' : ''}`}>
           <button
             type="button"
@@ -115,6 +129,10 @@ export function Dashboard() {
           </button>
 
           <div className="clock-footer">
+            <div className={`clock-schedule-pill ${todayWorkEnabled ? 'active' : 'off'}`}>
+              {todayScheduleSummary}
+            </div>
+            <span className="clock-schedule-caption">{todayScheduleCaption}</span>
             {status === 'idle' && !isLoading && (
               <span className="clock-hint">클릭하여 출근</span>
             )}
@@ -125,7 +143,7 @@ export function Dashboard() {
             )}
             {status === 'done' && clockIn && clockOut && (
               <span className="clock-checkin-time">
-                {formatMsgTime(clockIn)} – {formatMsgTime(clockOut)}
+                {formatMsgTime(clockIn)} - {formatMsgTime(clockOut)}
               </span>
             )}
             {status === 'working' && !isLoading && (
@@ -141,7 +159,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* 오늘 일정 */}
         <div className="card schedule-card glass">
           <h3>
             <Calendar size={16} />
@@ -154,15 +171,21 @@ export function Dashboard() {
             </div>
           ) : (
             <ul>
-              {todayEvents.slice(0, 4).map((ev) => (
-                <li key={ev.id} className="schedule-item purple">
-                  <Calendar size={16} className="schedule-icon" />
-                  <div>
-                    <span className="schedule-time">
-                      {formatTime(ev.startTime)} – {formatTime(ev.endTime)}
-                    </span>
-                    <span className="schedule-title">{ev.title}</span>
-                  </div>
+              {todayEvents.slice(0, 4).map((event) => (
+                <li key={event.id}>
+                  <button
+                    type="button"
+                    className="schedule-item schedule-item-btn purple"
+                    onClick={() => setSelectedEvent(event)}
+                  >
+                    <Calendar size={16} className="schedule-icon" />
+                    <div>
+                      <span className="schedule-time">
+                        {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                      </span>
+                      <span className="schedule-title">{event.title}</span>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -172,7 +195,6 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* 채팅 미리보기 */}
         <div className="card chat-preview glass">
           <h3>
             {activeChannel ? `# ${activeChannel.name}` : '팀 채팅'}
@@ -198,7 +220,6 @@ export function Dashboard() {
           <Link to="/chat" className="view-all">채팅 열기</Link>
         </div>
 
-        {/* 오늘 할 일 */}
         <div className="card tasks-card glass">
           <h3>
             <CheckSquare size={16} />
@@ -213,12 +234,22 @@ export function Dashboard() {
             <ul className="tasks-list">
               {todayTasks.slice(0, 5).map((task) => (
                 <li key={task.id} className={`task-item ${task.done ? 'done' : ''}`}>
-                  <span
-                    className="task-dot"
-                    style={{ background: priorityColors[task.priority] }}
-                  />
+                  <button
+                    type="button"
+                    className={`task-check-btn ${task.done ? 'done' : ''}`}
+                    onClick={() => toggleTaskDone(task.id)}
+                    aria-label={`${task.title} ${task.done ? '미완료로 변경' : '완료 처리'}`}
+                  >
+                    <span className="task-dot" style={{ background: priorityColors[task.priority] }} />
+                  </button>
                   <span className="task-title">{task.title}</span>
-                  {task.done && <span className="task-done-badge">완료</span>}
+                  <button
+                    type="button"
+                    className={`task-done-badge ${task.done ? 'done' : ''}`}
+                    onClick={() => toggleTaskDone(task.id)}
+                  >
+                    {task.done ? '완료됨' : '완료 처리'}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -228,6 +259,41 @@ export function Dashboard() {
           )}
         </div>
       </div>
+
+      {selectedEvent && (
+        <div className="dashboard-modal-overlay" onClick={() => setSelectedEvent(null)}>
+          <div className="dashboard-detail-modal glass" onClick={(event) => event.stopPropagation()}>
+            <div className="dashboard-detail-head">
+              <h3>오늘 일정 상세</h3>
+              <button type="button" className="dashboard-detail-close" onClick={() => setSelectedEvent(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="dashboard-detail-body">
+              <strong>{selectedEvent.title}</strong>
+              <p>
+                {selectedEvent.startDate} {formatTime(selectedEvent.startTime)} - {selectedEvent.endDate} {formatTime(selectedEvent.endTime)}
+              </p>
+              <span>작성자: {selectedEvent.createdBy}</span>
+            </div>
+            <div className="dashboard-detail-actions">
+              <button type="button" className="dashboard-secondary-btn" onClick={() => setSelectedEvent(null)}>
+                닫기
+              </button>
+              <button
+                type="button"
+                className="dashboard-primary-btn"
+                onClick={() => {
+                  setSelectedEvent(null)
+                  navigate('/calendar')
+                }}
+              >
+                캘린더에서 보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

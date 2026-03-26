@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Search, Crown, ChevronDown, UserPlus, X } from 'lucide-react'
+import { Search, UserPlus, X, Crown } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { getMembers, updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
-import { getTeams } from '../../shared/api/teamsApi'
-import type { TeamResponse } from '../../shared/api/teamsApi'
+import { updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
-import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { getTeamOptions, formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { canAccessAdmin } from '../../shared/lib/permissions'
+import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
@@ -17,15 +17,10 @@ const roleLabels: Record<string, string> = {
   MEMBER: '멤버',
 }
 
-const statusLabels: Record<string, string> = {
-  ACTIVE: '활성',
-  INACTIVE: '비활성',
-}
-
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 
 export function Members() {
-  const { state, isAdmin, loadMembers } = useApp()
+  const { state, refreshMembers } = useApp()
   const [search, setSearch] = useState('')
   const [teamFilter, setTeamFilter] = useState('전체 팀')
   const [roleFilter, setRoleFilter] = useState('전체 역할')
@@ -36,26 +31,20 @@ export function Members() {
   const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER')
   const [saving, setSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [teams, setTeams] = useState<TeamResponse[]>(FALLBACK_TEAMS)
+  const isAdmin = canAccessAdmin(state.currentUser)
 
   useEffect(() => {
-    Promise.all([
-      getMembers(),
-      getTeams().catch(() => FALLBACK_TEAMS),
-    ])
-      .then(([members, teamOptions]) => {
-        loadMembers(members)
-        setTeams(teamOptions)
-      })
+    if (state.users.length > 0) return
+    refreshMembers()
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
-  }, [loadMembers])
+  }, [refreshMembers, state.users.length])
 
   const visibleUsers = sortUsersByTeamAndName(
     state.users.filter((user) => (user.status ?? 'ACTIVE') === 'ACTIVE'),
   )
-  const baseTeamOptions = getTeamOptions(visibleUsers, teams)
+  const baseTeamOptions = getTeamOptions(visibleUsers, state.teams)
   const activeTeamNames = new Set(visibleUsers.map((user) => user.team).filter((team): team is string => Boolean(team)))
-  const teamOptions = sortTeams(baseTeamOptions.filter((team) => activeTeamNames.has(team.name)))
+  const teamOptions = baseTeamOptions.filter((team) => activeTeamNames.has(team.name))
 
   const filtered = visibleUsers.filter((user) => {
     const matchSearch = !search || user.name.toLowerCase().includes(search.toLowerCase())
@@ -82,7 +71,7 @@ export function Members() {
     setSaving(true)
     try {
       await updateMemberRole(changeRoleFor.id, selectedRole)
-      loadMembers(state.users.map((user) => user.id === changeRoleFor.id ? { ...user, role: selectedRole } : user))
+      await refreshMembers()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '역할 변경에 실패했습니다')
     }
@@ -94,8 +83,7 @@ export function Members() {
     setSaving(true)
     try {
       await deactivateMember(id)
-      const updated = await getMembers()
-      loadMembers(updated)
+      await refreshMembers()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
     }
@@ -111,8 +99,7 @@ export function Members() {
     setSaving(true)
     try {
       await deactivateMember(id)
-      const updated = await getMembers()
-      loadMembers(updated)
+      await refreshMembers()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '퇴출에 실패했습니다')
     }
@@ -123,8 +110,7 @@ export function Members() {
     setSaving(true)
     try {
       await activateMember(id)
-      const updated = await getMembers()
-      loadMembers(updated)
+      await refreshMembers()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '활성화에 실패했습니다')
     }
@@ -136,8 +122,7 @@ export function Members() {
 
     setSaving(true)
     try {
-      const updated = await getMembers()
-      loadMembers(updated)
+      await refreshMembers()
       setInviteEmail('')
       setShowInvite(false)
     } catch (err) {
@@ -199,79 +184,16 @@ export function Members() {
       <div className="members-content">
         <div className="table-section glass">
           <h3>멤버 목록</h3>
-          <div className="members-table-wrap">
-            <table className="members-table">
-              <colgroup>
-                <col className="profile-col" />
-                <col className="team-col" />
-                <col className="role-col" />
-                {isAdmin && <col className="status-col" />}
-                {isAdmin && <col className="actions-col" />}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>프로필</th>
-                  <th>팀</th>
-                  <th>역할</th>
-                  {isAdmin && <th>상태</th>}
-                  {isAdmin && <th>관리</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="profile-cell">
-                        <span className="avatar">{user.name[0]}</span>
-                        <span className="profile-cell-name">{user.name}</span>
-                      </div>
-                    </td>
-                    <td><span className="team-tag">{formatTeamName(user.team)}</span></td>
-                    <td>
-                      <span className={`role-tag ${user.role}`}>
-                        {user.role === 'ADMIN' && <Crown size={14} />}
-                        {roleLabels[user.role] ?? user.role}
-                      </span>
-                    </td>
-                    {isAdmin && (
-                      <td className="status-cell">
-                        <div className="member-status-stack">
-                          <span className={`member-status-tag ${user.status ?? 'ACTIVE'}`}>
-                            {statusLabels[user.status ?? 'ACTIVE'] ?? (user.status ?? 'ACTIVE')}
-                          </span>
-                          {user.status === 'INACTIVE' ? (
-                            <button className="action-btn activate-btn" disabled={saving} onClick={() => handleActivate(user.id)}>
-                              활성화
-                            </button>
-                          ) : (
-                            <button className="action-btn mute-btn" disabled={saving} onClick={() => handleDeactivate(user.id)}>
-                              비활성화
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                    {isAdmin && (
-                      <td className="actions-cell">
-                        <div className="member-actions-stack">
-                          <button className="action-btn action-btn-secondary" onClick={() => handleOpenChangeRole(user.id, user.name, user.role)}>
-                            역할 변경 <ChevronDown size={14} />
-                          </button>
-                          <button
-                            className="action-btn deactivate-btn"
-                            disabled={saving || user.status === 'INACTIVE'}
-                            onClick={() => handleExpel(user.id)}
-                          >
-                            {user.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <MemberManagementTable
+            members={filtered}
+            saving={saving}
+            showStatus={isAdmin}
+            showActions={isAdmin}
+            onOpenRoleChange={isAdmin ? (member) => handleOpenChangeRole(member.id, member.name, member.role) : undefined}
+            onDeactivate={isAdmin ? handleDeactivate : undefined}
+            onActivate={isAdmin ? handleActivate : undefined}
+            onExpel={isAdmin ? handleExpel : undefined}
+          />
         </div>
 
         <aside className="stats-sidebar glass">

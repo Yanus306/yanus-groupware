@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { chatHandlers } from '../../../../shared/api/mock/handlers/chat'
-import { AppProvider } from '../../../auth/model/AppProvider'
+import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { ChatProvider, useChat } from '../ChatProvider'
 
 const server = setupServer(...chatHandlers)
@@ -12,9 +12,40 @@ beforeAll(() => server.listen())
 afterEach(() => { server.resetHandlers(); localStorage.clear() })
 afterAll(() => server.close())
 
+function AuthBootstrap({ children }: { children: ReactNode }) {
+  const { loadUser } = useApp()
+
+  useEffect(() => {
+    loadUser({
+      id: '1',
+      name: '김리더',
+      email: 'leader@test.com',
+      role: 'ADMIN',
+      team: '1팀',
+      status: 'ACTIVE',
+    })
+  }, [loadUser])
+
+  return <>{children}</>
+}
+
+function ChatBootstrap({ children }: { children: ReactNode }) {
+  const { refreshChannels } = useChat()
+
+  useEffect(() => {
+    void refreshChannels()
+  }, [refreshChannels])
+
+  return <>{children}</>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
-    <ChatProvider>{children}</ChatProvider>
+    <AuthBootstrap>
+      <ChatProvider>
+        <ChatBootstrap>{children}</ChatBootstrap>
+      </ChatProvider>
+    </AuthBootstrap>
   </AppProvider>
 )
 
@@ -29,9 +60,9 @@ describe('ChatProvider', () => {
       await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
     })
 
-    it('초기 활성 채널 ID가 설정되어 있다', () => {
+    it('초기 활성 채널 ID가 설정되어 있다', async () => {
       const { result } = renderHook(() => useChat(), { wrapper })
-      expect(result.current.activeChannelId).toBeTruthy()
+      await waitFor(() => expect(result.current.activeChannelId).toBeTruthy())
     })
 
     it('초기 메시지가 존재한다', async () => {

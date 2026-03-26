@@ -1,0 +1,1 @@
+export { MemberManagementTable } from './MemberManagementTable'

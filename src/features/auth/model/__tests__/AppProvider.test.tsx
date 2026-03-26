@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { AppProvider, useApp } from '../AppProvider'
 import type { User } from '../../../../entities/user/model/types'
+import { FALLBACK_TEAMS } from '../../../../shared/lib/team'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>{children}</AppProvider>
@@ -22,6 +23,11 @@ describe('AppProvider', () => {
     it('초기 users는 빈 배열이다', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
       expect(result.current.state.users).toEqual([])
+    })
+
+    it('초기 teams는 기본 팀 목록이다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+      expect(result.current.state.teams).toEqual(FALLBACK_TEAMS)
     })
   })
 
@@ -93,6 +99,8 @@ describe('AppProvider', () => {
         result.current.logout()
       })
       expect(result.current.state.currentUser).toBeNull()
+      expect(result.current.state.users).toEqual([])
+      expect(result.current.state.teams).toEqual(FALLBACK_TEAMS)
     })
   })
 

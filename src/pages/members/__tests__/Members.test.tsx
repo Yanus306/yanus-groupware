@@ -10,6 +10,7 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 const mockLoadMembers = vi.fn()
+const mockRefreshMembers = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
@@ -20,10 +21,15 @@ vi.mock('../../../features/auth/model', () => ({
         { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'teamlead@test.com', status: 'ACTIVE' },
         { id: '3', name: '비활성멤버', role: 'MEMBER', team: '1팀', email: 'inactive@test.com', status: 'INACTIVE' },
       ],
+      teams: [
+        { id: 1, name: '1팀' },
+        { id: 2, name: '2팀' },
+      ],
     },
     isAdmin: true,
     isTeamLead: false,
     loadMembers: mockLoadMembers,
+    refreshMembers: mockRefreshMembers,
   }),
 }))
 

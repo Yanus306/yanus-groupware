@@ -90,10 +90,22 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function TasksBootstrap({ children }: { children: ReactNode }) {
+  const { refreshTasks } = useTasks()
+
+  useEffect(() => {
+    void refreshTasks()
+  }, [refreshTasks])
+
+  return <>{children}</>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
     <AuthBootstrap>
-      <TasksProvider>{children}</TasksProvider>
+      <TasksProvider>
+        <TasksBootstrap>{children}</TasksBootstrap>
+      </TasksProvider>
     </AuthBootstrap>
   </AppProvider>
 )
