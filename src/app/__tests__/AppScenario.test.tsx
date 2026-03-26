@@ -1,9 +1,19 @@
 import { beforeAll, afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import App from '../../App'
+
+function getToday() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const today = getToday()
 
 const initialTeams = [
   { id: 1, name: '1팀' },
@@ -24,7 +34,7 @@ let tasks = [
   {
     id: 1,
     title: '배포 준비',
-    date: '2026-03-26',
+    date: today,
     time: '10:00:00',
     priority: 'HIGH',
     done: false,
@@ -39,9 +49,9 @@ let events = [
   {
     id: 1,
     title: '운영진 회의',
-    startDate: '2026-03-26',
+    startDate: today,
     startTime: '13:00:00',
-    endDate: '2026-03-26',
+    endDate: today,
     endTime: '14:00:00',
     createdById: 1,
     createdByName: '관리자',
@@ -155,7 +165,7 @@ beforeEach(() => {
     {
       id: 1,
       title: '배포 준비',
-      date: '2026-03-26',
+      date: today,
       time: '10:00:00',
       priority: 'HIGH',
       done: false,
@@ -170,9 +180,9 @@ beforeEach(() => {
     {
       id: 1,
       title: '운영진 회의',
-      startDate: '2026-03-26',
+      startDate: today,
       startTime: '13:00:00',
-      endDate: '2026-03-26',
+      endDate: today,
       endTime: '14:00:00',
       createdById: 1,
       createdByName: '관리자',
@@ -207,13 +217,14 @@ describe('핵심 사용자 흐름', () => {
     await user.click(screen.getByRole('button', { name: '멤버 관리' }))
     expect(await screen.findByText('멤버 목록')).toBeInTheDocument()
 
-    await user.click(screen.getAllByRole('button', { name: /팀 변경/ })[0])
+    const memberRow = screen.getByRole('row', { name: /김멤버/ })
+    await user.click(within(memberRow).getByRole('button', { name: /팀 변경/ }))
     const teamOption = screen.getAllByText('2팀').find((element) => element.closest('.admin-role-option'))
     await user.click(teamOption!.closest('.admin-role-option') as HTMLElement)
     await user.click(screen.getByRole('button', { name: '변경 확인' }))
 
     await waitFor(() => {
-      expect(screen.getByText(/관리자의 팀을 2팀으로 변경했습니다/)).toBeInTheDocument()
+      expect(screen.getByText(/김멤버의 팀을 2팀으로 변경했습니다/)).toBeInTheDocument()
     })
 
     await user.click(screen.getByRole('button', { name: '로그아웃' }))
