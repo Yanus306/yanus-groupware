@@ -11,5 +11,7 @@
 | [기여 가이드](./guides/contributing.md) | 브랜치 전략, 머지 역할, 커밋 컨벤션, PR 규칙 |
 | [Git / GitHub 협업 컨벤션](./guides/git-conventions.md) | 브랜치, 커밋, PR, 이슈, 코드 리뷰 규칙 |
 | [테스트 가이드](./guides/testing.md) | TDD 흐름, 테스트 작성 방법 |
+| [테스트 전략](./testing/strategy.md) | 최신 테스트 레이어, 로그인 후 데이터 로드, E2E 운영 전략 |
+| [테스트 트러블슈팅](./testing/troubleshooting.md) | 최근 테스트 실패 사례와 해결 방법 |
 | [API 개요](./api/overview.md) | 백엔드 API 엔드포인트 목록 |
 | [트러블슈팅](./troubleshooting/README.md) | 자주 발생하는 문제와 해결법 |
