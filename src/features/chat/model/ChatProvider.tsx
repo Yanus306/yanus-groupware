@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import type { ChatMessage, Channel } from '../../../entities/message/model/types'
 import { getChannels, getMessages, sendMessage as apiSendMessage } from '../../../shared/api/chatApi'
-import type { ApiChannel, ApiMessage } from '../../../shared/api/chatApi'
+import type { ApiMessage } from '../../../shared/api/chatApi'
 
 export type { ChatMessage, Channel } from '../../../entities/message/model/types'
 
@@ -26,6 +26,7 @@ type ChatContextValue = {
   setActiveChannelId: (id: string) => void
   addMessage: (channelId: string, content?: string, files?: { name: string; url: string; type: string }[]) => void
   getMessagesByChannel: (channelId: string) => ChatMessage[]
+  refreshChannels: () => Promise<void>
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -34,18 +35,42 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { state } = useApp()
   const [channels, setChannels] = useState<Channel[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [activeChannelId, setActiveChannelId] = useState('1')
+  const [activeChannelId, setActiveChannelId] = useState('')
 
   const isDirectChannel = useCallback((channelId: string) => channelId.startsWith('dm-'), [])
 
   useEffect(() => {
-    getChannels()
-      .then((data: ApiChannel[]) => {
-        setChannels(data)
-        if (data.length > 0) setActiveChannelId(data[0].id)
-      })
-      .catch(() => {})
-  }, [])
+    if (!state.currentUser?.id) {
+      setChannels([])
+      setMessages([])
+      setActiveChannelId('')
+    }
+  }, [state.currentUser?.id])
+
+  const refreshChannels = useCallback(async () => {
+    if (!state.currentUser?.id) {
+      setChannels([])
+      setMessages([])
+      setActiveChannelId('')
+      return
+    }
+
+    const data = await getChannels()
+    setChannels(data)
+
+    const nextActiveChannelId = data.find((channel) => channel.id === activeChannelId)?.id ?? data[0]?.id ?? ''
+    setActiveChannelId(nextActiveChannelId)
+
+    if (!nextActiveChannelId || isDirectChannel(nextActiveChannelId)) {
+      return
+    }
+
+    const channelMessages = await getMessages(nextActiveChannelId)
+    setMessages((prev) => [
+      ...prev.filter((message) => message.channelId !== nextActiveChannelId),
+      ...channelMessages.map(apiMsgToChatMsg),
+    ])
+  }, [activeChannelId, isDirectChannel, state.currentUser?.id])
 
   useEffect(() => {
     if (!activeChannelId || isDirectChannel(activeChannelId)) return
@@ -98,6 +123,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setActiveChannelId,
         addMessage,
         getMessagesByChannel,
+        refreshChannels,
       }}
     >
       {children}

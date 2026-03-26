@@ -1,6 +1,7 @@
 import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon, ArrowLeftRight } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
+import { canAccessAdmin, canAccessTeamManagement } from '../../shared/lib/permissions'
 import { useTheme } from '../../shared/theme'
 import logoImg from '../../assets/logo.png'
 import './Layout.css'
@@ -19,12 +20,14 @@ const navItems = [
 export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { state, isAdmin, isTeamLead, logout } = useApp()
+  const { state, logout } = useApp()
   const { theme, toggleTheme } = useTheme()
   const { currentUser } = state
+  const canSeeAdmin = canAccessAdmin(currentUser)
+  const canSeeTeamManagement = canAccessTeamManagement(currentUser)
   const visibleNavItems = [
     ...navItems,
-    ...(isTeamLead ? [{ to: '/team-management', icon: ArrowLeftRight, label: '팀 관리' }] : []),
+    ...(canSeeTeamManagement ? [{ to: '/team-management', icon: ArrowLeftRight, label: '팀 관리' }] : []),
   ]
   const currentNav = visibleNavItems.find(({ to }) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)))
   const pageTitle = location.pathname === '/admin' ? '관리자' : currentNav?.label ?? '홈'
@@ -67,7 +70,7 @@ export function Layout() {
               <span className="nav-label">{label}</span>
             </NavLink>
           ))}
-          {isAdmin && (
+          {canSeeAdmin && (
             <NavLink
               to="/admin"
               className={({ isActive }) => `nav-item admin-nav-item ${isActive ? 'active' : ''}`}

@@ -10,11 +10,10 @@ import {
   getTeamWorkSchedules,
 } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord, MemberWorkScheduleItem } from '../../shared/api/attendanceApi'
-import { getMembers } from '../../shared/api/membersApi'
-import type { User } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
+import { sortUsersByTeamAndName } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
-import { getTeams } from '../../shared/api/teamsApi'
+import { canViewManagedAttendance } from '../../shared/lib/permissions'
 import './attendance.css'
 
 const DAY_LABELS: Record<string, string> = {
@@ -43,11 +42,10 @@ const ATTENDANCE_STATUS_LABEL = {
 } as const
 
 export function Attendance() {
-  const { isAdmin, isTeamLead, state } = useApp()
+  const { state } = useApp()
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
-  const [members, setMembers] = useState<User[]>([])
   const [teamSchedules, setTeamSchedules] = useState<MemberWorkScheduleItem[]>([])
   const [page, setPage] = useState(1)
   const [dateInput, setDateInput] = useState('')
@@ -55,27 +53,30 @@ export function Attendance() {
   const PAGE_SIZE = 10
 
   const todayStr = new Date().toISOString().slice(0, 10)
-  const canViewTeamAttendance = isAdmin || isTeamLead
+  const isAdmin = state.currentUser?.role === 'ADMIN'
+  const canSeeManagedAttendance = canViewManagedAttendance(state.currentUser)
+  const members = sortUsersByTeamAndName(
+    state.currentUser?.role === 'TEAM_LEAD'
+      ? state.users.filter((member) => member.team === state.currentUser?.team)
+      : state.users,
+  )
 
   const loadManagedAttendance = async (targetDate: string) => {
-    if (!canViewTeamAttendance || !state.currentUser) return
+    if (!canSeeManagedAttendance || !state.currentUser) return
 
     try {
+      const attendanceList = await getAttendanceByDate(targetDate)
       if (state.currentUser.role === 'ADMIN') {
-        const [attendanceList, memberList] = await Promise.all([
-          getAttendanceByDate(targetDate),
-          getMembers(),
-        ])
         setRecords(attendanceList)
-        setMembers(memberList)
         return
       }
 
-      const memberList = await getMembers({ teamName: state.currentUser.team })
-      const attendanceList = await getAttendanceByDate(targetDate)
-      const memberIds = new Set(memberList.map((member) => Number(member.id)))
-
-      setMembers(memberList)
+      const currentTeam = state.currentUser.team
+      const memberIds = new Set(
+        state.users
+          .filter((member) => member.team === currentTeam)
+          .map((member) => Number(member.id)),
+      )
       setRecords(attendanceList.filter((record) => memberIds.has(record.memberId)))
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '출퇴근 기록을 불러오지 못했습니다')
@@ -85,7 +86,7 @@ export function Attendance() {
   // 관리자/팀장: 날짜별 관리 대상 기록 + 멤버 목록
   useEffect(() => {
     loadManagedAttendance(todayStr)
-  }, [canViewTeamAttendance, todayStr, state.currentUser?.id])
+  }, [canSeeManagedAttendance, todayStr, state.currentUser?.id, state.currentUser?.team, state.users])
 
   // 일반 사용자: 내 출퇴근 기록 전체 이력
   useEffect(() => {
@@ -95,7 +96,7 @@ export function Attendance() {
   }, [])
 
   useEffect(() => {
-    if (!canViewTeamAttendance || !state.currentUser) return
+    if (!canSeeManagedAttendance || !state.currentUser) return
 
     const loadSchedules = async () => {
       try {
@@ -106,8 +107,7 @@ export function Attendance() {
         }
 
         if (state.currentUser?.role === 'TEAM_LEAD') {
-          const teams = await getTeams()
-          const currentTeam = teams.find((team) => team.name === state.currentUser?.team)
+          const currentTeam = state.teams.find((team) => team.name === state.currentUser?.team)
           if (!currentTeam) {
             setTeamSchedules([])
             return
@@ -121,7 +121,7 @@ export function Attendance() {
     }
 
     loadSchedules()
-  }, [canViewTeamAttendance, state.currentUser])
+  }, [canSeeManagedAttendance, state.currentUser, state.teams])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
@@ -195,13 +195,13 @@ export function Attendance() {
       </header>
 
       <div className="attendance-content">
-        {canViewTeamAttendance && members.length > 0 && (
+        {canSeeManagedAttendance && members.length > 0 && (
           <section className="team-status-section glass">
             <TeamAttendanceStatus members={members} records={records} date={todayStr} />
           </section>
         )}
 
-        {canViewTeamAttendance && (
+        {canSeeManagedAttendance && (
           <section className="team-schedule-section glass">
             <TeamWorkSchedulePanel
               schedules={teamSchedules}
@@ -210,11 +210,11 @@ export function Attendance() {
           </section>
         )}
 
-        <div className={`two-cards-row ${canViewTeamAttendance ? 'admin-wide' : 'single'}`}>
+        <div className={`two-cards-row ${canSeeManagedAttendance ? 'admin-wide' : 'single'}`}>
           <section className="set-work-days-section glass">
             <SetWorkDaysPersonal />
           </section>
-          {canViewTeamAttendance && (
+          {canSeeManagedAttendance && (
             <section className="records-section glass">
               <h3>출퇴근 기록</h3>
               <div className="records-table-wrap">
@@ -309,7 +309,7 @@ export function Attendance() {
           </div>
         </section>
 
-        {canViewTeamAttendance && (
+        {canSeeManagedAttendance && (
           <div className="summary-stats">
             <div className="stat-card glass">
               <span className="label">오늘 총 기록</span>
