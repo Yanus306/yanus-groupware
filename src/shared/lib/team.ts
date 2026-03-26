@@ -1,6 +1,8 @@
 import type { User } from '../../entities/user/model/types'
 import type { TeamResponse } from '../api/teamsApi'
 
+const TEAM_CACHE_KEY = 'yanus.team-options'
+
 export const FALLBACK_TEAMS: TeamResponse[] = [
   { id: 1, name: '1팀' },
   { id: 2, name: '2팀' },
@@ -15,6 +17,34 @@ export function formatTeamName(team?: string | null) {
 
 export function sortTeams<T extends { name: string }>(teams: T[]) {
   return [...teams].sort((left, right) => left.name.localeCompare(right.name, 'ko-KR', { numeric: true }))
+}
+
+export function cacheTeams(teams: TeamResponse[]) {
+  try {
+    localStorage.setItem(TEAM_CACHE_KEY, JSON.stringify(sortTeams(teams)))
+  } catch {
+    // Ignore cache write failures.
+  }
+}
+
+export function getCachedTeams() {
+  try {
+    const raw = localStorage.getItem(TEAM_CACHE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as TeamResponse[]
+    if (!Array.isArray(parsed)) return []
+    return sortTeams(
+      parsed.filter(
+        (team): team is TeamResponse =>
+          Boolean(team) &&
+          typeof team.id === 'number' &&
+          typeof team.name === 'string' &&
+          team.name.trim().length > 0,
+      ),
+    )
+  } catch {
+    return []
+  }
 }
 
 function compareTeamName(left?: string | null, right?: string | null) {
