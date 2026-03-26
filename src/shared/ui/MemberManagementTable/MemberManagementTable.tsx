@@ -1,6 +1,7 @@
-import { ArrowLeftRight, ChevronDown, Crown } from 'lucide-react'
+import { ArrowLeftRight, Crown } from 'lucide-react'
 import type { User } from '../../../entities/user/model/types'
 import { formatTeamName } from '../../lib/team'
+import { ActionMenu } from '../ActionMenu'
 import './MemberManagementTable.css'
 
 const roleLabels: Record<string, string> = {
@@ -128,33 +129,39 @@ export function MemberManagementTable({
                   {showActions && (
                     <td className="member-table-actions-cell">
                       <div className="member-actions-stack">
-                        {showTeamChange && (
-                          <button
-                            type="button"
-                            className="member-action-btn member-action-btn-secondary"
-                            onClick={() => onOpenTeamChange?.(member)}
-                          >
-                            팀 변경 <ArrowLeftRight size={14} />
-                          </button>
-                        )}
+                        <div className="member-actions-inline">
+                          {showTeamChange && (
+                            <button
+                              type="button"
+                              className="member-action-btn member-action-btn-secondary"
+                              onClick={() => onOpenTeamChange?.(member)}
+                            >
+                              팀 변경 <ArrowLeftRight size={14} />
+                            </button>
+                          )}
+                          <ActionMenu
+                            items={[
+                              ...(showRoleChange
+                                ? [{
+                                    label: '역할 변경',
+                                    onSelect: () => onOpenRoleChange?.(member),
+                                  }]
+                                : []),
+                              ...(showExpel
+                                ? [{
+                                    label: isInactive ? '퇴출됨' : '퇴출',
+                                    tone: 'danger' as const,
+                                    disabled: saving || isInactive,
+                                    onSelect: () => onExpel?.(member.id),
+                                  }]
+                                : []),
+                            ]}
+                          />
+                        </div>
                         {showRoleChange && (
-                          <button
-                            type="button"
-                            className="member-action-btn member-action-btn-secondary"
-                            onClick={() => onOpenRoleChange?.(member)}
-                          >
-                            역할 변경 <ChevronDown size={14} />
-                          </button>
-                        )}
-                        {showExpel && (
-                          <button
-                            type="button"
-                            className="member-action-btn expel-btn"
-                            disabled={saving || isInactive}
-                            onClick={() => onExpel?.(member.id)}
-                          >
-                            {isInactive ? '퇴출됨' : '퇴출'}
-                          </button>
+                          <span className="member-actions-caption">
+                            역할 변경 {showExpel ? '및 퇴출 관리' : '가능'}
+                          </span>
                         )}
                       </div>
                     </td>

@@ -126,6 +126,14 @@
   line-height: 1.4;
 }
 
+.field-help {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
 .register-footer {
   margin-top: 20px;
   text-align: center;

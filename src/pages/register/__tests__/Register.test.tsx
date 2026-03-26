@@ -102,4 +102,10 @@ describe('Register 페이지', () => {
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
     expect(await screen.findByText('이미 가입된 이메일입니다')).toBeInTheDocument()
   })
+
+  it('팀 목록을 불러오지 못하면 안내 문구를 표시한다', async () => {
+    renderRegister()
+
+    expect(await screen.findByText('실시간 팀 목록을 불러오지 못해 기본 팀 목록을 표시 중입니다. 최신 팀이 보이지 않으면 관리자에게 문의해 주세요.')).toBeInTheDocument()
+  })
 })

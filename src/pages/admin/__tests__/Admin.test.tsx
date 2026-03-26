@@ -112,8 +112,8 @@ describe('Admin 페이지', () => {
     renderAdmin()
     await user.click(screen.getByRole('button', { name: '멤버 관리' }))
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: '퇴출' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('관리 메뉴 열기').length).toBeGreaterThan(0)
   })
 
   it('멤버 목록은 팀 순, 이름 순이며 비활성 멤버는 마지막에 표시된다', async () => {

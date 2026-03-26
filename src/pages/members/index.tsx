@@ -6,6 +6,7 @@ import type { UserRole } from '../../entities/user/model/types'
 import { getTeamOptions, formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { canAccessAdmin } from '../../shared/lib/permissions'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
+import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
@@ -183,7 +184,10 @@ export function Members() {
 
       <div className="members-content">
         <div className="table-section glass">
-          <h3>멤버 목록</h3>
+          <SectionHeader
+            title="멤버 목록"
+            description="활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다."
+          />
           <MemberManagementTable
             members={filtered}
             saving={saving}
@@ -197,7 +201,10 @@ export function Members() {
         </div>
 
         <aside className="stats-sidebar glass">
-          <h3>팀별 멤버 수</h3>
+          <SectionHeader
+            title="팀별 멤버 수"
+            description="비활성 멤버는 집계에서 제외됩니다."
+          />
           <div className="bar-chart">
             {activeCountsByTeam.map((team) => {
               const count = team.count
@@ -214,8 +221,10 @@ export function Members() {
               )
             })}
           </div>
-          <p className="stats-caption">비활성 멤버는 집계에서 제외됩니다.</p>
-          <h3>역할 분포</h3>
+          <SectionHeader
+            title="역할 분포"
+            description="현재 활성 멤버 기준으로 역할 비중을 보여줍니다."
+          />
           <div className="pie-legend">
             <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {visibleUsers.filter((user) => user.role === 'ADMIN').length}</span>
             <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {visibleUsers.filter((user) => user.role === 'TEAM_LEAD').length}</span>
