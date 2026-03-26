@@ -34,6 +34,7 @@ describe('Login 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+    sessionStorage.clear()
     mockGetMe.mockResolvedValue({ id: '1', name: '홍길동', email: 'user@test.com', team: 'BACKEND', role: 'MEMBER', online: true })
   })
 
@@ -107,5 +108,14 @@ describe('Login 페이지', () => {
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '로그인' }))
     expect(screen.getByRole('button', { name: /로그인/ })).toBeDisabled()
+  })
+
+  it('세션 만료 후 로그인 화면에 진입하면 안내 메시지를 표시한다', () => {
+    sessionStorage.setItem('yanus-session-expired-message', '세션이 만료되어 다시 로그인해 주세요')
+
+    renderLogin()
+
+    expect(screen.getByText('세션이 만료되어 다시 로그인해 주세요')).toBeInTheDocument()
+    expect(sessionStorage.getItem('yanus-session-expired-message')).toBeNull()
   })
 })
