@@ -61,6 +61,30 @@ export function Attendance() {
       : state.users,
   )
 
+  const loadTeamSchedules = async () => {
+    if (!canSeeManagedAttendance || !state.currentUser) return
+
+    try {
+      if (state.currentUser.role === 'ADMIN') {
+        const schedules = await getAllWorkSchedules()
+        setTeamSchedules(schedules)
+        return
+      }
+
+      if (state.currentUser.role === 'TEAM_LEAD') {
+        const currentTeam = state.teams.find((team) => team.name === state.currentUser?.team)
+        if (!currentTeam) {
+          setTeamSchedules([])
+          return
+        }
+        const schedules = await getTeamWorkSchedules(currentTeam.id)
+        setTeamSchedules(schedules)
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '팀 근무 일정을 불러오지 못했습니다')
+    }
+  }
+
   const loadManagedAttendance = async (targetDate: string) => {
     if (!canSeeManagedAttendance || !state.currentUser) return
 
@@ -96,31 +120,7 @@ export function Attendance() {
   }, [])
 
   useEffect(() => {
-    if (!canSeeManagedAttendance || !state.currentUser) return
-
-    const loadSchedules = async () => {
-      try {
-        if (state.currentUser?.role === 'ADMIN') {
-          const schedules = await getAllWorkSchedules()
-          setTeamSchedules(schedules)
-          return
-        }
-
-        if (state.currentUser?.role === 'TEAM_LEAD') {
-          const currentTeam = state.teams.find((team) => team.name === state.currentUser?.team)
-          if (!currentTeam) {
-            setTeamSchedules([])
-            return
-          }
-          const schedules = await getTeamWorkSchedules(currentTeam.id)
-          setTeamSchedules(schedules)
-        }
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : '팀 근무 일정을 불러오지 못했습니다')
-      }
-    }
-
-    loadSchedules()
+    loadTeamSchedules()
   }, [canSeeManagedAttendance, state.currentUser, state.teams])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
@@ -212,7 +212,7 @@ export function Attendance() {
 
         <div className={`two-cards-row ${canSeeManagedAttendance ? 'admin-wide' : 'single'}`}>
           <section className="set-work-days-section glass">
-            <SetWorkDaysPersonal />
+            <SetWorkDaysPersonal onSaved={loadTeamSchedules} />
           </section>
           {canSeeManagedAttendance && (
             <section className="records-section glass">
