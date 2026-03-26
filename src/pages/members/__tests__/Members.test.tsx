@@ -43,8 +43,9 @@ describe('Members 페이지', () => {
     await waitFor(() => {
       expect(screen.getByText('김리더')).toBeInTheDocument()
       expect(screen.getByText('박팀장')).toBeInTheDocument()
-      expect(screen.getByText('비활성멤버')).toBeInTheDocument()
     })
+
+    expect(screen.queryByText('비활성멤버')).not.toBeInTheDocument()
   })
 
   it('관리자에게 관리 컬럼이 표시된다', () => {
@@ -65,6 +66,7 @@ describe('Members 페이지', () => {
     render(<Members />)
 
     expect(screen.getByText('비활성 멤버는 집계에서 제외됩니다.')).toBeInTheDocument()
+    expect(screen.getByText('전체 멤버 2명')).toBeInTheDocument()
     expect(screen.getByLabelText('1팀 활성 멤버 1명')).toBeInTheDocument()
     expect(screen.getByLabelText('2팀 활성 멤버 1명')).toBeInTheDocument()
   })
