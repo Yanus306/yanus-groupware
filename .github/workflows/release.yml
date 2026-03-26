@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
 
@@ -19,31 +21,23 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            if (!context.payload.pull_request?.merged) {
+              core.notice('머지되지 않은 PR이라 GitHub Release 생성을 건너뜁니다.')
+              return
+            }
+
             const releaseTitlePattern = /^release:\s*(v\d+\.\d+\.\d+)$/i
             const { owner, repo } = context.repo
-            const commit_sha = context.sha
+            const releasePr = context.payload.pull_request
 
-            const associatedPrs = await github.paginate(
-              github.rest.repos.listPullRequestsAssociatedWithCommit,
-              {
-                owner,
-                repo,
-                commit_sha,
-              },
-            )
-
-            const releasePr = associatedPrs.find((pr) => {
-              if (!pr.merged_at) return false
-              return releaseTitlePattern.test(pr.title.trim())
-            })
-
-            if (!releasePr) {
+            if (!releaseTitlePattern.test(releasePr.title.trim())) {
               core.notice('release: vX.Y.Z 형식의 머지된 PR을 찾지 못해 GitHub Release 생성을 건너뜁니다.')
               return
             }
 
             const [, tagName] = releasePr.title.trim().match(releaseTitlePattern)
             const releaseBody = (releasePr.body || `Release ${tagName}`).trim()
+            const commit_sha = releasePr.merge_commit_sha
 
             try {
               await github.rest.git.getRef({
