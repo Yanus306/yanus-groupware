@@ -183,6 +183,11 @@
   font-weight: 600;
 }
 
+.records-table td {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
 .records-table tr.late {
   background: rgba(234, 179, 8, 0.12);
 }
@@ -232,6 +237,13 @@
 .status-badge.absent {
   background: rgba(239, 68, 68, 0.2);
   color: var(--error);
+}
+
+.records-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+  font-weight: 600;
 }
 
 .pagination {
@@ -284,6 +296,27 @@
 
 .stat-card .value.red {
   color: var(--error);
+}
+
+:root[data-theme='light'] .records-table th,
+:root[data-theme='light'] .records-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.14);
+}
+
+:root[data-theme='light'] .records-table th {
+  color: #566684;
+}
+
+:root[data-theme='light'] .records-table td {
+  color: #1c2740;
+}
+
+:root[data-theme='light'] .records-empty {
+  color: #5f6f8d;
+}
+
+:root[data-theme='light'] .records-table tr.late {
+  background: rgba(234, 179, 8, 0.08);
 }
 
 @media (max-width: 1100px) {

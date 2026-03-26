@@ -289,7 +289,7 @@ export function Attendance() {
               </thead>
               <tbody>
                 {myRecords.length === 0 ? (
-                  <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px' }}>기록이 없습니다</td></tr>
+                  <tr><td colSpan={4} className="records-empty">기록이 없습니다</td></tr>
                 ) : (
                   myRecords.map((r) => (
                     <tr key={r.id}>
