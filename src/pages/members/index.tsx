@@ -5,7 +5,7 @@ import { getMembers, updateMemberRole, deactivateMember, activateMember } from '
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import type { UserRole } from '../../entities/user/model/types'
-import { FALLBACK_TEAMS, formatTeamName, getTeamOptions } from '../../shared/lib/team'
+import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
@@ -50,20 +50,22 @@ export function Members() {
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
   }, [loadMembers])
 
-  const teamOptions = getTeamOptions(state.users, teams)
+  const visibleUsers = state.users.filter((user) => (user.status ?? 'ACTIVE') === 'ACTIVE')
+  const baseTeamOptions = getTeamOptions(visibleUsers, teams)
+  const activeTeamNames = new Set(visibleUsers.map((user) => user.team).filter((team): team is string => Boolean(team)))
+  const teamOptions = sortTeams(baseTeamOptions.filter((team) => activeTeamNames.has(team.name)))
 
-  const filtered = state.users.filter((user) => {
+  const filtered = visibleUsers.filter((user) => {
     const matchSearch = !search || user.name.toLowerCase().includes(search.toLowerCase())
     const matchTeam = teamFilter === '전체 팀' || user.team === teamFilter
     const matchRole = roleFilter === '전체 역할' || user.role === roleFilter
     return matchSearch && matchTeam && matchRole
   })
 
-  const activeUsers = state.users.filter((user) => (user.status ?? 'ACTIVE') === 'ACTIVE')
   const activeCountsByTeam = teamOptions.map((team) => ({
     id: team.id,
     name: team.name,
-    count: activeUsers.filter((user) => user.team === team.name).length,
+    count: visibleUsers.filter((user) => user.team === team.name).length,
   }))
   const maxActiveTeamCount = Math.max(...activeCountsByTeam.map((team) => team.count), 1)
 
@@ -189,7 +191,7 @@ export function Members() {
             ))}
           </div>
         </div>
-        <div className="total-members glass">전체 멤버 {state.users.length}명</div>
+        <div className="total-members glass">전체 멤버 {visibleUsers.length}명</div>
       </div>
 
       <div className="members-content">
@@ -291,9 +293,9 @@ export function Members() {
           <p className="stats-caption">비활성 멤버는 집계에서 제외됩니다.</p>
           <h3>역할 분포</h3>
           <div className="pie-legend">
-            <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {state.users.filter((user) => user.role === 'ADMIN').length}</span>
-            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {state.users.filter((user) => user.role === 'TEAM_LEAD').length}</span>
-            <span><i style={{ background: 'var(--text-secondary)' }} /> 멤버 {state.users.filter((user) => user.role === 'MEMBER').length}</span>
+            <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {visibleUsers.filter((user) => user.role === 'ADMIN').length}</span>
+            <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {visibleUsers.filter((user) => user.role === 'TEAM_LEAD').length}</span>
+            <span><i style={{ background: 'var(--text-secondary)' }} /> 멤버 {visibleUsers.filter((user) => user.role === 'MEMBER').length}</span>
           </div>
         </aside>
       </div>
