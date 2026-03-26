@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeftRight, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import type { User } from '../../entities/user/model/types'
-import { getMembers, updateMemberTeam } from '../../shared/api/membersApi'
-import { getTeams } from '../../shared/api/teamsApi'
-import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, formatTeamName, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { updateMemberTeam } from '../../shared/api/membersApi'
+import { formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './team-management.css'
 
@@ -21,9 +19,7 @@ const statusLabels = {
 }
 
 export function TeamManagement() {
-  const { state, loadMembers } = useApp()
-  const [members, setMembers] = useState<User[]>([])
-  const [teams, setTeams] = useState<TeamResponse[]>(FALLBACK_TEAMS)
+  const { state, refreshMembers, refreshTeams } = useApp()
   const [search, setSearch] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -34,24 +30,23 @@ export function TeamManagement() {
   const currentTeam = state.currentUser?.team
 
   const loadTeamMembers = async () => {
-    if (!currentTeam) return
-
     try {
-      const [memberList, teamList] = await Promise.all([
-        getMembers({ teamName: currentTeam }),
-        getTeams().catch(() => FALLBACK_TEAMS),
-      ])
-      setMembers(sortUsersByTeamAndName(memberList))
-      setTeams(sortTeams(teamList))
-      loadMembers(memberList)
+      await Promise.all([refreshMembers(), refreshTeams()])
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '팀 멤버를 불러오지 못했습니다')
     }
   }
 
   useEffect(() => {
+    if (!currentTeam) return
     loadTeamMembers()
   }, [currentTeam])
+
+  const members = useMemo(() => (
+    sortUsersByTeamAndName(
+      state.users.filter((member) => member.team === currentTeam),
+    )
+  ), [currentTeam, state.users])
 
   const filteredMembers = useMemo(() => (
     sortUsersByTeamAndName(members).filter((member) => {
@@ -63,7 +58,7 @@ export function TeamManagement() {
 
   const openTeamModal = (member: User) => {
     setChangeTeamFor(member)
-    const matchedTeam = teams.find((team) => team.name === member.team)
+    const matchedTeam = state.teams.find((team) => team.name === member.team)
     setSelectedTeamId(matchedTeam?.id ?? null)
   }
 
@@ -72,7 +67,7 @@ export function TeamManagement() {
 
     setSaving(true)
     try {
-      const nextTeam = teams.find((team) => team.id === selectedTeamId)
+      const nextTeam = state.teams.find((team) => team.id === selectedTeamId)
       await updateMemberTeam(changeTeamFor.id, { teamId: selectedTeamId })
       await loadTeamMembers()
       setSuccessMessage(`${changeTeamFor.name}의 팀을 ${formatTeamName(nextTeam?.name)}으로 변경했습니다`)
@@ -173,7 +168,7 @@ export function TeamManagement() {
             <h3>{changeTeamFor.name} 팀 변경</h3>
             <p>팀장은 멤버의 소속 팀만 변경할 수 있습니다.</p>
             <div className="team-select-list">
-              {teams.map((team) => (
+              {state.teams.map((team) => (
                 <button
                   key={team.id}
                   type="button"

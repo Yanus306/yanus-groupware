@@ -29,10 +29,22 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function EventsBootstrap({ children }: { children: ReactNode }) {
+  const { refreshEvents } = useEvents()
+
+  useEffect(() => {
+    void refreshEvents()
+  }, [refreshEvents])
+
+  return <>{children}</>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
     <AuthBootstrap>
-      <EventsProvider>{children}</EventsProvider>
+      <EventsProvider>
+        <EventsBootstrap>{children}</EventsBootstrap>
+      </EventsProvider>
     </AuthBootstrap>
   </AppProvider>
 )

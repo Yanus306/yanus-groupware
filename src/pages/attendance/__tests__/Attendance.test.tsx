@@ -25,7 +25,13 @@ afterAll(() => server.close())
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
-    state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: '1팀' }, users: [] },
+    state: {
+      currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: '1팀' },
+      users: [
+        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE' },
+      ],
+      teams: [{ id: 1, name: '1팀' }],
+    },
     isAdmin: true,
     isTeamLead: false,
   }),

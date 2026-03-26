@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Crown, ChevronDown, Download, ArrowLeftRight, FolderPlus, Trash2, Users } from 'lucide-react'
+import { Crown, Download, FolderPlus, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
-import { getMembers, updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
+import { updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
 import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
 import { getTodayStr } from '../../shared/lib/date'
-import { createTeam, deleteTeam, getTeams } from '../../shared/api/teamsApi'
+import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
 import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams'
@@ -23,17 +24,10 @@ const roleLabels: Record<string, string> = {
   MEMBER: '멤버',
 }
 
-const statusLabels: Record<string, string> = {
-  ACTIVE: '활성',
-  INACTIVE: '비활성',
-}
-
 export function Admin() {
-  const { loadMembers } = useApp()
+  const { state, loadMembers, refreshMembers, refreshTeams } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
-  const [members, setMembers] = useState<User[]>([])
-  const [teams, setTeams] = useState<TeamResponse[]>(FALLBACK_TEAMS)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -44,33 +38,23 @@ export function Admin() {
   const [newTeamName, setNewTeamName] = useState('')
 
   const todayStr = getTodayStr()
-  const teamOptions = getTeamOptions(members, teams)
+  const members = sortUsersByTeamAndName(state.users)
+  const teamOptions = getTeamOptions(members, state.teams)
 
   useEffect(() => {
-    Promise.all([
-      getMembers(),
-      getAttendanceByDate(todayStr),
-      getTeams().catch(() => FALLBACK_TEAMS),
-    ])
-      .then(([memberList, attendanceList, teamList]) => {
-        const sortedMembers = sortUsersByTeamAndName(memberList)
-        setMembers(sortedMembers)
-        loadMembers(sortedMembers)
+    getAttendanceByDate(todayStr)
+      .then((attendanceList) => {
         setRecords(attendanceList)
-        setTeams(sortTeams(teamList))
       })
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '관리 데이터를 불러오지 못했습니다'))
-  }, [todayStr, loadMembers])
+  }, [todayStr])
 
   const reloadMembersAndTeams = async () => {
-    const [memberList, teamList] = await Promise.all([
-      getMembers(),
-      getTeams().catch(() => FALLBACK_TEAMS),
+    const [memberList] = await Promise.all([
+      refreshMembers(),
+      refreshTeams(),
     ])
-    const sortedMembers = sortUsersByTeamAndName(memberList)
-    setMembers(sortedMembers)
-    loadMembers(sortedMembers)
-    setTeams(sortTeams(teamList))
+    loadMembers(memberList)
   }
 
   const handleOpenRoleChange = (id: string, name: string, current: UserRole) => {
@@ -84,11 +68,7 @@ export function Admin() {
     setSaving(true)
     try {
       await updateMemberRole(changeRoleFor.id, selectedRole)
-      const updated = sortUsersByTeamAndName(members.map((member) =>
-        member.id === changeRoleFor.id ? { ...member, role: selectedRole } : member,
-      ))
-      setMembers(updated)
-      loadMembers(updated)
+      await refreshMembers()
       setSuccessMessage(`${changeRoleFor.name}의 역할을 ${roleLabels[selectedRole]}로 변경했습니다`)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '역할 변경에 실패했습니다')
@@ -165,8 +145,7 @@ export function Admin() {
     setSaving(true)
     try {
       await createTeam(trimmed)
-      const refreshedTeams = await getTeams().catch(() => FALLBACK_TEAMS)
-      setTeams(sortTeams(refreshedTeams))
+      await refreshTeams()
       setNewTeamName('')
       setSuccessMessage(`${trimmed}을 생성했습니다`)
     } catch (err) {
@@ -188,8 +167,7 @@ export function Admin() {
     setSaving(true)
     try {
       await deleteTeam(team.id)
-      const refreshedTeams = await getTeams().catch(() => FALLBACK_TEAMS)
-      setTeams(sortTeams(refreshedTeams))
+      await refreshTeams()
       setSuccessMessage(`${formatTeamName(team.name)}을 삭제했습니다`)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '팀 삭제에 실패했습니다')
@@ -269,90 +247,17 @@ export function Admin() {
       {tab === 'members' && (
         <div className="admin-tab-content glass">
           <h3 className="admin-section-title">멤버 목록</h3>
-          <div className="admin-table-wrap">
-            <table className="admin-members-table">
-              <thead>
-                <tr>
-                  <th>이름</th>
-                  <th>팀</th>
-                  <th>역할</th>
-                  <th>상태</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id}>
-                    <td>
-                      <span className="admin-avatar">{member.name[0]}</span>
-                      {member.name}
-                    </td>
-                    <td>
-                      <span className="admin-team-tag">
-                        {formatTeamName(member.team)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`admin-role-tag ${member.role}`}>
-                        {member.role === 'ADMIN' && <Crown size={12} />}
-                        {roleLabels[member.role] ?? member.role}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="admin-status-cell">
-                        <span className={`admin-status-tag ${member.status ?? 'ACTIVE'}`}>
-                          {statusLabels[member.status ?? 'ACTIVE'] ?? (member.status ?? 'ACTIVE')}
-                        </span>
-                        {member.status === 'INACTIVE' ? (
-                          <button
-                            type="button"
-                            className="admin-action-btn activate-btn"
-                            disabled={saving}
-                            onClick={() => handleActivate(member.id)}
-                          >
-                            활성화
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="admin-action-btn mute-btn"
-                            disabled={saving}
-                            onClick={() => handleDeactivate(member.id)}
-                          >
-                            비활성화
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="admin-actions-cell">
-                      <button
-                        type="button"
-                        className="admin-action-btn"
-                        onClick={() => handleOpenTeamChange(member)}
-                      >
-                        팀 변경 <ArrowLeftRight size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-action-btn"
-                        onClick={() => handleOpenRoleChange(member.id, member.name, member.role)}
-                      >
-                        역할 변경 <ChevronDown size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-action-btn deactivate-btn"
-                        disabled={saving || member.status === 'INACTIVE'}
-                        onClick={() => handleExpel(member.id)}
-                      >
-                        {member.status === 'INACTIVE' ? '퇴출됨' : '퇴출'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <MemberManagementTable
+            members={members}
+            saving={saving}
+            showStatus
+            showActions
+            onOpenRoleChange={(member) => handleOpenRoleChange(member.id, member.name, member.role)}
+            onOpenTeamChange={handleOpenTeamChange}
+            onDeactivate={handleDeactivate}
+            onActivate={handleActivate}
+            onExpel={handleExpel}
+          />
         </div>
       )}
 

@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useEffect, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { AppProvider } from '../../../features/auth/model'
+import { AppProvider, useApp } from '../../../features/auth/model'
+import type { User } from '../../../entities/user/model/types'
 import { Admin } from '../index'
 
 const mockMembers = [
@@ -58,11 +60,30 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
+function AdminBootstrap({ children }: { children: ReactNode }) {
+  const { loadUser, loadMembers, loadTeams } = useApp()
+
+  useEffect(() => {
+    loadUser({ id: '99', name: '관리자', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE' })
+    loadMembers(mockMembers as User[])
+    loadTeams([
+      { id: 1, name: '1팀' },
+      { id: 2, name: '2팀' },
+      { id: 3, name: '3팀' },
+      { id: 4, name: '4팀' },
+    ])
+  }, [loadMembers, loadTeams, loadUser])
+
+  return <>{children}</>
+}
+
 function renderAdmin() {
   return render(
     <MemoryRouter>
       <AppProvider>
-        <Admin />
+        <AdminBootstrap>
+          <Admin />
+        </AdminBootstrap>
       </AppProvider>
     </MemoryRouter>,
   )

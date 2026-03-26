@@ -21,6 +21,7 @@ type EventsContextValue = {
   deleteEvent: (id: string) => void
   getEventsByDate: (date: string) => CalendarEvent[]
   getEventsForDateRange: (start: string, end: string) => CalendarEvent[]
+  refreshEvents: () => Promise<void>
 }
 
 const EventsContext = createContext<EventsContextValue | null>(null)
@@ -61,11 +62,17 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       setEvents([])
       return
     }
+  }, [state.currentUser?.id])
+
+  const refreshEvents = useCallback(async () => {
+    if (!state.currentUser?.id) {
+      setEvents([])
+      return
+    }
 
     const { startDate, endDate } = getDefaultDateRange()
-    apiGetEvents(startDate, endDate)
-      .then((data) => setEvents(data.map(toCalendarEvent)))
-      .catch(() => {})
+    const data = await apiGetEvents(startDate, endDate)
+    setEvents(data.map(toCalendarEvent))
   }, [state.currentUser?.id])
 
   const addEvent = useCallback(
@@ -124,7 +131,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   return (
     <EventsContext.Provider
-      value={{ events, addEvent, updateEvent, deleteEvent, getEventsByDate, getEventsForDateRange }}
+      value={{ events, addEvent, updateEvent, deleteEvent, getEventsByDate, getEventsForDateRange, refreshEvents }}
     >
       {children}
     </EventsContext.Provider>

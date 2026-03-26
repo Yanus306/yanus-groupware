@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useApp } from '../../../features/auth/model'
+import { canAccessAdmin } from '../../lib/permissions'
 
 export function AdminRoute() {
-  const { isAdmin } = useApp()
-  return isAdmin ? <Outlet /> : <Navigate to="/" replace />
+  const { state } = useApp()
+  return canAccessAdmin(state.currentUser) ? <Outlet /> : <Navigate to="/" replace />
 }

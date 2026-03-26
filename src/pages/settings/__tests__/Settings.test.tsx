@@ -10,7 +10,11 @@ const mockNavigate = vi.fn()
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
-    state: { currentUser: { id: '1', name: '홍길동', role: 'member', team: '개발팀' }, users: [] },
+    state: {
+      currentUser: { id: '1', name: '홍길동', role: 'MEMBER', team: '1팀' },
+      users: [],
+      teams: [{ id: 1, name: '1팀' }],
+    },
     isAdmin: false,
     isTeamLead: false,
     logout: mockLogout,

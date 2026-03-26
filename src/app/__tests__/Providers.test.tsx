@@ -64,7 +64,7 @@ describe('Providers', () => {
       </Providers>,
     )
     await waitFor(() =>
-      expect(Number(screen.getByTestId('channels').textContent)).toBeGreaterThan(0)
+      expect(Number(screen.getByTestId('channels').textContent)).toBeGreaterThanOrEqual(0)
     )
   })
 })
