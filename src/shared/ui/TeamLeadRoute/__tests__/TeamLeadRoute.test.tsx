@@ -30,9 +30,15 @@ describe('TeamLeadRoute', () => {
       isAdmin: false,
       isTeamLead: true,
       isInitializing: false,
-      state: { currentUser: null, users: [] },
+      isBootstrapping: false,
+      state: { currentUser: { id: '2', name: '팀장', email: 'lead@test.com', team: '1팀', role: 'TEAM_LEAD' }, users: [], teams: [] },
       loadUser: vi.fn(),
       loadMembers: vi.fn(),
+      loadTeams: vi.fn(),
+      refreshCurrentUser: vi.fn(),
+      refreshMembers: vi.fn(),
+      refreshTeams: vi.fn(),
+      setBootstrapping: vi.fn(),
       logout: vi.fn(),
     })
     render(<TestLayout />)
@@ -44,9 +50,15 @@ describe('TeamLeadRoute', () => {
       isAdmin: true,
       isTeamLead: false,
       isInitializing: false,
-      state: { currentUser: null, users: [] },
+      isBootstrapping: false,
+      state: { currentUser: { id: '1', name: '관리자', email: 'admin@test.com', team: '1팀', role: 'ADMIN' }, users: [], teams: [] },
       loadUser: vi.fn(),
       loadMembers: vi.fn(),
+      loadTeams: vi.fn(),
+      refreshCurrentUser: vi.fn(),
+      refreshMembers: vi.fn(),
+      refreshTeams: vi.fn(),
+      setBootstrapping: vi.fn(),
       logout: vi.fn(),
     })
     render(<TestLayout />)

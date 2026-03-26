@@ -20,6 +20,21 @@ vi.mock('../../../features/attendance/ui', () => ({
   AnimatedClockRing: () => <div data-testid="clock-ring" />,
 }))
 
+vi.mock('../../../features/attendance/model/useWorkSchedule', () => ({
+  useWorkSchedule: () => ({
+    workDays: [true, false, false, false, false, false, false],
+    daySchedules: [
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+      { checkInTime: '09:00', checkOutTime: '18:00' },
+    ],
+  }),
+}))
+
 vi.mock('../../../features/calendar/model/EventsProvider', () => ({
   useEvents: () => ({
     getEventsByDate: () => [],
@@ -40,6 +55,7 @@ vi.mock('../../../features/tasks/model/TasksProvider', () => ({
     getTasksByDate: () => [],
     tasks: [],
     isLoading: false,
+    toggleTaskDone: vi.fn(),
   }),
 }))
 

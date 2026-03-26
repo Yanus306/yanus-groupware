@@ -11,16 +11,28 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 const mockLoadMembers = vi.fn()
+const mockRefreshMembers = vi.fn().mockResolvedValue([])
+const mockRefreshTeams = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: {
       currentUser: { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'lead@test.com' },
-      users: [],
+      users: [
+        { id: '2', name: '박팀장', role: 'TEAM_LEAD', team: '2팀', email: 'lead@test.com', status: 'ACTIVE' },
+        { id: '4', name: '이멤버', role: 'MEMBER', team: '1팀', email: 'member@test.com', status: 'ACTIVE' },
+      ],
+      teams: [
+        { id: 1, name: '1팀' },
+        { id: 2, name: '2팀' },
+        { id: 3, name: '3팀' },
+      ],
     },
     isAdmin: false,
     isTeamLead: true,
     loadMembers: mockLoadMembers,
+    refreshMembers: mockRefreshMembers,
+    refreshTeams: mockRefreshTeams,
   }),
 }))
 
