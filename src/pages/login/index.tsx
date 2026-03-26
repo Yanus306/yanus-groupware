@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { login, getMe } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
+import { consumeSessionExpiredMessage } from '../../shared/lib/authStorage'
 import logoSrc from '../../assets/logo.png'
 import './login.css'
 
@@ -33,6 +34,13 @@ export function Login() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const expiredMessage = consumeSessionExpiredMessage()
+    if (expiredMessage) {
+      setServerError(expiredMessage)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

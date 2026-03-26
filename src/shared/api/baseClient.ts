@@ -1,5 +1,11 @@
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
-import { clearAuthTokens, getAccessToken, getRefreshToken, storeAuthTokens } from '../lib/authStorage'
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  markSessionExpired,
+  storeAuthTokens,
+} from '../lib/authStorage'
 
 export class ApiError extends Error {
   status: number
@@ -17,8 +23,9 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-function handleUnauthorized() {
+function handleUnauthorized(message = '세션이 만료되어 다시 로그인해 주세요') {
   clearAuthTokens()
+  markSessionExpired(message)
   window.location.href = '/login'
 }
 
@@ -98,7 +105,7 @@ async function request<T>(path: string, options: RequestInit = {}, canRetry = tr
       if (refreshed) {
         return request<T>(path, options, false)
       }
-      handleUnauthorized()
+      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
     }
     throw new ApiError(res.status, message, code)
   }
@@ -127,7 +134,7 @@ async function requestBlob(path: string, canRetry = true): Promise<Blob> {
       if (refreshed) {
         return requestBlob(path, false)
       }
-      handleUnauthorized()
+      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
@@ -148,7 +155,7 @@ async function requestUpload<T>(path: string, formData: FormData, canRetry = tru
       if (refreshed) {
         return requestUpload<T>(path, formData, false)
       }
-      handleUnauthorized()
+      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
