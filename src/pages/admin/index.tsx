@@ -13,6 +13,7 @@ import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
+import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams'
@@ -246,7 +247,10 @@ export function Admin() {
 
       {tab === 'members' && (
         <div className="admin-tab-content glass">
-          <h3 className="admin-section-title">멤버 목록</h3>
+          <SectionHeader
+            title="멤버 목록"
+            description="역할, 상태, 팀 이동, 퇴출 액션을 한 곳에서 관리합니다."
+          />
           <MemberManagementTable
             members={members}
             saving={saving}
@@ -264,10 +268,10 @@ export function Admin() {
       {tab === 'teams' && (
         <div className="admin-tab-content glass">
           <div className="admin-team-manager-head">
-            <div>
-              <h3 className="admin-section-title">팀 목록</h3>
-              <p className="admin-team-manager-copy">새 팀을 추가하거나 더 이상 사용하지 않는 팀을 삭제할 수 있습니다.</p>
-            </div>
+            <SectionHeader
+              title="팀 목록"
+              description="새 팀을 추가하거나 더 이상 사용하지 않는 팀을 삭제할 수 있습니다."
+            />
             <div className="admin-team-create">
               <input
                 type="text"

@@ -140,6 +140,19 @@
   min-width: 0;
 }
 
+.member-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.member-actions-caption {
+  color: var(--text-tertiary);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
 .member-status-tag {
   display: inline-flex;
   align-items: center;
@@ -166,7 +179,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 100px;
+  min-width: 108px;
   padding: 7px 12px;
   border-radius: 8px;
   background: rgba(124, 58, 237, 0.15);
@@ -222,5 +235,9 @@
 @media (max-width: 768px) {
   .member-management-table {
     min-width: 860px;
+  }
+
+  .member-actions-inline {
+    justify-content: space-between;
   }
 }

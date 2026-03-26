@@ -4,6 +4,8 @@ import { useApp } from '../../features/auth/model'
 import type { User } from '../../entities/user/model/types'
 import { updateMemberTeam } from '../../shared/api/membersApi'
 import { formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { EmptyState } from '../../shared/ui/EmptyState'
+import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
 import './team-management.css'
 
@@ -99,6 +101,10 @@ export function TeamManagement() {
       </header>
 
       <section className="team-management-panel glass">
+        <SectionHeader
+          title="팀 멤버 목록"
+          description="팀장은 소속 멤버의 팀 이동만 관리할 수 있습니다."
+        />
         <div className="team-management-toolbar">
           <div className="team-management-search">
             <input
@@ -125,7 +131,13 @@ export function TeamManagement() {
             <tbody>
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="team-management-empty">표시할 멤버가 없습니다.</td>
+                  <td colSpan={6} className="team-management-empty">
+                    <EmptyState
+                      compact
+                      title="표시할 멤버가 없습니다."
+                      description="검색 조건을 바꾸거나 멤버 상태를 다시 확인해 주세요."
+                    />
+                  </td>
                 </tr>
               ) : (
                 filteredMembers.map((member) => (
