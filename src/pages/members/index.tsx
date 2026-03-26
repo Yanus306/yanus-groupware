@@ -232,8 +232,8 @@ export function Members() {
                       </span>
                     </td>
                     {isAdmin && (
-                      <td>
-                        <div className="member-status-cell">
+                      <td className="status-cell">
+                        <div className="member-status-stack">
                           <span className={`member-status-tag ${user.status ?? 'ACTIVE'}`}>
                             {statusLabels[user.status ?? 'ACTIVE'] ?? (user.status ?? 'ACTIVE')}
                           </span>

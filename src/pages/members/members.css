@@ -150,11 +150,11 @@
 }
 
 .members-table .status-col {
-  width: 180px;
+  width: 148px;
 }
 
 .members-table .actions-col {
-  width: 184px;
+  width: 148px;
 }
 
 .members-table th,
@@ -166,6 +166,7 @@
   white-space: nowrap;
 }
 
+.members-table td.status-cell,
 .members-table td.actions-cell {
   white-space: normal;
 }
@@ -264,12 +265,16 @@
   min-width: 0;
 }
 
+.member-status-stack,
 .member-actions-stack {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  width: 100%;
-  max-width: 156px;
+  justify-items: start;
+  width: fit-content;
+  min-width: 104px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .action-btn {
@@ -283,21 +288,12 @@
   color: var(--accent-purple-light);
   border-radius: 6px;
   white-space: nowrap;
-  width: 100%;
+  width: auto;
 }
 
 .action-btn-secondary {
   background: rgba(124, 58, 237, 0.1);
   color: var(--accent-purple-light);
-}
-
-.member-status-cell {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  justify-content: start;
-  min-width: 0;
 }
 
 .member-status-tag {

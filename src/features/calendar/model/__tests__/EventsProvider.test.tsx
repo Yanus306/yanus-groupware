@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { calendarHandlers } from '../../../../shared/api/mock/handlers/calendar'
-import { AppProvider } from '../../../auth/model/AppProvider'
+import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { EventsProvider, useEvents } from '../EventsProvider'
 
 const server = setupServer(...calendarHandlers)
@@ -12,11 +12,36 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
+function AuthBootstrap({ children }: { children: ReactNode }) {
+  const { loadUser } = useApp()
+
+  useEffect(() => {
+    loadUser({
+      id: '1',
+      name: '김리더',
+      email: 'leader@test.com',
+      role: 'ADMIN',
+      team: '1팀',
+      status: 'ACTIVE',
+    })
+  }, [loadUser])
+
+  return <>{children}</>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
-    <EventsProvider>{children}</EventsProvider>
+    <AuthBootstrap>
+      <EventsProvider>{children}</EventsProvider>
+    </AuthBootstrap>
   </AppProvider>
 )
+
+async function mountHook() {
+  const hook = renderHook(() => useEvents(), { wrapper })
+  await act(async () => {})
+  return hook
+}
 
 const makeEvent = (overrides?: Partial<{ title: string; startDate: string; endDate: string }>) => ({
   title: '테스트 이벤트',
@@ -30,6 +55,14 @@ const makeEvent = (overrides?: Partial<{ title: string; startDate: string; endDa
 describe('EventsProvider', () => {
   beforeEach(() => {
     localStorage.clear()
+  })
+
+  describe('초기 로드', () => {
+    it('로그인 사용자 로드 후 서버 이벤트를 불러온다', async () => {
+      const { result } = await mountHook()
+
+      expect(result.current.events.length).toBeGreaterThan(0)
+    })
   })
 
   describe('addEvent', () => {
