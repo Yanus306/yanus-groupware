@@ -17,6 +17,28 @@ export function sortTeams<T extends { name: string }>(teams: T[]) {
   return [...teams].sort((left, right) => left.name.localeCompare(right.name, 'ko-KR', { numeric: true }))
 }
 
+function compareTeamName(left?: string | null, right?: string | null) {
+  return formatTeamName(left).localeCompare(formatTeamName(right), 'ko-KR', { numeric: true })
+}
+
+export function sortUsersByTeamAndName<T extends User>(users: T[]) {
+  return [...users].sort((left, right) => {
+    const leftInactive = (left.status ?? 'ACTIVE') === 'INACTIVE'
+    const rightInactive = (right.status ?? 'ACTIVE') === 'INACTIVE'
+
+    if (leftInactive !== rightInactive) {
+      return leftInactive ? 1 : -1
+    }
+
+    const teamCompare = compareTeamName(left.team, right.team)
+    if (teamCompare !== 0) {
+      return teamCompare
+    }
+
+    return left.name.localeCompare(right.name, 'ko-KR', { numeric: true })
+  })
+}
+
 export function getTeamOptions(users: User[], teams: TeamResponse[]) {
   if (teams.length > 0) {
     return sortTeams(teams)

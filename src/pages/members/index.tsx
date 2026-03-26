@@ -5,7 +5,7 @@ import { getMembers, updateMemberRole, deactivateMember, activateMember } from '
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import type { UserRole } from '../../entities/user/model/types'
-import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams } from '../../shared/lib/team'
+import { FALLBACK_TEAMS, formatTeamName, getTeamOptions, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
@@ -50,7 +50,9 @@ export function Members() {
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '멤버 목록을 불러오지 못했습니다'))
   }, [loadMembers])
 
-  const visibleUsers = state.users.filter((user) => (user.status ?? 'ACTIVE') === 'ACTIVE')
+  const visibleUsers = sortUsersByTeamAndName(
+    state.users.filter((user) => (user.status ?? 'ACTIVE') === 'ACTIVE'),
+  )
   const baseTeamOptions = getTeamOptions(visibleUsers, teams)
   const activeTeamNames = new Set(visibleUsers.map((user) => user.team).filter((team): team is string => Boolean(team)))
   const teamOptions = sortTeams(baseTeamOptions.filter((team) => activeTeamNames.has(team.name)))
