@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Calendar, CheckSquare, X } from 'lucide-react'
+import { AlertTriangle, Calendar, CheckSquare, Pencil, Trash2, X } from 'lucide-react'
 import { AnimatedClockRing } from '../../features/attendance/ui'
 import { useWorkSession } from '../../features/attendance/model/useWorkSession'
 import { useWorkSchedule } from '../../features/attendance/model/useWorkSchedule'
@@ -9,6 +9,7 @@ import type { CalendarEvent } from '../../features/calendar/model'
 import { useChat } from '../../features/chat/model/ChatProvider'
 import { useTasks } from '../../features/tasks/model/TasksProvider'
 import { getTodayStr } from '../../shared/lib/date'
+import { EmptyState } from '../../shared/ui/EmptyState'
 import { Toast } from '../../shared/ui/Toast'
 import './dashboard.css'
 
@@ -20,19 +21,24 @@ function formatDuration(ms: number) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
 
-function formatTime(t: string) {
-  const [h, m] = t.split(':').map(Number)
-  const period = h >= 12 ? '오후' : '오전'
-  const h12 = h % 12 || 12
-  return `${period} ${h12}:${String(m).padStart(2, '0')}`
+function formatTime(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  const period = hours >= 12 ? '오후' : '오전'
+  const displayHours = hours % 12 || 12
+  return `${period} ${displayHours}:${String(minutes).padStart(2, '0')}`
 }
 
-function formatMsgTime(date: Date) {
-  const h = date.getHours()
-  const m = date.getMinutes()
-  const period = h >= 12 ? '오후' : '오전'
-  const h12 = h % 12 || 12
-  return `${period} ${h12}:${String(m).padStart(2, '0')}`
+function formatMessageTime(date: Date) {
+  const hours = date.getHours()
+  const minutes = date.getMinutes()
+  const period = hours >= 12 ? '오후' : '오전'
+  const displayHours = hours % 12 || 12
+  return `${period} ${displayHours}:${String(minutes).padStart(2, '0')}`
+}
+
+function toMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return (hours * 60) + minutes
 }
 
 const priorityColors: Record<string, string> = {
@@ -41,14 +47,37 @@ const priorityColors: Record<string, string> = {
   low: 'var(--text-secondary)',
 }
 
+const priorityLabels: Record<string, string> = {
+  high: '높음',
+  medium: '보통',
+  low: '낮음',
+}
+
 export function Dashboard() {
   const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
-  const { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError, isLoading } =
-    useWorkSession()
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [eventForm, setEventForm] = useState({
+    title: '',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+  })
+
+  const {
+    status,
+    clockIn,
+    clockOut,
+    handleClockClick,
+    errorMessage,
+    toastType,
+    clearError,
+    isLoading,
+  } = useWorkSession()
   const { workDays, daySchedules } = useWorkSchedule()
-  const { getEventsByDate } = useEvents()
+  const { getEventsByDate, updateEvent, deleteEvent } = useEvents()
   const { channels, getMessagesByChannel, activeChannelId } = useChat()
   const { getTasksByDate, toggleTaskDone } = useTasks()
 
@@ -60,11 +89,100 @@ export function Dashboard() {
   const todayIndex = (new Date().getDay() + 6) % 7
   const todayWorkEnabled = workDays[todayIndex]
   const todayWorkSchedule = daySchedules[todayIndex]
+  const nowMinutes = (now.getHours() * 60) + now.getMinutes()
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  const attendanceAlert = useMemo(() => {
+    if (!todayWorkEnabled) {
+      if (status === 'working' || status === 'done') {
+        return {
+          tone: 'info',
+          title: '휴무일에도 출근 기록이 있습니다',
+          description: '오늘은 휴무일로 설정되어 있지만 실제 출퇴근 기록이 남아 있습니다.',
+        }
+      }
+
+      return null
+    }
+
+    const scheduledStart = toMinutes(todayWorkSchedule.checkInTime)
+    const scheduledEnd = toMinutes(todayWorkSchedule.checkOutTime)
+
+    if (status === 'idle' && nowMinutes >= scheduledStart + 15) {
+      return {
+        tone: 'warning',
+        title: '출근 예정 시간이 지났습니다',
+        description: `${todayWorkSchedule.checkInTime}까지 출근 예정이었어요. 출근 여부를 확인해 주세요.`,
+      }
+    }
+
+    if (status === 'done' && clockOut) {
+      const actualEnd = (clockOut.getHours() * 60) + clockOut.getMinutes()
+      if (actualEnd + 30 < scheduledEnd) {
+        return {
+          tone: 'warning',
+          title: '예정보다 일찍 퇴근했습니다',
+          description: `예정 퇴근 시간은 ${todayWorkSchedule.checkOutTime}입니다.`,
+        }
+      }
+    }
+
+    if (status === 'working' && nowMinutes >= scheduledEnd + 30) {
+      return {
+        tone: 'info',
+        title: '근무 시간이 길어지고 있습니다',
+        description: `예정 퇴근 시간 ${todayWorkSchedule.checkOutTime}보다 30분 이상 지났습니다.`,
+      }
+    }
+
+    return {
+      tone: 'success',
+      title: '오늘 근무 일정이 정상입니다',
+      description: `${todayWorkSchedule.checkInTime} - ${todayWorkSchedule.checkOutTime} 기준으로 확인 중입니다.`,
+    }
+  }, [clockOut, nowMinutes, status, todayWorkEnabled, todayWorkSchedule.checkInTime, todayWorkSchedule.checkOutTime])
+
+  const openEventDetail = (event: CalendarEvent) => {
+    setSelectedEvent(event)
+    setIsEditingEvent(false)
+    setEventForm({
+      title: event.title,
+      startDate: event.startDate,
+      startTime: event.startTime,
+      endDate: event.endDate,
+      endTime: event.endTime,
+    })
+  }
+
+  const closeEventDetail = () => {
+    setSelectedEvent(null)
+    setIsEditingEvent(false)
+  }
+
+  const handleSaveEvent = () => {
+    if (!selectedEvent) return
+    const title = eventForm.title.trim()
+    if (!title) return
+
+    updateEvent(selectedEvent.id, {
+      title,
+      startDate: eventForm.startDate,
+      startTime: eventForm.startTime,
+      endDate: eventForm.endDate,
+      endTime: eventForm.endTime,
+    })
+    closeEventDetail()
+  }
+
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return
+    deleteEvent(selectedEvent.id)
+    closeEventDetail()
+  }
 
   let centerText = ''
   let centerClass = 'clock-time'
@@ -117,9 +235,9 @@ export function Dashboard() {
                 now={now}
                 variant={
                   isLoading ? 'default'
-                  : status === 'idle' ? 'start'
-                  : status === 'working' ? 'leave'
-                  : 'default'
+                    : status === 'idle' ? 'start'
+                      : status === 'working' ? 'leave'
+                        : 'default'
                 }
               />
               <div className="clock-inner">
@@ -133,17 +251,26 @@ export function Dashboard() {
               {todayScheduleSummary}
             </div>
             <span className="clock-schedule-caption">{todayScheduleCaption}</span>
+            {attendanceAlert && (
+              <div className={`attendance-alert-card ${attendanceAlert.tone}`}>
+                <div className="attendance-alert-title">
+                  <AlertTriangle size={15} />
+                  <span>{attendanceAlert.title}</span>
+                </div>
+                <p>{attendanceAlert.description}</p>
+              </div>
+            )}
             {status === 'idle' && !isLoading && (
               <span className="clock-hint">클릭하여 출근</span>
             )}
             {status === 'working' && clockIn && (
               <span className="clock-checkin-time">
-                출근 {formatMsgTime(clockIn)}
+                출근 {formatMessageTime(clockIn)}
               </span>
             )}
             {status === 'done' && clockIn && clockOut && (
               <span className="clock-checkin-time">
-                {formatMsgTime(clockIn)} - {formatMsgTime(clockOut)}
+                {formatMessageTime(clockIn)} - {formatMessageTime(clockOut)}
               </span>
             )}
             {status === 'working' && !isLoading && (
@@ -165,10 +292,11 @@ export function Dashboard() {
             오늘 일정
           </h3>
           {todayEvents.length === 0 ? (
-            <div className="empty-state">
-              <p>오늘 등록된 일정이 없습니다</p>
-              <Link to="/calendar" className="view-all">캘린더 보기</Link>
-            </div>
+            <EmptyState
+              compact
+              title="오늘 등록된 일정이 없습니다"
+              action={<Link to="/calendar" className="view-all">캘린더 보기</Link>}
+            />
           ) : (
             <ul>
               {todayEvents.slice(0, 4).map((event) => (
@@ -176,7 +304,7 @@ export function Dashboard() {
                   <button
                     type="button"
                     className="schedule-item schedule-item-btn purple"
-                    onClick={() => setSelectedEvent(event)}
+                    onClick={() => openEventDetail(event)}
                   >
                     <Calendar size={16} className="schedule-icon" />
                     <div>
@@ -200,18 +328,16 @@ export function Dashboard() {
             {activeChannel ? `# ${activeChannel.name}` : '팀 채팅'}
           </h3>
           {recentMessages.length === 0 ? (
-            <div className="empty-state">
-              <p>최근 메시지가 없습니다</p>
-            </div>
+            <EmptyState compact title="최근 메시지가 없습니다" />
           ) : (
             <ul>
-              {recentMessages.map((msg) => (
-                <li key={msg.id}>
-                  <span className="avatar">{msg.userName[0]}</span>
+              {recentMessages.map((message) => (
+                <li key={message.id}>
+                  <span className="avatar">{message.userName[0]}</span>
                   <div className="chat-msg-content">
-                    <strong>{msg.userName}</strong>
-                    <span className="msg-text">{msg.content ?? '(파일)'}</span>
-                    <span className="ts">{formatMsgTime(msg.timestamp)}</span>
+                    <strong>{message.userName}</strong>
+                    <span className="msg-text">{message.content ?? '(파일)'}</span>
+                    <span className="ts">{formatMessageTime(message.timestamp)}</span>
                   </div>
                 </li>
               ))}
@@ -226,32 +352,50 @@ export function Dashboard() {
             오늘 할 일
           </h3>
           {todayTasks.length === 0 ? (
-            <div className="empty-state">
-              <p>오늘 등록된 할 일이 없습니다</p>
-              <Link to="/calendar" className="view-all">할 일 보기</Link>
-            </div>
+            <EmptyState
+              compact
+              title="오늘 등록된 할 일이 없습니다"
+              action={<Link to="/calendar" className="view-all">할 일 보기</Link>}
+            />
           ) : (
             <ul className="tasks-list">
-              {todayTasks.slice(0, 5).map((task) => (
-                <li key={task.id} className={`task-item ${task.done ? 'done' : ''}`}>
-                  <button
-                    type="button"
-                    className={`task-check-btn ${task.done ? 'done' : ''}`}
-                    onClick={() => toggleTaskDone(task.id)}
-                    aria-label={`${task.title} ${task.done ? '미완료로 변경' : '완료 처리'}`}
+              {todayTasks.slice(0, 5).map((task) => {
+                const dueSoon = !task.done && nowMinutes >= toMinutes(task.time) - 90
+
+                return (
+                  <li
+                    key={task.id}
+                    className={`task-item ${task.done ? 'done' : ''} ${dueSoon ? 'due-soon' : ''}`}
                   >
-                    <span className="task-dot" style={{ background: priorityColors[task.priority] }} />
-                  </button>
-                  <span className="task-title">{task.title}</span>
-                  <button
-                    type="button"
-                    className={`task-done-badge ${task.done ? 'done' : ''}`}
-                    onClick={() => toggleTaskDone(task.id)}
-                  >
-                    {task.done ? '완료됨' : '완료 처리'}
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      className={`task-check-btn ${task.done ? 'done' : ''}`}
+                      onClick={() => toggleTaskDone(task.id)}
+                      aria-label={`${task.title} ${task.done ? '미완료로 변경' : '완료 처리'}`}
+                    >
+                      <span className="task-dot" style={{ background: priorityColors[task.priority] }} />
+                    </button>
+                    <div className="task-copy">
+                      <span className="task-title">{task.title}</span>
+                      <div className="task-meta-row">
+                        <span className={`task-priority-badge ${task.priority}`}>
+                          {priorityLabels[task.priority]}
+                        </span>
+                        <span className={`task-deadline-badge ${dueSoon ? 'urgent' : ''}`}>
+                          {task.time} {dueSoon ? '마감 임박' : '까지'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`task-done-badge ${task.done ? 'done' : ''}`}
+                      onClick={() => toggleTaskDone(task.id)}
+                    >
+                      {task.done ? '완료됨' : '완료 처리'}
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
           {todayTasks.length > 5 && (
@@ -261,35 +405,104 @@ export function Dashboard() {
       </div>
 
       {selectedEvent && (
-        <div className="dashboard-modal-overlay" onClick={() => setSelectedEvent(null)}>
+        <div className="dashboard-modal-overlay" onClick={closeEventDetail}>
           <div className="dashboard-detail-modal glass" onClick={(event) => event.stopPropagation()}>
             <div className="dashboard-detail-head">
               <h3>오늘 일정 상세</h3>
-              <button type="button" className="dashboard-detail-close" onClick={() => setSelectedEvent(null)}>
+              <button type="button" className="dashboard-detail-close" onClick={closeEventDetail}>
                 <X size={18} />
               </button>
             </div>
             <div className="dashboard-detail-body">
-              <strong>{selectedEvent.title}</strong>
-              <p>
-                {selectedEvent.startDate} {formatTime(selectedEvent.startTime)} - {selectedEvent.endDate} {formatTime(selectedEvent.endTime)}
-              </p>
-              <span>작성자: {selectedEvent.createdBy}</span>
+              {isEditingEvent ? (
+                <div className="dashboard-event-form">
+                  <label>
+                    제목
+                    <input
+                      value={eventForm.title}
+                      onChange={(event) => setEventForm((prev) => ({ ...prev, title: event.target.value }))}
+                    />
+                  </label>
+                  <div className="dashboard-event-grid">
+                    <label>
+                      시작 날짜
+                      <input
+                        type="date"
+                        value={eventForm.startDate}
+                        onChange={(event) => setEventForm((prev) => ({ ...prev, startDate: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      시작 시간
+                      <input
+                        type="time"
+                        value={eventForm.startTime}
+                        onChange={(event) => setEventForm((prev) => ({ ...prev, startTime: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      종료 날짜
+                      <input
+                        type="date"
+                        value={eventForm.endDate}
+                        onChange={(event) => setEventForm((prev) => ({ ...prev, endDate: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      종료 시간
+                      <input
+                        type="time"
+                        value={eventForm.endTime}
+                        onChange={(event) => setEventForm((prev) => ({ ...prev, endTime: event.target.value }))}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <strong>{selectedEvent.title}</strong>
+                  <p>
+                    {selectedEvent.startDate} {formatTime(selectedEvent.startTime)} - {selectedEvent.endDate} {formatTime(selectedEvent.endTime)}
+                  </p>
+                  <span>작성자: {selectedEvent.createdBy}</span>
+                </>
+              )}
             </div>
             <div className="dashboard-detail-actions">
-              <button type="button" className="dashboard-secondary-btn" onClick={() => setSelectedEvent(null)}>
-                닫기
-              </button>
-              <button
-                type="button"
-                className="dashboard-primary-btn"
-                onClick={() => {
-                  setSelectedEvent(null)
-                  navigate('/calendar')
-                }}
-              >
-                캘린더에서 보기
-              </button>
+              {isEditingEvent ? (
+                <>
+                  <button type="button" className="dashboard-secondary-btn" onClick={() => setIsEditingEvent(false)}>
+                    취소
+                  </button>
+                  <button type="button" className="dashboard-primary-btn" onClick={handleSaveEvent}>
+                    저장
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="dashboard-secondary-btn" onClick={closeEventDetail}>
+                    닫기
+                  </button>
+                  <button type="button" className="dashboard-secondary-btn" onClick={() => setIsEditingEvent(true)}>
+                    <Pencil size={15} />
+                    수정
+                  </button>
+                  <button type="button" className="dashboard-danger-btn" onClick={handleDeleteEvent}>
+                    <Trash2 size={15} />
+                    삭제
+                  </button>
+                  <button
+                    type="button"
+                    className="dashboard-primary-btn"
+                    onClick={() => {
+                      closeEventDetail()
+                      navigate('/calendar')
+                    }}
+                  >
+                    캘린더에서 보기
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
