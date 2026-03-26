@@ -4,7 +4,12 @@ import { useApp } from '../../features/auth/model'
 import { updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
 import { getTeamOptions, formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
-import { canAccessAdmin } from '../../shared/lib/permissions'
+import {
+  canAccessAdmin,
+  canExpelMembersFor,
+  canManageMemberRolesFor,
+  canManageMemberStatusFor,
+} from '../../shared/lib/permissions'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
@@ -62,6 +67,12 @@ export function Members() {
   const maxActiveTeamCount = Math.max(...activeCountsByTeam.map((team) => team.count), 1)
 
   const handleOpenChangeRole = (id: string, name: string, currentRole: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberRolesFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정의 역할은 변경할 수 없습니다')
+      return
+    }
+
     setChangeRoleFor({ id, name })
     setSelectedRole(currentRole as UserRole)
   }
@@ -81,6 +92,12 @@ export function Members() {
   }
 
   const handleDeactivate = async (id: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정은 비활성화할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await deactivateMember(id)
@@ -93,6 +110,11 @@ export function Members() {
 
   const handleExpel = async (id: string) => {
     const member = state.users.find((item) => item.id === id)
+    if (!canExpelMembersFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정은 퇴출할 수 없습니다')
+      return
+    }
+
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
     }
@@ -108,6 +130,12 @@ export function Members() {
   }
 
   const handleActivate = async (id: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정의 상태는 변경할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await activateMember(id)
@@ -197,6 +225,9 @@ export function Members() {
             onDeactivate={isAdmin ? handleDeactivate : undefined}
             onActivate={isAdmin ? handleActivate : undefined}
             onExpel={isAdmin ? handleExpel : undefined}
+            canManageRoleFor={(member) => canManageMemberRolesFor(state.currentUser, member)}
+            canManageStatusFor={(member) => canManageMemberStatusFor(state.currentUser, member)}
+            canExpelFor={(member) => canExpelMembersFor(state.currentUser, member)}
           />
         </div>
 

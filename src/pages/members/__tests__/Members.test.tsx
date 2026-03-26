@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { membersHandlers } from '../../../shared/api/mock/handlers/members'
@@ -71,6 +71,22 @@ describe('Members 페이지', () => {
 
     await user.click(screen.getAllByLabelText('관리 메뉴 열기')[0])
     expect(screen.getByRole('menuitem', { name: '퇴출' })).toBeInTheDocument()
+  })
+
+  it('관리자는 본인 계정에 대해 관리 액션을 볼 수 없다', async () => {
+    render(<Members />)
+
+    await waitFor(() => {
+      expect(screen.getByText('김리더')).toBeInTheDocument()
+    })
+
+    const selfRow = screen.getByText('김리더').closest('tr')
+    expect(selfRow).not.toBeNull()
+    const scoped = within(selfRow as HTMLTableRowElement)
+
+    expect(scoped.getByText('관리 불가')).toBeInTheDocument()
+    expect(scoped.queryByRole('button', { name: '비활성화' })).not.toBeInTheDocument()
+    expect(scoped.queryByLabelText('관리 메뉴 열기')).not.toBeInTheDocument()
   })
 
   it('팀별 멤버 수는 활성 멤버만 집계한다', () => {

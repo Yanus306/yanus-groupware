@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -10,6 +10,7 @@ import type { User } from '../../../entities/user/model/types'
 import { Admin } from '../index'
 
 const mockMembers = [
+  { id: '99', name: '관리자', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE' },
   { id: '1', name: '이서연', email: 'seo@yanus.kr', team: '2팀', role: 'TEAM_LEAD', status: 'ACTIVE' },
   { id: '2', name: '강민준', email: 'kang@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
   { id: '3', name: '김민준', email: 'min@yanus.kr', team: '1팀', role: 'MEMBER', status: 'ACTIVE' },
@@ -114,6 +115,20 @@ describe('Admin 페이지', () => {
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('관리 메뉴 열기').length).toBeGreaterThan(0)
+  })
+
+  it('관리자는 본인 계정에 대해 역할, 상태, 퇴출 액션을 볼 수 없다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '멤버 관리' }))
+
+    const selfRow = screen.getAllByText('관리자')[0]?.closest('tr')
+    expect(selfRow).not.toBeNull()
+    const scoped = within(selfRow as HTMLTableRowElement)
+
+    expect(scoped.getByText('관리 불가')).toBeInTheDocument()
+    expect(scoped.queryByRole('button', { name: '비활성화' })).not.toBeInTheDocument()
+    expect(scoped.queryByLabelText('관리 메뉴 열기')).not.toBeInTheDocument()
   })
 
   it('멤버 목록은 팀 순, 이름 순이며 비활성 멤버는 마지막에 표시된다', async () => {

@@ -12,6 +12,12 @@ import { getTodayStr } from '../../shared/lib/date'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
+import {
+  canChangeMemberTeamFor,
+  canExpelMembersFor,
+  canManageMemberRolesFor,
+  canManageMemberStatusFor,
+} from '../../shared/lib/permissions'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
@@ -59,6 +65,12 @@ export function Admin() {
   }
 
   const handleOpenRoleChange = (id: string, name: string, current: UserRole) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberRolesFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정의 역할은 변경할 수 없습니다')
+      return
+    }
+
     setChangeRoleFor({ id, name, current })
     setSelectedRole(current)
   }
@@ -79,6 +91,12 @@ export function Admin() {
   }
 
   const handleDeactivate = async (id: string) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정은 비활성화할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await deactivateMember(id)
@@ -91,6 +109,11 @@ export function Admin() {
 
   const handleExpel = async (id: string) => {
     const member = members.find((item) => item.id === id)
+    if (!canExpelMembersFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정은 퇴출할 수 없습니다')
+      return
+    }
+
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
     }
@@ -107,6 +130,12 @@ export function Admin() {
   }
 
   const handleActivate = async (id: string) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정은 활성화 상태를 변경할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await activateMember(id)
@@ -118,6 +147,11 @@ export function Admin() {
   }
 
   const handleOpenTeamChange = (member: User) => {
+    if (!canChangeMemberTeamFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정의 팀은 여기서 변경할 수 없습니다')
+      return
+    }
+
     setChangeTeamFor(member)
     const currentTeam = teamOptions.find((team) => team.name === member.team)
     setSelectedTeamId(currentTeam?.id ?? null)
@@ -261,6 +295,10 @@ export function Admin() {
             onDeactivate={handleDeactivate}
             onActivate={handleActivate}
             onExpel={handleExpel}
+            canManageRoleFor={(member) => canManageMemberRolesFor(state.currentUser, member)}
+            canChangeTeamFor={(member) => canChangeMemberTeamFor(state.currentUser, member)}
+            canManageStatusFor={(member) => canManageMemberStatusFor(state.currentUser, member)}
+            canExpelFor={(member) => canExpelMembersFor(state.currentUser, member)}
           />
         </div>
       )}
