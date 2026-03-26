@@ -1,0 +1,226 @@
+.member-management-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+  padding-bottom: 6px;
+  min-width: 0;
+  scrollbar-width: thin;
+}
+
+.member-management-table {
+  width: 100%;
+  min-width: 920px;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.member-management-table .member-profile-col {
+  width: 250px;
+}
+
+.member-management-table .member-team-col {
+  width: 150px;
+}
+
+.member-management-table .member-role-col {
+  width: 160px;
+}
+
+.member-management-table .member-status-col {
+  width: 170px;
+}
+
+.member-management-table .member-actions-col {
+  width: 220px;
+}
+
+.member-management-table th,
+.member-management-table td {
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.member-management-table th {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.member-management-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.member-management-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.member-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.member-profile-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.member-team-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 140px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 18%, transparent);
+}
+
+.member-role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.member-role-tag.ADMIN {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple-light);
+}
+
+.member-role-tag.TEAM_LEAD {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
+}
+
+.member-role-tag.MEMBER {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+.member-table-status-cell,
+.member-table-actions-cell {
+  white-space: normal;
+}
+
+.member-status-stack,
+.member-actions-stack {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  justify-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.member-status-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.member-status-tag.ACTIVE {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+}
+
+.member-status-tag.INACTIVE {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-secondary);
+}
+
+.member-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 100px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--accent-purple-light);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.member-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.member-action-btn-secondary {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-purple-light);
+}
+
+.member-action-btn.activate-btn {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+}
+
+.member-action-btn.mute-btn {
+  background: rgba(250, 204, 21, 0.12);
+  color: #fde047;
+}
+
+.member-action-btn.expel-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+.member-management-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .member-management-table th {
+  border-bottom-color: rgba(84, 102, 146, 0.14);
+}
+
+:root[data-theme='light'] .member-management-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.1);
+}
+
+:root[data-theme='light'] .member-management-table tbody tr:hover td {
+  background: rgba(84, 102, 146, 0.05);
+}
+
+@media (max-width: 768px) {
+  .member-management-table {
+    min-width: 860px;
+  }
+}
