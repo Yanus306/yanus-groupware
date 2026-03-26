@@ -34,3 +34,5 @@ api.md
 .claude/todos/
 .vercel
 .env*.local
+playwright-report
+test-results
