@@ -12,6 +12,7 @@ import {
 import type { AttendanceRecord, MemberWorkScheduleItem } from '../../shared/api/attendanceApi'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { sortUsersByTeamAndName } from '../../shared/lib/team'
+import { DataTableScroll, DataTableSection } from '../../shared/ui/DataTableSection'
 import { Toast } from '../../shared/ui/Toast'
 import { canViewManagedAttendance } from '../../shared/lib/permissions'
 import './attendance.css'
@@ -215,9 +216,12 @@ export function Attendance() {
             <SetWorkDaysPersonal onSaved={loadTeamSchedules} />
           </section>
           {canSeeManagedAttendance && (
-            <section className="records-section glass">
-              <h3>출퇴근 기록</h3>
-              <div className="records-table-wrap">
+            <DataTableSection
+              className="records-section"
+              title="출퇴근 기록"
+              description="관리 대상 멤버의 근무 일정과 출퇴근 상태를 날짜 기준으로 확인합니다."
+            >
+              <DataTableScroll className="records-table-wrap">
                 <table className="records-table">
                   <thead>
                     <tr>
@@ -264,20 +268,23 @@ export function Attendance() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </DataTableScroll>
               <div className="pagination">
                 <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={18} /></button>
                 <span>{page} / {totalPages} 페이지</span>
                 <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight size={18} /></button>
               </div>
-            </section>
+            </DataTableSection>
           )}
         </div>
 
         {/* 내 출퇴근 이력 — 모든 유저 */}
-        <section className="my-history-section glass">
-          <h3>내 출퇴근 이력</h3>
-          <div className="records-table-wrap">
+        <DataTableSection
+          className="my-history-section"
+          title="내 출퇴근 이력"
+          description="개인 출퇴근 기록을 최근 순서대로 확인할 수 있습니다."
+        >
+          <DataTableScroll className="records-table-wrap">
             <table className="records-table">
               <thead>
                 <tr>
@@ -306,8 +313,8 @@ export function Attendance() {
                 )}
               </tbody>
             </table>
-          </div>
-        </section>
+          </DataTableScroll>
+        </DataTableSection>
 
         {canSeeManagedAttendance && (
           <div className="summary-stats">

@@ -10,6 +10,7 @@ import {
   canManageMemberRolesFor,
   canManageMemberStatusFor,
 } from '../../shared/lib/permissions'
+import { DataTableSection } from '../../shared/ui/DataTableSection'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
@@ -211,11 +212,11 @@ export function Members() {
       </div>
 
       <div className="members-content">
-        <div className="table-section glass">
-          <SectionHeader
-            title="멤버 목록"
-            description="활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다."
-          />
+        <DataTableSection
+          className="table-section"
+          title="멤버 목록"
+          description="활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다."
+        >
           <MemberManagementTable
             members={filtered}
             saving={saving}
@@ -229,7 +230,7 @@ export function Members() {
             canManageStatusFor={(member) => canManageMemberStatusFor(state.currentUser, member)}
             canExpelFor={(member) => canExpelMembersFor(state.currentUser, member)}
           />
-        </div>
+        </DataTableSection>
 
         <aside className="stats-sidebar glass">
           <SectionHeader
