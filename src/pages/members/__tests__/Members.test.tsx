@@ -49,4 +49,13 @@ describe('Members 페이지', () => {
     render(<Members />)
     expect(screen.getByText('관리')).toBeInTheDocument()
   })
+
+  it('관리 컬럼에 상태 및 퇴출 액션이 함께 표시된다', async () => {
+    render(<Members />)
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
+      expect(screen.getAllByRole('button', { name: '퇴출' }).length).toBeGreaterThan(0)
+    })
+  })
 })

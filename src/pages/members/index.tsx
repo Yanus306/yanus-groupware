@@ -189,6 +189,13 @@ export function Members() {
           <h3>멤버 목록</h3>
           <div className="members-table-wrap">
             <table className="members-table">
+              <colgroup>
+                <col className="profile-col" />
+                <col className="team-col" />
+                <col className="role-col" />
+                {isAdmin && <col className="status-col" />}
+                {isAdmin && <col className="actions-col" />}
+              </colgroup>
               <thead>
                 <tr>
                   <th>프로필</th>
@@ -201,7 +208,12 @@ export function Members() {
               <tbody>
                 {filtered.map((user) => (
                   <tr key={user.id}>
-                    <td><span className="avatar">{user.name[0]}</span>{user.name}</td>
+                    <td>
+                      <div className="profile-cell">
+                        <span className="avatar">{user.name[0]}</span>
+                        <span className="profile-cell-name">{user.name}</span>
+                      </div>
+                    </td>
                     <td><span className="team-tag">{formatTeamName(user.team)}</span></td>
                     <td>
                       <span className={`role-tag ${user.role}`}>
