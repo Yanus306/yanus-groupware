@@ -5,8 +5,8 @@ import type { User } from '../../entities/user/model/types'
 import { updateMemberTeam } from '../../shared/api/membersApi'
 import { formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { canChangeMemberTeamFor } from '../../shared/lib/permissions'
+import { DataTableScroll, DataTableSection } from '../../shared/ui/DataTableSection'
 import { EmptyState } from '../../shared/ui/EmptyState'
-import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
 import './team-management.css'
 
@@ -110,11 +110,11 @@ export function TeamManagement() {
         </div>
       </header>
 
-      <section className="team-management-panel glass">
-        <SectionHeader
-          title="팀 멤버 목록"
-          description="팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다."
-        />
+      <DataTableSection
+        className="team-management-panel"
+        title="팀 멤버 목록"
+        description="팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다."
+      >
         <div className="team-management-toolbar">
           <div className="team-management-search">
             <input
@@ -126,7 +126,7 @@ export function TeamManagement() {
           <p className="team-management-caption">역할 변경, 상태 변경, 퇴출은 관리자만 가능합니다.</p>
         </div>
 
-        <div className="team-management-table-wrap">
+        <DataTableScroll className="team-management-table-wrap">
           <table className="team-management-table">
             <thead>
               <tr>
@@ -181,8 +181,8 @@ export function TeamManagement() {
               )}
             </tbody>
           </table>
-        </div>
-      </section>
+        </DataTableScroll>
+      </DataTableSection>
 
       {changeTeamFor && (
         <div className="team-management-modal-overlay" onClick={() => setChangeTeamFor(null)}>
