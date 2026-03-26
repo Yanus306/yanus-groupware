@@ -156,13 +156,27 @@ describe('useWorkSchedule', () => {
       expect(JSON.parse(stored!)[0]).toBe('THIRD')
     })
 
-    it('localStorage에 저장된 workDays를 마운트 시 복원한다', async () => {
+    it('서버에 저장된 근무 일정이 있으면 localStorage보다 API 응답을 우선한다', async () => {
       localStorage.setItem('yanus-work-days', JSON.stringify(
         [false, true, true, true, true, false, false],
       ))
       const { result } = await mountHook()
-      expect(result.current.workDays[0]).toBe(false)
-      expect(result.current.workDays[1]).toBe(true)
+      expect(result.current.workDays.slice(0, 5)).toEqual([true, true, true, true, true])
+    })
+
+    it('근무 일정 조회가 실패하면 localStorage 저장값을 fallback으로 복원한다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({ code: 'ERROR', message: '불러오기 실패' }, { status: 500 }),
+        ),
+      )
+
+      localStorage.setItem('yanus-work-days', JSON.stringify(
+        [false, true, true, false, false, false, false],
+      ))
+
+      const { result } = await mountHook()
+      expect(result.current.workDays).toEqual([false, true, true, false, false, false, false])
     })
 
     it('localStorage에 저장된 weekPatterns를 마운트 시 복원한다', async () => {
