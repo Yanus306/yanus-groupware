@@ -10,6 +10,7 @@ import {
   type CreateEventPayload,
 } from '../../../shared/api/calendarApi'
 import { getTodayStr } from '../../../shared/lib/date'
+import { useApp } from '../../auth/model/AppProvider'
 
 export type { CalendarEvent } from '../../../entities/event/model/types'
 
@@ -52,14 +53,20 @@ function getDefaultDateRange(): { startDate: string; endDate: string } {
 }
 
 export function EventsProvider({ children }: { children: ReactNode }) {
+  const { state } = useApp()
   const [events, setEvents] = useState<CalendarEvent[]>([])
 
   useEffect(() => {
+    if (!state.currentUser?.id) {
+      setEvents([])
+      return
+    }
+
     const { startDate, endDate } = getDefaultDateRange()
     apiGetEvents(startDate, endDate)
       .then((data) => setEvents(data.map(toCalendarEvent)))
       .catch(() => {})
-  }, [])
+  }, [state.currentUser?.id])
 
   const addEvent = useCallback(
     (event: Omit<CalendarEvent, 'id' | 'createdBy'>) => {

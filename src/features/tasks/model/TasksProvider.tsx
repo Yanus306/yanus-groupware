@@ -90,6 +90,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!state.currentUser?.id) {
+      setTasks([])
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     Promise.all([
       apiGetTasks({ type: 'MY' }),
@@ -100,7 +106,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [state.currentUser?.id])
 
   const myTasks = useMemo(() => tasks.filter((t) => !t.isTeamTask), [tasks])
   const teamTasks = useMemo(() => tasks.filter((t) => t.isTeamTask), [tasks])
