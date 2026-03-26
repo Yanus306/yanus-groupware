@@ -154,7 +154,7 @@
 }
 
 .members-table .actions-col {
-  width: 200px;
+  width: 184px;
 }
 
 .members-table th,
@@ -164,6 +164,10 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   vertical-align: middle;
   white-space: nowrap;
+}
+
+.members-table td.actions-cell {
+  white-space: normal;
 }
 
 .members-table th {
@@ -257,17 +261,21 @@
 }
 
 .actions-cell {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px 12px;
   min-width: 0;
+}
+
+.member-actions-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 156px;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 12px;
   font-size: 0.8rem;
@@ -275,10 +283,12 @@
   color: var(--accent-purple-light);
   border-radius: 6px;
   white-space: nowrap;
+  width: 100%;
 }
 
-.actions-cell .deactivate-btn {
-  justify-self: start;
+.action-btn-secondary {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-purple-light);
 }
 
 .member-status-cell {
@@ -365,6 +375,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stats-caption {
+  margin: 10px 0 20px;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
 }
 
 .pie-legend span {
