@@ -5,7 +5,7 @@ import type { User } from '../../entities/user/model/types'
 import { getMembers, updateMemberTeam } from '../../shared/api/membersApi'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, formatTeamName, sortTeams } from '../../shared/lib/team'
+import { FALLBACK_TEAMS, formatTeamName, sortTeams, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './team-management.css'
 
@@ -41,7 +41,7 @@ export function TeamManagement() {
         getMembers({ teamName: currentTeam }),
         getTeams().catch(() => FALLBACK_TEAMS),
       ])
-      setMembers(memberList)
+      setMembers(sortUsersByTeamAndName(memberList))
       setTeams(sortTeams(teamList))
       loadMembers(memberList)
     } catch (err) {
@@ -54,7 +54,7 @@ export function TeamManagement() {
   }, [currentTeam])
 
   const filteredMembers = useMemo(() => (
-    members.filter((member) => {
+    sortUsersByTeamAndName(members).filter((member) => {
       if (!search.trim()) return true
       const keyword = search.trim().toLowerCase()
       return member.name.toLowerCase().includes(keyword) || member.email.toLowerCase().includes(keyword)

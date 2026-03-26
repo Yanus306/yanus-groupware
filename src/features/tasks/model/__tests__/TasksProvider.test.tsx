@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { AppProvider } from '../../../auth/model/AppProvider'
+import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { TasksProvider, useTasks } from '../TasksProvider'
 
 let nextId = 100
@@ -73,9 +73,28 @@ beforeAll(() => server.listen())
 afterEach(() => { server.resetHandlers(); TASKS.length = 0; nextId = 100 })
 afterAll(() => server.close())
 
+function AuthBootstrap({ children }: { children: ReactNode }) {
+  const { loadUser } = useApp()
+
+  useEffect(() => {
+    loadUser({
+      id: '1',
+      name: '김리더',
+      email: 'leader@test.com',
+      role: 'ADMIN',
+      team: '1팀',
+      status: 'ACTIVE',
+    })
+  }, [loadUser])
+
+  return <>{children}</>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppProvider>
-    <TasksProvider>{children}</TasksProvider>
+    <AuthBootstrap>
+      <TasksProvider>{children}</TasksProvider>
+    </AuthBootstrap>
   </AppProvider>
 )
 
