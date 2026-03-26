@@ -2,13 +2,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
 }
 
 .time-input-group {
   display: flex;
   align-items: center;
-  background: rgba(15, 13, 26, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -32,6 +33,8 @@
   display: flex;
   flex-direction: column;
   padding-right: 4px;
+  border-left: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-soft) 72%, transparent);
 }
 
 .time-input-arrows button {
@@ -48,4 +51,17 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .time-input-group {
+  background: rgba(244, 247, 253, 0.98);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme='light'] .time-input-field {
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .time-input-arrows {
+  background: rgba(107, 79, 196, 0.08);
 }

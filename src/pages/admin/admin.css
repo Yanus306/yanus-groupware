@@ -113,6 +113,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 760px;
+  table-layout: fixed;
 }
 
 .admin-table-wrap {
@@ -136,6 +137,7 @@
   color: var(--text-primary);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .admin-members-table tr:last-child td {
@@ -302,10 +304,11 @@
 .admin-role-tag.MEMBER    { background: rgba(100, 116, 139, 0.2); color: var(--text-secondary); }
 
 .admin-actions-cell {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
   gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+  align-items: start;
+  justify-content: start;
 }
 
 .admin-status-cell {
@@ -382,6 +385,36 @@
 
 .admin-action-btn.mute-btn:hover {
   background: rgba(234, 179, 8, 0.1);
+}
+
+.admin-members-table th:first-child,
+.admin-members-table td:first-child {
+  width: 180px;
+}
+
+.admin-members-table th:nth-child(2),
+.admin-members-table td:nth-child(2) {
+  width: 120px;
+}
+
+.admin-members-table th:nth-child(3),
+.admin-members-table td:nth-child(3) {
+  width: 120px;
+}
+
+.admin-members-table th:nth-child(4),
+.admin-members-table td:nth-child(4) {
+  width: 170px;
+}
+
+.admin-members-table th:last-child,
+.admin-members-table td:last-child {
+  width: 220px;
+}
+
+.admin-actions-cell .deactivate-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 /* ── 역할 변경 모달 ── */
@@ -548,13 +581,17 @@
   }
 
   .admin-actions-cell {
-    flex-direction: column;
-    gap: 4px;
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .admin-status-cell {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .admin-actions-cell .deactivate-btn {
+    grid-column: auto;
   }
 }
 

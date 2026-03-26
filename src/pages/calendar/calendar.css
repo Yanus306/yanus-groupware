@@ -207,8 +207,18 @@
 }
 
 .fullcalendar-wrapper .fc-button {
+  background: var(--fc-button-bg-color);
+  border-color: var(--fc-button-border-color);
   color: var(--text-primary);
   text-transform: none;
+  box-shadow: none;
+}
+
+.fullcalendar-wrapper .fc-button:disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--bg-card-solid) 88%, transparent);
+  border-color: var(--border-color);
+  color: var(--text-muted);
 }
 
 .fullcalendar-wrapper .fc-toolbar-title {
@@ -882,6 +892,12 @@
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc {
   --fc-border-color: rgba(84, 102, 146, 0.14);
+  --fc-button-bg-color: rgba(255, 255, 255, 0.94);
+  --fc-button-border-color: rgba(107, 79, 196, 0.28);
+  --fc-button-hover-bg-color: rgba(107, 79, 196, 0.1);
+  --fc-button-hover-border-color: rgba(107, 79, 196, 0.38);
+  --fc-button-active-bg-color: rgba(107, 79, 196, 0.14);
+  --fc-button-active-border-color: rgba(107, 79, 196, 0.44);
   --fc-today-bg-color: rgba(107, 79, 196, 0.08);
 }
 
@@ -891,6 +907,28 @@
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc-daygrid-day:hover {
   background: rgba(107, 79, 196, 0.04);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary {
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary:not(:disabled).fc-button-active,
+:root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary:not(:disabled):active {
+  color: var(--accent-purple-dark);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc-button:disabled {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-muted);
+}
+
+:root[data-theme='light'] .tasks-tabs span {
+  color: var(--text-secondary);
+}
+
+:root[data-theme='light'] .tasks-tabs span.active {
+  color: var(--accent-purple-dark);
 }
 
 :root[data-theme='light'] .add-task-time::-webkit-calendar-picker-indicator,
