@@ -1,0 +1,23 @@
+.data-table-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.data-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 768px) {
+  .data-table-section {
+    padding: 18px;
+  }
+}

@@ -6,7 +6,7 @@ import { clearAuthTokens, getAccessToken } from '../../../shared/lib/authStorage
 import { getMembers } from '../../../shared/api/membersApi'
 import { getTeams } from '../../../shared/api/teamsApi'
 import type { TeamResponse } from '../../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, sortTeams, sortUsersByTeamAndName } from '../../../shared/lib/team'
+import { FALLBACK_TEAMS, cacheTeams, getCachedTeams, sortTeams, sortUsersByTeamAndName } from '../../../shared/lib/team'
 import { canAccessAdmin, canAccessTeamManagement } from '../../../shared/lib/permissions'
 
 export type { UserRole, Team, User, UserStatus } from '../../../entities/user/model/types'
@@ -51,6 +51,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const loadTeams = useCallback((teams: TeamResponse[]) => {
+    cacheTeams(teams)
     setState((prev) => ({ ...prev, teams: sortTeams(teams) }))
   }, [])
 
@@ -74,8 +75,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshTeams = useCallback(async () => {
-    const teams = await getTeams().catch(() => FALLBACK_TEAMS)
+    const teams = await getTeams().catch(() => {
+      const cachedTeams = getCachedTeams()
+      return cachedTeams.length > 0 ? cachedTeams : FALLBACK_TEAMS
+    })
     const sortedTeams = sortTeams(teams)
+    cacheTeams(sortedTeams)
     setState((prev) => ({ ...prev, teams: sortedTeams }))
     return sortedTeams
   }, [])

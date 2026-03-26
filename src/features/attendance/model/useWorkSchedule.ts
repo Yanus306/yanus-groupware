@@ -38,15 +38,18 @@ export function useWorkSchedule() {
   const [savedWorkDays, setSavedWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
 
   useEffect(() => {
-    // localStorage에서 근무 요일 토글 상태 복원
     const storedDays = localStorage.getItem(WORK_DAYS_STORAGE_KEY)
+    let parsedStoredDays: boolean[] | null = null
     if (storedDays) {
       try {
         const parsed = JSON.parse(storedDays) as boolean[]
-        if (Array.isArray(parsed) && parsed.length === 7) setWorkDays(parsed)
+        if (Array.isArray(parsed) && parsed.length === 7) {
+          parsedStoredDays = parsed
+        }
       } catch {}
     }
 
+    // localStorage에서 근무 요일 토글 상태는 API 조회 실패 시에만 fallback으로 사용
     const storedWeekPatterns = localStorage.getItem(WORK_WEEK_PATTERNS_STORAGE_KEY)
     if (storedWeekPatterns) {
       try {
@@ -58,6 +61,13 @@ export function useWorkSchedule() {
     // API에서 요일별 근무 시간 불러오기
     getMyWorkSchedule()
       .then((items) => {
+        const activeDays = INDEX_TO_DOW.map((dow) =>
+          items.some((item) => item.dayOfWeek === dow),
+        )
+
+        setSavedWorkDays(activeDays)
+        setWorkDays(activeDays)
+
         if (items.length === 0) return
         setDaySchedules((prev) => {
           const next = [...prev]
@@ -72,20 +82,13 @@ export function useWorkSchedule() {
           }
           return next
         })
-        // localStorage에 저장된 토글 없으면 API 응답 기반으로 활성 요일 설정
-        if (!storedDays) {
-          const activeDays = INDEX_TO_DOW.map((dow) =>
-            items.some((item) => item.dayOfWeek === dow),
-          )
-          setSavedWorkDays(activeDays)
-          if (activeDays.some(Boolean)) setWorkDays(activeDays)
-        } else {
-          setSavedWorkDays(
-            INDEX_TO_DOW.map((dow) => items.some((item) => item.dayOfWeek === dow)),
-          )
+      })
+      .catch(() => {
+        if (parsedStoredDays) {
+          setWorkDays(parsedStoredDays)
+          setSavedWorkDays(parsedStoredDays)
         }
       })
-      .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -104,6 +107,7 @@ export function useWorkSchedule() {
   const saveSchedule = async () => {
     setIsSaving(true)
     setError(null)
+    let saved = false
     try {
       const upsertPromises = workDays
         .map((active, i) => {
@@ -127,6 +131,7 @@ export function useWorkSchedule() {
       setSavedWorkDays([...workDays])
       localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
       localStorage.setItem(WORK_WEEK_PATTERNS_STORAGE_KEY, JSON.stringify(weekPatterns))
+      saved = true
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
@@ -136,6 +141,8 @@ export function useWorkSchedule() {
     } finally {
       setIsSaving(false)
     }
+
+    return saved
   }
 
   return {

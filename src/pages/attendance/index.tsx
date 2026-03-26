@@ -12,6 +12,7 @@ import {
 import type { AttendanceRecord, MemberWorkScheduleItem } from '../../shared/api/attendanceApi'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { sortUsersByTeamAndName } from '../../shared/lib/team'
+import { DataTableScroll, DataTableSection } from '../../shared/ui/DataTableSection'
 import { Toast } from '../../shared/ui/Toast'
 import { canViewManagedAttendance } from '../../shared/lib/permissions'
 import './attendance.css'
@@ -61,6 +62,30 @@ export function Attendance() {
       : state.users,
   )
 
+  const loadTeamSchedules = async () => {
+    if (!canSeeManagedAttendance || !state.currentUser) return
+
+    try {
+      if (state.currentUser.role === 'ADMIN') {
+        const schedules = await getAllWorkSchedules()
+        setTeamSchedules(schedules)
+        return
+      }
+
+      if (state.currentUser.role === 'TEAM_LEAD') {
+        const currentTeam = state.teams.find((team) => team.name === state.currentUser?.team)
+        if (!currentTeam) {
+          setTeamSchedules([])
+          return
+        }
+        const schedules = await getTeamWorkSchedules(currentTeam.id)
+        setTeamSchedules(schedules)
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '팀 근무 일정을 불러오지 못했습니다')
+    }
+  }
+
   const loadManagedAttendance = async (targetDate: string) => {
     if (!canSeeManagedAttendance || !state.currentUser) return
 
@@ -96,31 +121,7 @@ export function Attendance() {
   }, [])
 
   useEffect(() => {
-    if (!canSeeManagedAttendance || !state.currentUser) return
-
-    const loadSchedules = async () => {
-      try {
-        if (state.currentUser?.role === 'ADMIN') {
-          const schedules = await getAllWorkSchedules()
-          setTeamSchedules(schedules)
-          return
-        }
-
-        if (state.currentUser?.role === 'TEAM_LEAD') {
-          const currentTeam = state.teams.find((team) => team.name === state.currentUser?.team)
-          if (!currentTeam) {
-            setTeamSchedules([])
-            return
-          }
-          const schedules = await getTeamWorkSchedules(currentTeam.id)
-          setTeamSchedules(schedules)
-        }
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : '팀 근무 일정을 불러오지 못했습니다')
-      }
-    }
-
-    loadSchedules()
+    loadTeamSchedules()
   }, [canSeeManagedAttendance, state.currentUser, state.teams])
 
   const todayRecords = records.filter((r) => r.workDate === todayStr)
@@ -212,12 +213,15 @@ export function Attendance() {
 
         <div className={`two-cards-row ${canSeeManagedAttendance ? 'admin-wide' : 'single'}`}>
           <section className="set-work-days-section glass">
-            <SetWorkDaysPersonal />
+            <SetWorkDaysPersonal onSaved={loadTeamSchedules} />
           </section>
           {canSeeManagedAttendance && (
-            <section className="records-section glass">
-              <h3>출퇴근 기록</h3>
-              <div className="records-table-wrap">
+            <DataTableSection
+              className="records-section"
+              title="출퇴근 기록"
+              description="관리 대상 멤버의 근무 일정과 출퇴근 상태를 날짜 기준으로 확인합니다."
+            >
+              <DataTableScroll className="records-table-wrap">
                 <table className="records-table">
                   <thead>
                     <tr>
@@ -264,20 +268,23 @@ export function Attendance() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </DataTableScroll>
               <div className="pagination">
                 <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={18} /></button>
                 <span>{page} / {totalPages} 페이지</span>
                 <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight size={18} /></button>
               </div>
-            </section>
+            </DataTableSection>
           )}
         </div>
 
         {/* 내 출퇴근 이력 — 모든 유저 */}
-        <section className="my-history-section glass">
-          <h3>내 출퇴근 이력</h3>
-          <div className="records-table-wrap">
+        <DataTableSection
+          className="my-history-section"
+          title="내 출퇴근 이력"
+          description="개인 출퇴근 기록을 최근 순서대로 확인할 수 있습니다."
+        >
+          <DataTableScroll className="records-table-wrap">
             <table className="records-table">
               <thead>
                 <tr>
@@ -306,8 +313,8 @@ export function Attendance() {
                 )}
               </tbody>
             </table>
-          </div>
-        </section>
+          </DataTableScroll>
+        </DataTableSection>
 
         {canSeeManagedAttendance && (
           <div className="summary-stats">

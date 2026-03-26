@@ -12,7 +12,14 @@ import { getTodayStr } from '../../shared/lib/date'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
+import {
+  canChangeMemberTeamFor,
+  canExpelMembersFor,
+  canManageMemberRolesFor,
+  canManageMemberStatusFor,
+} from '../../shared/lib/permissions'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
+import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams'
@@ -58,6 +65,12 @@ export function Admin() {
   }
 
   const handleOpenRoleChange = (id: string, name: string, current: UserRole) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberRolesFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정의 역할은 변경할 수 없습니다')
+      return
+    }
+
     setChangeRoleFor({ id, name, current })
     setSelectedRole(current)
   }
@@ -78,6 +91,12 @@ export function Admin() {
   }
 
   const handleDeactivate = async (id: string) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정은 비활성화할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await deactivateMember(id)
@@ -90,6 +109,11 @@ export function Admin() {
 
   const handleExpel = async (id: string) => {
     const member = members.find((item) => item.id === id)
+    if (!canExpelMembersFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정은 퇴출할 수 없습니다')
+      return
+    }
+
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
     }
@@ -106,6 +130,12 @@ export function Admin() {
   }
 
   const handleActivate = async (id: string) => {
+    const targetMember = members.find((member) => member.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetMember)) {
+      setErrorMessage('본인 계정은 활성화 상태를 변경할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await activateMember(id)
@@ -117,6 +147,11 @@ export function Admin() {
   }
 
   const handleOpenTeamChange = (member: User) => {
+    if (!canChangeMemberTeamFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정의 팀은 여기서 변경할 수 없습니다')
+      return
+    }
+
     setChangeTeamFor(member)
     const currentTeam = teamOptions.find((team) => team.name === member.team)
     setSelectedTeamId(currentTeam?.id ?? null)
@@ -246,7 +281,10 @@ export function Admin() {
 
       {tab === 'members' && (
         <div className="admin-tab-content glass">
-          <h3 className="admin-section-title">멤버 목록</h3>
+          <SectionHeader
+            title="멤버 목록"
+            description="역할, 상태, 팀 이동, 퇴출 액션을 한 곳에서 관리합니다."
+          />
           <MemberManagementTable
             members={members}
             saving={saving}
@@ -257,6 +295,10 @@ export function Admin() {
             onDeactivate={handleDeactivate}
             onActivate={handleActivate}
             onExpel={handleExpel}
+            canManageRoleFor={(member) => canManageMemberRolesFor(state.currentUser, member)}
+            canChangeTeamFor={(member) => canChangeMemberTeamFor(state.currentUser, member)}
+            canManageStatusFor={(member) => canManageMemberStatusFor(state.currentUser, member)}
+            canExpelFor={(member) => canExpelMembersFor(state.currentUser, member)}
           />
         </div>
       )}
@@ -264,10 +306,10 @@ export function Admin() {
       {tab === 'teams' && (
         <div className="admin-tab-content glass">
           <div className="admin-team-manager-head">
-            <div>
-              <h3 className="admin-section-title">팀 목록</h3>
-              <p className="admin-team-manager-copy">새 팀을 추가하거나 더 이상 사용하지 않는 팀을 삭제할 수 있습니다.</p>
-            </div>
+            <SectionHeader
+              title="팀 목록"
+              description="새 팀을 추가하거나 더 이상 사용하지 않는 팀을 삭제할 수 있습니다."
+            />
             <div className="admin-team-create">
               <input
                 type="text"

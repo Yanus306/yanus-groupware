@@ -5,7 +5,7 @@ import { getMe, login, register } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, formatTeamName, sortTeams } from '../../shared/lib/team'
+import { FALLBACK_TEAMS, cacheTeams, formatTeamName, getCachedTeams, sortTeams } from '../../shared/lib/team'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -57,12 +57,26 @@ export function Register() {
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
   const [teamOptions, setTeamOptions] = useState<TeamResponse[]>([])
+  const [teamSource, setTeamSource] = useState<'live' | 'cached' | 'fallback'>('live')
 
   useEffect(() => {
     getTeams()
-      .then((teams) => setTeamOptions(sortTeams(teams)))
+      .then((teams) => {
+        const sortedTeams = sortTeams(teams)
+        cacheTeams(sortedTeams)
+        setTeamOptions(sortedTeams)
+        setTeamSource('live')
+      })
       .catch(() => {
+        const cachedTeams = getCachedTeams()
+        if (cachedTeams.length > 0) {
+          setTeamOptions(cachedTeams)
+          setTeamSource('cached')
+          return
+        }
+
         setTeamOptions(FALLBACK_TEAMS)
+        setTeamSource('fallback')
       })
   }, [])
 
@@ -162,6 +176,13 @@ export function Register() {
               </select>
             </div>
             {errors.team && <span className="field-error">{errors.team}</span>}
+            {teamSource !== 'live' && (
+              <span className="field-help">
+                {teamSource === 'cached'
+                  ? '실시간 팀 목록을 불러오지 못해 최근 저장된 팀 목록을 표시 중입니다.'
+                  : '실시간 팀 목록을 불러오지 못해 기본 팀 목록을 표시 중입니다. 최신 팀이 보이지 않으면 관리자에게 문의해 주세요.'}
+              </span>
+            )}
           </div>
 
           <div className="form-group">

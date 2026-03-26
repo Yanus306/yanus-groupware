@@ -9,6 +9,7 @@ beforeAll(() => server.listen())
 afterEach(() => {
   server.resetHandlers()
   localStorage.clear()
+  sessionStorage.clear()
 })
 afterAll(() => server.close())
 
@@ -97,6 +98,7 @@ describe('baseClient', () => {
     })
     expect(localStorage.getItem('accessToken')).toBeNull()
     expect(localStorage.getItem('refreshToken')).toBeNull()
+    expect(sessionStorage.getItem('yanus-session-expired-message')).toBe('세션이 만료되어 다시 로그인해 주세요')
   })
 
   it('4xx 응답 시 ApiError를 던진다', async () => {

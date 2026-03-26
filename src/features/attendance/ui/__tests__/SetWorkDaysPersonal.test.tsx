@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
@@ -99,6 +99,22 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
       expect(screen.getByText('저장')).toBeInTheDocument()
+    })
+  })
+
+  it('저장 성공 후 onSaved 콜백을 호출한다', async () => {
+    const onSaved = vi.fn()
+
+    render(<SetWorkDaysPersonal onSaved={onSaved} />, { wrapper })
+
+    await waitFor(() => {
+      expect(screen.getByText('저장')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('저장'))
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledTimes(1)
     })
   })
 })

@@ -110,7 +110,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -142,6 +142,47 @@
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
+}
+
+.attendance-alert-card {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+
+.attendance-alert-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.attendance-alert-card.success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
+.attendance-alert-card.warning {
+  background: rgba(250, 204, 21, 0.1);
+  border-color: rgba(250, 204, 21, 0.18);
+}
+
+.attendance-alert-card.info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.16);
+}
+
+.attendance-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
 .clockout-btn {
@@ -198,19 +239,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
-}
-
-.empty-state p {
-  color: var(--text-secondary);
-  font-size: 0.88rem;
-  margin: 0;
 }
 
 .schedule-card ul,
@@ -354,6 +382,11 @@
   color: var(--text-primary);
 }
 
+.task-item.due-soon {
+  border-color: rgba(250, 204, 21, 0.22);
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.08), rgba(250, 204, 21, 0.03));
+}
+
 .task-item.done {
   opacity: 0.78;
 }
@@ -388,11 +421,62 @@
 }
 
 .task-title {
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.task-copy {
   flex: 1;
   min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.task-copy .task-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.task-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-priority-badge,
+.task-deadline-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.task-priority-badge.high {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+.task-priority-badge.medium {
+  background: rgba(124, 58, 237, 0.14);
+  color: var(--accent-purple-light);
+}
+
+.task-priority-badge.low {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-secondary);
+}
+
+.task-deadline-badge {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
+}
+
+.task-deadline-badge.urgent {
+  background: rgba(250, 204, 21, 0.12);
+  color: #fde047;
 }
 
 .task-done-badge {
@@ -446,11 +530,16 @@
 
 .dashboard-detail-close,
 .dashboard-secondary-btn,
-.dashboard-primary-btn {
+.dashboard-primary-btn,
+.dashboard-danger-btn {
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .dashboard-detail-close,
@@ -465,10 +554,43 @@
   color: #fff;
 }
 
+.dashboard-danger-btn {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
 .dashboard-detail-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.dashboard-event-form {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-event-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.dashboard-event-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-soft);
+  color: var(--text-primary);
+}
+
+.dashboard-event-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .dashboard-detail-body p,
@@ -531,5 +653,14 @@
   .dashboard-detail-modal {
     padding: 18px;
     border-radius: 20px;
+  }
+
+  .dashboard-detail-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .dashboard-event-grid {
+    grid-template-columns: 1fr;
   }
 }

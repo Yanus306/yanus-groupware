@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { Dashboard } from '../index'
 
+const mockUpdateEvent = vi.fn()
+const mockDeleteEvent = vi.fn()
+const mockToggleTaskDone = vi.fn()
+
 vi.mock('../../../features/attendance/model/useWorkSession', () => ({
   useWorkSession: () => ({
     status: 'idle',
@@ -39,6 +43,8 @@ vi.mock('../../../features/calendar/model/EventsProvider', () => ({
   useEvents: () => ({
     getEventsByDate: () => [],
     events: [],
+    updateEvent: mockUpdateEvent,
+    deleteEvent: mockDeleteEvent,
   }),
 }))
 
@@ -55,7 +61,7 @@ vi.mock('../../../features/tasks/model/TasksProvider', () => ({
     getTasksByDate: () => [],
     tasks: [],
     isLoading: false,
-    toggleTaskDone: vi.fn(),
+    toggleTaskDone: mockToggleTaskDone,
   }),
 }))
 

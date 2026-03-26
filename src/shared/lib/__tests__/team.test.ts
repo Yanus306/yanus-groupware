@@ -1,5 +1,23 @@
-import { describe, it, expect } from 'vitest'
-import { sortUsersByTeamAndName } from '../team'
+import { beforeEach, describe, it, expect } from 'vitest'
+import { cacheTeams, getCachedTeams, sortUsersByTeamAndName } from '../team'
+
+describe('team cache', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('팀 목록을 로컬 스토리지에 저장하고 다시 불러올 수 있다', () => {
+    cacheTeams([
+      { id: 2, name: '2팀' },
+      { id: 1, name: '1팀' },
+    ])
+
+    expect(getCachedTeams()).toEqual([
+      { id: 1, name: '1팀' },
+      { id: 2, name: '2팀' },
+    ])
+  })
+})
 
 describe('sortUsersByTeamAndName', () => {
   it('활성 멤버를 팀 순, 이름 순으로 정렬하고 비활성 멤버는 마지막으로 보낸다', () => {

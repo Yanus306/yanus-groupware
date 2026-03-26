@@ -13,7 +13,11 @@ const WEEK_PATTERN_OPTIONS: { value: WeekPattern; label: string }[] = [
   { value: 'LAST', label: '마지막 주' },
 ]
 
-export function SetWorkDaysPersonal() {
+interface SetWorkDaysPersonalProps {
+  onSaved?: () => void | Promise<void>
+}
+
+export function SetWorkDaysPersonal({ onSaved }: SetWorkDaysPersonalProps) {
   const { state } = useApp()
   const {
     workDays,
@@ -28,6 +32,13 @@ export function SetWorkDaysPersonal() {
     saveSchedule,
   } =
     useWorkSchedule()
+
+  const handleSave = async () => {
+    const saved = await saveSchedule()
+    if (saved) {
+      await onSaved?.()
+    }
+  }
 
   return (
     <div className="set-work-days-personal">
@@ -118,7 +129,7 @@ export function SetWorkDaysPersonal() {
 
       {error && <p className="schedule-error">{error}</p>}
 
-      <button className="schedule-save-btn" onClick={saveSchedule} disabled={isSaving}>
+      <button className="schedule-save-btn" onClick={handleSave} disabled={isSaving}>
         {isSaving ? '저장 중...' : '저장'}
       </button>
     </div>

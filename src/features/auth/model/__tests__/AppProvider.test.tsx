@@ -79,6 +79,25 @@ describe('AppProvider', () => {
     })
   })
 
+  describe('loadTeams', () => {
+    it('loadTeams 호출 시 팀 목록을 정렬하고 캐시에 저장한다', () => {
+      const { result } = renderHook(() => useApp(), { wrapper })
+
+      act(() => {
+        result.current.loadTeams([
+          { id: 2, name: '2팀' },
+          { id: 1, name: '1팀' },
+        ])
+      })
+
+      expect(result.current.state.teams).toEqual([
+        { id: 1, name: '1팀' },
+        { id: 2, name: '2팀' },
+      ])
+      expect(localStorage.getItem('yanus.team-options')).toContain('1팀')
+    })
+  })
+
   describe('logout', () => {
     it('logout 호출 시 accessToken이 제거된다', () => {
       localStorage.setItem('accessToken', 'test-token')

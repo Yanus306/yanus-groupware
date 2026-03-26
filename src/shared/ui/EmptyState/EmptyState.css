@@ -1,0 +1,35 @@
+.empty-state-panel {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 18px;
+  border: 1px dashed color-mix(in srgb, var(--border-color) 84%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-elevated) 88%, transparent), transparent 120%);
+}
+
+.empty-state-panel.compact {
+  padding: 14px 16px;
+  gap: 8px;
+}
+
+.empty-state-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.empty-state-description {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.empty-state-action {
+  display: inline-flex;
+}
+
+:root[data-theme='light'] .empty-state-panel {
+  background: linear-gradient(180deg, rgba(247, 249, 255, 0.92), rgba(255, 255, 255, 0.98));
+}

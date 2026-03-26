@@ -4,8 +4,15 @@ import { useApp } from '../../features/auth/model'
 import { updateMemberRole, deactivateMember, activateMember } from '../../shared/api/membersApi'
 import type { UserRole } from '../../entities/user/model/types'
 import { getTeamOptions, formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
-import { canAccessAdmin } from '../../shared/lib/permissions'
+import {
+  canAccessAdmin,
+  canExpelMembersFor,
+  canManageMemberRolesFor,
+  canManageMemberStatusFor,
+} from '../../shared/lib/permissions'
+import { DataTableSection } from '../../shared/ui/DataTableSection'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
+import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
 import './members.css'
 
@@ -61,6 +68,12 @@ export function Members() {
   const maxActiveTeamCount = Math.max(...activeCountsByTeam.map((team) => team.count), 1)
 
   const handleOpenChangeRole = (id: string, name: string, currentRole: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberRolesFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정의 역할은 변경할 수 없습니다')
+      return
+    }
+
     setChangeRoleFor({ id, name })
     setSelectedRole(currentRole as UserRole)
   }
@@ -80,6 +93,12 @@ export function Members() {
   }
 
   const handleDeactivate = async (id: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정은 비활성화할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await deactivateMember(id)
@@ -92,6 +111,11 @@ export function Members() {
 
   const handleExpel = async (id: string) => {
     const member = state.users.find((item) => item.id === id)
+    if (!canExpelMembersFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정은 퇴출할 수 없습니다')
+      return
+    }
+
     if (!window.confirm(`${member?.name ?? '선택한 멤버'}를 퇴출하시겠습니까?`)) {
       return
     }
@@ -107,6 +131,12 @@ export function Members() {
   }
 
   const handleActivate = async (id: string) => {
+    const targetUser = state.users.find((user) => user.id === id)
+    if (!canManageMemberStatusFor(state.currentUser, targetUser)) {
+      setErrorMessage('본인 계정의 상태는 변경할 수 없습니다')
+      return
+    }
+
     setSaving(true)
     try {
       await activateMember(id)
@@ -182,8 +212,11 @@ export function Members() {
       </div>
 
       <div className="members-content">
-        <div className="table-section glass">
-          <h3>멤버 목록</h3>
+        <DataTableSection
+          className="table-section"
+          title="멤버 목록"
+          description="활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다."
+        >
           <MemberManagementTable
             members={filtered}
             saving={saving}
@@ -193,11 +226,17 @@ export function Members() {
             onDeactivate={isAdmin ? handleDeactivate : undefined}
             onActivate={isAdmin ? handleActivate : undefined}
             onExpel={isAdmin ? handleExpel : undefined}
+            canManageRoleFor={(member) => canManageMemberRolesFor(state.currentUser, member)}
+            canManageStatusFor={(member) => canManageMemberStatusFor(state.currentUser, member)}
+            canExpelFor={(member) => canExpelMembersFor(state.currentUser, member)}
           />
-        </div>
+        </DataTableSection>
 
         <aside className="stats-sidebar glass">
-          <h3>팀별 멤버 수</h3>
+          <SectionHeader
+            title="팀별 멤버 수"
+            description="비활성 멤버는 집계에서 제외됩니다."
+          />
           <div className="bar-chart">
             {activeCountsByTeam.map((team) => {
               const count = team.count
@@ -214,8 +253,10 @@ export function Members() {
               )
             })}
           </div>
-          <p className="stats-caption">비활성 멤버는 집계에서 제외됩니다.</p>
-          <h3>역할 분포</h3>
+          <SectionHeader
+            title="역할 분포"
+            description="현재 활성 멤버 기준으로 역할 비중을 보여줍니다."
+          />
           <div className="pie-legend">
             <span><i style={{ background: 'var(--accent-purple)' }} /> 관리자 {visibleUsers.filter((user) => user.role === 'ADMIN').length}</span>
             <span><i style={{ background: 'var(--accent-blue, #72b8e8)' }} /> 팀장 {visibleUsers.filter((user) => user.role === 'TEAM_LEAD').length}</span>
