@@ -124,6 +124,7 @@
 
 .members-table-wrap {
   overflow-x: auto;
+  width: 100%;
   padding-bottom: 6px;
   min-width: 0;
   scrollbar-width: thin;
@@ -132,7 +133,28 @@
 .members-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 880px;
+  table-layout: fixed;
+}
+
+.members-table .profile-col {
+  width: 240px;
+}
+
+.members-table .team-col {
+  width: 130px;
+}
+
+.members-table .role-col {
+  width: 140px;
+}
+
+.members-table .status-col {
+  width: 180px;
+}
+
+.members-table .actions-col {
+  width: 200px;
 }
 
 .members-table th,
@@ -158,13 +180,9 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-.members-table td:first-child {
-  min-width: 180px;
-}
-
 .members-table td:last-child,
 .members-table th:last-child {
-  min-width: 190px;
+  min-width: 200px;
 }
 
 .members-table .avatar {
@@ -178,6 +196,19 @@
   font-size: 0.85rem;
   margin-right: 12px;
   vertical-align: middle;
+}
+
+.profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-cell-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .team-tag {
@@ -227,14 +258,15 @@
 
 .actions-cell {
   display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-start;
+  gap: 10px 12px;
+  min-width: 0;
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
@@ -242,13 +274,20 @@
   background: rgba(124, 58, 237, 0.15);
   color: var(--accent-purple-light);
   border-radius: 6px;
+  white-space: nowrap;
+}
+
+.actions-cell .deactivate-btn {
+  justify-self: start;
 }
 
 .member-status-cell {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  justify-content: start;
+  min-width: 0;
 }
 
 .member-status-tag {
@@ -291,6 +330,7 @@
   padding: 24px;
   height: fit-content;
   min-width: 0;
+  width: 100%;
 }
 
 .stats-sidebar h3 {
@@ -431,7 +471,7 @@
   font-weight: 600;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1320px) {
   .members-content {
     grid-template-columns: 1fr;
   }
@@ -573,6 +613,10 @@
   .members-table td {
     white-space: nowrap;
     padding: 10px 12px;
+  }
+
+  .members-table {
+    min-width: 840px;
   }
 
   .table-section,
