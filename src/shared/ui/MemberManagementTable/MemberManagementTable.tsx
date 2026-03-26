@@ -26,6 +26,10 @@ interface MemberManagementTableProps {
   onDeactivate?: (memberId: string) => void
   onActivate?: (memberId: string) => void
   onExpel?: (memberId: string) => void
+  canManageRoleFor?: (member: User) => boolean
+  canChangeTeamFor?: (member: User) => boolean
+  canManageStatusFor?: (member: User) => boolean
+  canExpelFor?: (member: User) => boolean
 }
 
 export function MemberManagementTable({
@@ -39,6 +43,10 @@ export function MemberManagementTable({
   onDeactivate,
   onActivate,
   onExpel,
+  canManageRoleFor,
+  canChangeTeamFor,
+  canManageStatusFor,
+  canExpelFor,
 }: MemberManagementTableProps) {
   const showRoleChange = typeof onOpenRoleChange === 'function'
   const showTeamChange = typeof onOpenTeamChange === 'function'
@@ -78,6 +86,27 @@ export function MemberManagementTable({
             members.map((member) => {
               const status = member.status ?? 'ACTIVE'
               const isInactive = status === 'INACTIVE'
+              const canManageRole = showRoleChange && (canManageRoleFor ? canManageRoleFor(member) : true)
+              const canChangeTeam = showTeamChange && (canChangeTeamFor ? canChangeTeamFor(member) : true)
+              const canManageStatus = showStatusAction && (canManageStatusFor ? canManageStatusFor(member) : true)
+              const canExpel = showExpel && (canExpelFor ? canExpelFor(member) : true)
+              const menuItems = [
+                ...(canManageRole
+                  ? [{
+                      label: '역할 변경',
+                      onSelect: () => onOpenRoleChange?.(member),
+                    }]
+                  : []),
+                ...(canExpel
+                  ? [{
+                      label: isInactive ? '퇴출됨' : '퇴출',
+                      tone: 'danger' as const,
+                      disabled: saving || isInactive,
+                      onSelect: () => onExpel?.(member.id),
+                    }]
+                  : []),
+              ]
+              const hasActionControls = canChangeTeam || menuItems.length > 0
 
               return (
                 <tr key={member.id}>
@@ -102,7 +131,7 @@ export function MemberManagementTable({
                         <span className={`member-status-tag ${status}`}>
                           {statusLabels[status] ?? status}
                         </span>
-                        {showStatusAction && (
+                        {canManageStatus && (
                           isInactive ? (
                             <button
                               type="button"
@@ -130,7 +159,7 @@ export function MemberManagementTable({
                     <td className="member-table-actions-cell">
                       <div className="member-actions-stack">
                         <div className="member-actions-inline">
-                          {showTeamChange && (
+                          {canChangeTeam && (
                             <button
                               type="button"
                               className="member-action-btn member-action-btn-secondary"
@@ -139,29 +168,16 @@ export function MemberManagementTable({
                               팀 변경 <ArrowLeftRight size={14} />
                             </button>
                           )}
-                          <ActionMenu
-                            items={[
-                              ...(showRoleChange
-                                ? [{
-                                    label: '역할 변경',
-                                    onSelect: () => onOpenRoleChange?.(member),
-                                  }]
-                                : []),
-                              ...(showExpel
-                                ? [{
-                                    label: isInactive ? '퇴출됨' : '퇴출',
-                                    tone: 'danger' as const,
-                                    disabled: saving || isInactive,
-                                    onSelect: () => onExpel?.(member.id),
-                                  }]
-                                : []),
-                            ]}
-                          />
+                          {menuItems.length > 0 && (
+                            <ActionMenu items={menuItems} />
+                          )}
                         </div>
-                        {showRoleChange && (
+                        {hasActionControls ? (
                           <span className="member-actions-caption">
-                            역할 변경 {showExpel ? '및 퇴출 관리' : '가능'}
+                            {canManageRole && canExpel ? '역할 변경 및 퇴출 관리' : '추가 관리 가능'}
                           </span>
+                        ) : (
+                          <span className="member-actions-disabled">관리 불가</span>
                         )}
                       </div>
                     </td>

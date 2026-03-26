@@ -153,6 +153,12 @@
   line-height: 1.4;
 }
 
+.member-actions-disabled {
+  color: var(--text-tertiary);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
 .member-status-tag {
   display: inline-flex;
   align-items: center;

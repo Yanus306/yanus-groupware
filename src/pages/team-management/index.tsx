@@ -4,6 +4,7 @@ import { useApp } from '../../features/auth/model'
 import type { User } from '../../entities/user/model/types'
 import { updateMemberTeam } from '../../shared/api/membersApi'
 import { formatTeamName, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { canChangeMemberTeamFor } from '../../shared/lib/permissions'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import { Toast } from '../../shared/ui/Toast'
@@ -50,15 +51,24 @@ export function TeamManagement() {
     )
   ), [currentTeam, state.users])
 
+  const manageableMembers = useMemo(() => (
+    members.filter((member) => canChangeMemberTeamFor(state.currentUser, member))
+  ), [members, state.currentUser])
+
   const filteredMembers = useMemo(() => (
-    sortUsersByTeamAndName(members).filter((member) => {
+    sortUsersByTeamAndName(manageableMembers).filter((member) => {
       if (!search.trim()) return true
       const keyword = search.trim().toLowerCase()
       return member.name.toLowerCase().includes(keyword) || member.email.toLowerCase().includes(keyword)
     })
-  ), [members, search])
+  ), [manageableMembers, search])
 
   const openTeamModal = (member: User) => {
+    if (!canChangeMemberTeamFor(state.currentUser, member)) {
+      setErrorMessage('팀장은 같은 팀의 활성 일반 멤버만 이동할 수 있습니다')
+      return
+    }
+
     setChangeTeamFor(member)
     const matchedTeam = state.teams.find((team) => team.name === member.team)
     setSelectedTeamId(matchedTeam?.id ?? null)
@@ -103,7 +113,7 @@ export function TeamManagement() {
       <section className="team-management-panel glass">
         <SectionHeader
           title="팀 멤버 목록"
-          description="팀장은 소속 멤버의 팀 이동만 관리할 수 있습니다."
+          description="팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다."
         />
         <div className="team-management-toolbar">
           <div className="team-management-search">
