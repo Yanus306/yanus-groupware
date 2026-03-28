@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { attendanceHandlers } from '../../../shared/api/mock/handlers/attendance'
@@ -64,6 +64,16 @@ describe('Attendance 페이지', () => {
     expect(screen.getByText('이번 달')).toBeInTheDocument()
   })
 
+  it('기본 범위 라벨로 이번 달이 표시된다', async () => {
+    render(<Attendance />)
+
+    const [year, month] = TODAY.split('-')
+    const monthStart = `${year}-${month}-01`
+    await waitFor(() => {
+      expect(screen.getAllByText(new RegExp(`${monthStart} ~ ${year}-${month}`)).length).toBeGreaterThan(0)
+    })
+  })
+
   it('관리자에게 팀 근무 일정 패널이 표시된다', () => {
     render(<Attendance />)
     expect(screen.getByTestId('team-work-schedule-panel')).toBeInTheDocument()
@@ -100,6 +110,37 @@ describe('Attendance 페이지', () => {
       const scheduledDaysCell = screen.getByTestId('scheduled-days-1')
       expect(within(scheduledDaysCell).getAllByLabelText(/근무 예정/)).toHaveLength(3)
       expect(within(scheduledDaysCell).getAllByLabelText(/휴무/)).toHaveLength(4)
+    })
+  })
+
+  it('직접 선택 기간 조회가 날짜 범위 기준으로 동작한다', async () => {
+    const requestedDates: string[] = []
+
+    server.use(
+      http.get('/api/v1/attendances', ({ request }) => {
+        const url = new URL(request.url)
+        const date = url.searchParams.get('date') ?? TODAY
+        requestedDates.push(date)
+
+        const data = date === '2026-03-01'
+          ? [{ id: 11, memberId: 1, memberName: '김리더', workDate: date, checkInTime: `${date}T09:00:00`, checkOutTime: `${date}T18:00:00`, status: 'LEFT' }]
+          : []
+
+        return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
+      }),
+    )
+
+    render(<Attendance />)
+
+    fireEvent.click(screen.getByRole('button', { name: '직접 선택' }))
+    fireEvent.change(screen.getByLabelText('조회 시작일'), { target: { value: '2026-03-01' } })
+    fireEvent.change(screen.getByLabelText('조회 종료일'), { target: { value: '2026-03-03' } })
+    fireEvent.click(screen.getByRole('button', { name: '조회' }))
+
+    await waitFor(() => {
+      expect(requestedDates).toEqual(expect.arrayContaining(['2026-03-01', '2026-03-02', '2026-03-03']))
+      expect(screen.getByText('2026-03-01 ~ 2026-03-03')).toBeInTheDocument()
+      expect(screen.getAllByText('김리더').length).toBeGreaterThan(0)
     })
   })
 })
