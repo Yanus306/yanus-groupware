@@ -101,6 +101,26 @@ describe('baseClient', () => {
     expect(sessionStorage.getItem('yanus-session-expired-message')).toBe('세션이 만료되어 다시 로그인해 주세요')
   })
 
+  it('재사용된 refresh token이면 보안 안내 메시지로 세션을 종료한다', async () => {
+    localStorage.setItem('accessToken', 'expired-access-token')
+    localStorage.setItem('refreshToken', 'reused-refresh-token')
+
+    server.use(
+      http.get('/test-refresh-reused', () =>
+        HttpResponse.json({ code: 'UNAUTHORIZED', message: 'access 만료', data: null }, { status: 401 }),
+      ),
+      http.post('/api/v1/auth/refresh', () =>
+        HttpResponse.json({ code: 'TOKEN_REUSED', message: '재사용된 토큰', data: null }, { status: 401 }),
+      ),
+    )
+
+    await expect(baseClient.get('/test-refresh-reused')).rejects.toMatchObject({
+      status: 401,
+      code: 'UNAUTHORIZED',
+    })
+    expect(sessionStorage.getItem('yanus-session-expired-message')).toBe('보안을 위해 모든 세션이 종료되었습니다. 다시 로그인해 주세요')
+  })
+
   it('4xx 응답 시 ApiError를 던진다', async () => {
     server.use(
       http.get('/test-4xx', () =>

@@ -101,6 +101,15 @@ describe('Login 페이지', () => {
     expect(await screen.findByText('비활성화된 계정입니다. 관리자에게 문의해 주세요')).toBeInTheDocument()
   })
 
+  it('계정 잠금 상태면 전용 안내 메시지를 표시한다', async () => {
+    mockLogin.mockRejectedValue(new Error('로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요'))
+    renderLogin()
+    await userEvent.type(screen.getByLabelText('이메일'), 'locked@yanus.kr')
+    await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: '로그인' }))
+    expect(await screen.findByText('로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요')).toBeInTheDocument()
+  })
+
   it('로딩 중에는 버튼이 비활성화된다', async () => {
     mockLogin.mockImplementation(() => new Promise(() => {})) // 무한 대기
     renderLogin()
