@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { DEFAULT_SIGNUP_TEAM_NAME } from '../../../lib/team'
 import { getAuthMockUserByAuthorization } from './auth'
 
 interface MockDriveFile {
@@ -34,6 +35,13 @@ export const driveHandlers = [
 
   http.post('/api/v1/drive/upload', async ({ request }) => {
     const uploader = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (uploader.team === DEFAULT_SIGNUP_TEAM_NAME) {
+      return HttpResponse.json(
+        { code: 'FORBIDDEN', message: '신입 팀은 파일을 업로드할 수 없습니다', data: null },
+        { status: 403 },
+      )
+    }
+
     let fileName = 'unknown'
     let fileType = 'application/octet-stream'
     let fileSize = 0
