@@ -3,6 +3,7 @@ import { FileText, Image, Upload, Trash2, Download, Files, HardDrive, Clock3, Sp
 import { getFiles, uploadFile, deleteFile, downloadFile } from '../../shared/api/driveApi'
 import type { DriveFile } from '../../shared/api/driveApi'
 import { useApp } from '../../features/auth/model'
+import { DEFAULT_SIGNUP_TEAM_NAME } from '../../shared/lib/team'
 import { Toast } from '../../shared/ui/Toast'
 import './drive.css'
 
@@ -22,9 +23,16 @@ export function Drive() {
       .catch(() => setErrorMessage('파일 목록을 불러오지 못했습니다'))
   }, [])
 
+  const isNewHireTeam = (state.currentUser?.team ?? '') === DEFAULT_SIGNUP_TEAM_NAME
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (isNewHireTeam) {
+      setErrorMessage('신입 팀은 파일을 업로드할 수 없습니다')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
     setUploading(true)
     try {
       const newFile = await uploadFile(file)
@@ -101,10 +109,10 @@ export function Drive() {
           <button
             className="upload-btn"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || isNewHireTeam}
           >
             <Upload size={18} />
-            {uploading ? '업로드 중...' : '공용 파일 업로드'}
+            {isNewHireTeam ? '신입 팀은 업로드 불가' : uploading ? '업로드 중...' : '공용 파일 업로드'}
           </button>
         </div>
         <input
@@ -158,15 +166,19 @@ export function Drive() {
           <button
             className="upload-cta"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || isNewHireTeam}
           >
             <Upload size={18} />
-            {uploading ? '업로드 중...' : '새 공유 파일 추가'}
+            {isNewHireTeam ? '신입 팀은 업로드 불가' : uploading ? '업로드 중...' : '새 공유 파일 추가'}
           </button>
           <div className="drive-access-note">
-            <span>현재 업로드 가능 계정</span>
+            <span>현재 사용자</span>
             <strong>{currentUserName}</strong>
-            <p>일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.</p>
+            <p>
+              {isNewHireTeam
+                ? '신입 팀은 공유 드라이브를 조회만 할 수 있고 파일 업로드는 제한됩니다.'
+                : '일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.'}
+            </p>
           </div>
           <div className="drive-side-stats">
             <div>

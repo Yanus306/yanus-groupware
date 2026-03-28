@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, AlertCircle, Users } from 'lucide-react'
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { getMe, login, register } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { FALLBACK_TEAMS, cacheTeams, formatTeamName, getCachedTeams, sortTeams } from '../../shared/lib/team'
+import {
+  DEFAULT_SIGNUP_TEAM_NAME,
+  FALLBACK_TEAMS,
+  cacheTeams,
+  getCachedTeams,
+  getDefaultSignupTeam,
+  sortTeams,
+} from '../../shared/lib/team'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -14,10 +21,9 @@ interface FormErrors {
   email?: string
   password?: string
   confirmPassword?: string
-  team?: string
 }
 
-function validate(name: string, email: string, password: string, confirmPassword: string, team: string): FormErrors {
+function validate(name: string, email: string, password: string, confirmPassword: string): FormErrors {
   const errors: FormErrors = {}
   if (!name.trim()) {
     errors.name = '이름을 입력해 주세요'
@@ -37,9 +43,6 @@ function validate(name: string, email: string, password: string, confirmPassword
   } else if (password !== confirmPassword) {
     errors.confirmPassword = '비밀번호가 일치하지 않습니다'
   }
-  if (!team) {
-    errors.team = '팀을 선택해 주세요'
-  }
   return errors
 }
 
@@ -50,7 +53,6 @@ export function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [team, setTeam] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -58,6 +60,7 @@ export function Register() {
   const [loading, setLoading] = useState(false)
   const [teamOptions, setTeamOptions] = useState<TeamResponse[]>([])
   const [teamSource, setTeamSource] = useState<'live' | 'cached' | 'fallback'>('live')
+  const defaultTeam = getDefaultSignupTeam(teamOptions)
 
   useEffect(() => {
     getTeams()
@@ -84,17 +87,21 @@ export function Register() {
     e.preventDefault()
     setServerError('')
 
-    const validationErrors = validate(name, email, password, confirmPassword, team)
+    const validationErrors = validate(name, email, password, confirmPassword)
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       return
     }
     setErrors({})
 
+    if (!defaultTeam) {
+      setServerError(`기본 팀 ${DEFAULT_SIGNUP_TEAM_NAME}을 찾을 수 없습니다. 관리자에게 문의해 주세요`)
+      return
+    }
+
     setLoading(true)
     try {
-      const teamId = teamOptions.find((t) => t.name === team)?.id ?? 1
-      await register({ name, email, password, teamId })
+      await register({ name, email, password, teamId: defaultTeam.id })
       await login(email, password)
       const user = await getMe()
       loadUser(user)
@@ -160,22 +167,15 @@ export function Register() {
           <div className="form-group">
             <label htmlFor="team">팀</label>
             <div className="input-wrap">
-              <Users size={16} className="input-icon" />
-              <select
+              <input
                 id="team"
-                className={`form-input form-select${errors.team ? ' error' : ''}`}
-                value={team}
-                onChange={(e) => setTeam(e.target.value)}
-              >
-                <option value="">팀을 선택해 주세요</option>
-                {teamOptions.map((item) => (
-                  <option key={item.id} value={item.name}>
-                    {formatTeamName(item.name)}
-                  </option>
-                ))}
-              </select>
+                type="text"
+                className="form-input"
+                value={defaultTeam?.name ?? DEFAULT_SIGNUP_TEAM_NAME}
+                readOnly
+              />
             </div>
-            {errors.team && <span className="field-error">{errors.team}</span>}
+            <span className="field-help">회원가입 시 모든 신규 사용자는 신입 팀으로 자동 배정됩니다.</span>
             {teamSource !== 'live' && (
               <span className="field-help">
                 {teamSource === 'cached'

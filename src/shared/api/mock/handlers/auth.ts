@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { User } from '../../../../entities/user/model/types'
-import { FALLBACK_TEAMS } from '../../../lib/team'
+import { DEFAULT_SIGNUP_TEAM_NAME, FALLBACK_TEAMS } from '../../../lib/team'
 
 const INITIAL_USERS: User[] = [
   { id: '1', name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE', online: true },
@@ -77,7 +77,7 @@ export const authHandlers = [
       id: newId,
       name: body.name,
       email: body.email,
-      team: teamMap[body.teamId] ?? FALLBACK_TEAMS[0].name,
+      team: teamMap[body.teamId] ?? DEFAULT_SIGNUP_TEAM_NAME,
       role: 'MEMBER',
       online: true,
     }
