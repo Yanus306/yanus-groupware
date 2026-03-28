@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Crown, Download, FolderPlus, Trash2, Users } from 'lucide-react'
+import { Crown, Download, FolderPlus, History, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import { getAuditLogs } from '../../shared/api/auditLogsApi'
+import type { AuditLog } from '../../shared/api/auditLogsApi'
 import { updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
 import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
@@ -11,7 +13,7 @@ import { Toast } from '../../shared/ui/Toast'
 import { getTodayStr } from '../../shared/lib/date'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
-import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
+import { DEFAULT_SIGNUP_TEAM_NAME, formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
 import {
   canChangeMemberTeamFor,
   canExpelMembersFor,
@@ -19,10 +21,12 @@ import {
   canManageMemberStatusFor,
 } from '../../shared/lib/permissions'
 import { MemberManagementTable } from '../../shared/ui/MemberManagementTable'
+import { DataTableScroll } from '../../shared/ui/DataTableSection'
+import { EmptyState } from '../../shared/ui/EmptyState'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
-type Tab = 'attendance' | 'members' | 'teams'
+type Tab = 'attendance' | 'members' | 'teams' | 'audit'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 const roleLabels: Record<string, string> = {
@@ -31,10 +35,28 @@ const roleLabels: Record<string, string> = {
   MEMBER: '멤버',
 }
 
+const auditActionLabels: Record<string, string> = {
+  ROLE_CHANGE: '역할 변경',
+  TEAM_CHANGE: '팀 변경',
+  DEACTIVATE: '비활성화',
+  ACTIVATE: '활성화',
+}
+
+function formatAuditDateTime(value: string) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
 export function Admin() {
   const { state, loadMembers, refreshMembers, refreshTeams } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -48,6 +70,18 @@ export function Admin() {
   const members = sortUsersByTeamAndName(state.users)
   const teamOptions = getTeamOptions(members, state.teams)
 
+  const loadAuditLogList = async () => {
+    setAuditLoading(true)
+    try {
+      const logs = await getAuditLogs()
+      setAuditLogs(logs)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '감사 로그를 불러오지 못했습니다')
+    } finally {
+      setAuditLoading(false)
+    }
+  }
+
   useEffect(() => {
     getAttendanceByDate(todayStr)
       .then((attendanceList) => {
@@ -55,6 +89,11 @@ export function Admin() {
       })
       .catch((err) => setErrorMessage(err instanceof Error ? err.message : '관리 데이터를 불러오지 못했습니다'))
   }, [todayStr])
+
+  useEffect(() => {
+    if (tab !== 'audit') return
+    void loadAuditLogList()
+  }, [tab])
 
   const reloadMembersAndTeams = async () => {
     const [memberList] = await Promise.all([
@@ -190,6 +229,11 @@ export function Admin() {
   }
 
   const handleDeleteTeam = async (team: TeamResponse) => {
+    if (team.name === DEFAULT_SIGNUP_TEAM_NAME) {
+      setErrorMessage('신입 팀은 삭제할 수 없습니다')
+      return
+    }
+
     const memberCount = members.filter((member) => member.team === team.name).length
     const confirmMessage = memberCount > 0
       ? `${formatTeamName(team.name)}에는 현재 ${memberCount}명의 멤버가 있습니다. 백엔드 정책에 따라 삭제가 거부될 수 있습니다. 계속하시겠습니까?`
@@ -271,6 +315,13 @@ export function Admin() {
         >
           팀 관리
         </button>
+        <button
+          type="button"
+          className={`admin-tab-btn ${tab === 'audit' ? 'active' : ''}`}
+          onClick={() => setTab('audit')}
+        >
+          감사 로그
+        </button>
       </div>
 
       {tab === 'attendance' && (
@@ -339,11 +390,11 @@ export function Admin() {
                     <button
                       type="button"
                       className="admin-team-delete-btn"
-                      disabled={saving}
+                      disabled={saving || team.name === DEFAULT_SIGNUP_TEAM_NAME}
                       onClick={() => handleDeleteTeam(team)}
                     >
                       <Trash2 size={14} />
-                      삭제
+                      {team.name === DEFAULT_SIGNUP_TEAM_NAME ? '삭제 불가' : '삭제'}
                     </button>
                   </div>
                   <div className="admin-team-card-body">
@@ -351,12 +402,79 @@ export function Admin() {
                       <Users size={14} />
                       소속 멤버 {memberCount}명
                     </span>
-                    <p>팀 삭제 전 멤버 이동이 필요한 경우 멤버 관리에서 먼저 팀을 변경해 주세요.</p>
+                    <p>
+                      {team.name === DEFAULT_SIGNUP_TEAM_NAME
+                        ? '신입 팀은 신규 가입자의 기본 배정 팀이라 삭제할 수 없습니다.'
+                        : '팀 삭제 전 멤버 이동이 필요한 경우 멤버 관리에서 먼저 팀을 변경해 주세요.'}
+                    </p>
                   </div>
                 </article>
               )
             })}
           </div>
+        </div>
+      )}
+
+      {tab === 'audit' && (
+        <div className="admin-tab-content glass">
+          <SectionHeader
+            title="감사 로그"
+            description="권한과 상태 변경 이력을 최신순으로 확인합니다."
+            actions={(
+              <button
+                type="button"
+                className="admin-export-btn glass"
+                onClick={() => void loadAuditLogList()}
+                disabled={auditLoading}
+              >
+                <History size={16} />
+                {auditLoading ? '불러오는 중...' : '새로고침'}
+              </button>
+            )}
+          />
+
+          {auditLogs.length === 0 ? (
+            <EmptyState
+              compact
+              title={auditLoading ? '감사 로그를 불러오는 중입니다.' : '표시할 감사 로그가 없습니다.'}
+              description="역할 변경, 팀 변경, 활성화/비활성화 이력이 쌓이면 이곳에서 확인할 수 있습니다."
+            />
+          ) : (
+            <DataTableScroll className="admin-audit-table-wrap">
+              <table className="admin-audit-table">
+                <colgroup>
+                  <col className="admin-audit-time-col" />
+                  <col className="admin-audit-actor-col" />
+                  <col className="admin-audit-action-col" />
+                  <col className="admin-audit-target-col" />
+                  <col className="admin-audit-before-col" />
+                  <col className="admin-audit-after-col" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>시각</th>
+                    <th>수행자</th>
+                    <th>액션</th>
+                    <th>대상</th>
+                    <th>변경 전</th>
+                    <th>변경 후</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td>{formatAuditDateTime(log.createdAt)}</td>
+                      <td>{log.actorRole}</td>
+                      <td>{auditActionLabels[log.action] ?? log.action}</td>
+                      <td>{log.targetId}</td>
+                      <td>{log.previousValue ?? '-'}</td>
+                      <td>{log.newValue ?? '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DataTableScroll>
+          )}
         </div>
       )}
 
