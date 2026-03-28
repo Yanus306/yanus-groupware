@@ -1,6 +1,7 @@
 .attendance-page {
-  max-width: 1400px;
+  max-width: var(--page-max-ultra);
   width: 100%;
+  margin: 0 auto;
 }
 
 .attendance-header {
@@ -123,7 +124,7 @@
 
 .two-cards-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(360px, 0.94fr) minmax(520px, 1.26fr);
   gap: 24px;
   min-width: 0;
 }
@@ -151,6 +152,13 @@
   padding: 24px;
   min-width: 0;
   overflow: hidden;
+}
+
+@media (min-width: 1680px) {
+  .two-cards-row {
+    grid-template-columns: minmax(400px, 0.92fr) minmax(640px, 1.3fr);
+    gap: 28px;
+  }
 }
 
 .records-section h3 {

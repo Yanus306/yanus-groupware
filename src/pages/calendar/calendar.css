@@ -11,13 +11,13 @@
 
 .calendar-main {
   flex: 1;
-  padding: 36px 40px 48px;
+  padding: clamp(32px, 2.6vw, 44px) clamp(28px, 3vw, 48px) clamp(40px, 3vw, 56px);
   position: relative;
   overflow: auto;
 }
 
 .fullcalendar-wrapper {
-  max-width: 85%;
+  width: min(100%, 1360px);
   margin: 0 auto;
   position: relative;
 }
@@ -488,7 +488,7 @@
 
 /* Tasks Sidebar - dark grey, integrated - 사진처럼 뚜렷한 세로 구분선 */
 .tasks-sidebar {
-  width: 340px;
+  width: clamp(320px, 22vw, 400px);
   padding: 24px;
   overflow-y: auto;
   flex-shrink: 0;
@@ -940,6 +940,17 @@
 :root[data-theme='light'] .task-item:hover,
 :root[data-theme='light'] .event-item:hover {
   background: rgba(107, 79, 196, 0.05);
+}
+
+@media (min-width: 1680px) {
+  .fullcalendar-wrapper {
+    width: min(100%, 1480px);
+  }
+
+  .tasks-sidebar {
+    width: clamp(340px, 21vw, 420px);
+    padding: 28px;
+  }
 }
 
 @media (max-width: 900px) {

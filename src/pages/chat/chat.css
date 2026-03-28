@@ -1,5 +1,7 @@
 .chat-page {
   display: flex;
+  width: 100%;
+  max-width: var(--page-max-ultra);
   min-height: 0;
   height: clamp(620px, calc(100dvh - 180px), 860px);
   max-height: calc(100dvh - 180px);
@@ -9,6 +11,7 @@
   background: var(--bg-card);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
+  margin: 0 auto;
 }
 
 .chat-page > * {
@@ -16,7 +19,7 @@
 }
 
 .chat-sidebar {
-  width: 280px;
+  width: clamp(280px, 20vw, 360px);
   flex-shrink: 0;
   min-height: 0;
   overflow-y: auto;
@@ -263,7 +266,7 @@
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 24px clamp(24px, 2.8vw, 42px);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 100%),
     radial-gradient(circle at top right, rgba(212, 74, 153, 0.08), transparent 30%);
@@ -333,7 +336,7 @@
 }
 
 .msg-content {
-  max-width: 75%;
+  max-width: min(760px, 72%);
   padding: 12px 16px;
   background: var(--bg-soft);
   border: 1px solid var(--border-color);
@@ -448,7 +451,7 @@
 }
 
 .chat-input-area {
-  padding: 18px 24px 22px;
+  padding: 18px clamp(24px, 2.8vw, 42px) 22px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -460,16 +463,20 @@
 
 .input-preview {
   margin-bottom: 4px;
+  width: min(100%, 1260px);
+  margin-inline: auto;
 }
 
 .input-preview-content {
-  max-width: 70%;
+  max-width: min(720px, 68%);
 }
 
 .input-row {
   display: flex;
   gap: 12px;
   align-items: center;
+  width: min(100%, 1260px);
+  margin: 0 auto;
 }
 
 .chat-input-area .chat-input {
@@ -493,6 +500,8 @@
 .format-toolbar {
   display: flex;
   gap: 4px;
+  width: min(100%, 1260px);
+  margin: 0 auto;
 }
 
 .format-toolbar button {
@@ -555,6 +564,8 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
+  width: min(100%, 1260px);
+  margin-inline: auto;
 }
 
 .attach-tag {
@@ -667,6 +678,24 @@
 :root[data-theme='light'] .msg.own .msg-content {
   background: rgba(107, 79, 196, 0.16);
   border-color: rgba(107, 79, 196, 0.2);
+}
+
+@media (min-width: 1680px) {
+  .chat-page {
+    height: clamp(700px, calc(100dvh - 180px), 920px);
+  }
+
+  .chat-header {
+    padding-inline: clamp(28px, 2.6vw, 42px);
+  }
+
+  .chat-messages {
+    padding-inline: clamp(30px, 3vw, 48px);
+  }
+
+  .chat-input-area {
+    padding-inline: clamp(30px, 3vw, 48px);
+  }
 }
 
 @media (max-width: 768px) {
