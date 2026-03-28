@@ -502,6 +502,81 @@
   line-height: 1.6;
 }
 
+:root[data-theme='light'] .settings-summary-card,
+:root[data-theme='light'] .settings-nav,
+:root[data-theme='light'] .settings-content {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 249, 254, 0.98) 100%);
+  border-color: rgba(84, 102, 146, 0.14);
+  box-shadow: 0 16px 36px rgba(97, 114, 150, 0.12);
+}
+
+:root[data-theme='light'] .settings-summary-icon {
+  background: rgba(107, 79, 196, 0.1);
+  color: #5d44b0;
+}
+
+:root[data-theme='light'] .settings-nav-item:hover {
+  background: rgba(107, 79, 196, 0.08);
+}
+
+:root[data-theme='light'] .settings-nav-item.active {
+  background: rgba(107, 79, 196, 0.14);
+  color: #5d44b0;
+}
+
+:root[data-theme='light'] .setting-input {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(84, 102, 146, 0.18);
+  box-shadow: 0 8px 18px rgba(97, 114, 150, 0.06);
+}
+
+:root[data-theme='light'] .setting-input.disabled {
+  background: rgba(243, 246, 251, 0.94);
+  color: #6f7d99;
+}
+
+:root[data-theme='light'] .theme-option-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(84, 102, 146, 0.16);
+}
+
+:root[data-theme='light'] .theme-option-card:hover {
+  background: rgba(107, 79, 196, 0.08);
+}
+
+:root[data-theme='light'] .theme-option-card.active {
+  background: rgba(107, 79, 196, 0.12);
+  border-color: rgba(107, 79, 196, 0.24);
+}
+
+:root[data-theme='light'] .theme-option-icon,
+:root[data-theme='light'] .theme-preview,
+:root[data-theme='light'] .appearance-note {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(84, 102, 146, 0.16);
+}
+
+:root[data-theme='light'] .danger-zone {
+  background: linear-gradient(180deg, rgba(255, 237, 237, 0.86) 0%, rgba(255, 245, 245, 0.96) 100%);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+:root[data-theme='light'] .danger-zone-icon {
+  color: #c24141;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+:root[data-theme='light'] .danger-btn,
+:root[data-theme='light'] .danger-confirm-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b42318;
+}
+
+:root[data-theme='light'] .danger-cancel-btn {
+  background: rgba(84, 102, 146, 0.08);
+  color: #4f5f7f;
+}
+
 @media (max-width: 1080px) {
   .settings-header {
     grid-template-columns: 1fr;
