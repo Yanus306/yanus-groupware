@@ -223,6 +223,14 @@ export function Attendance() {
             >
               <DataTableScroll className="records-table-wrap">
                 <table className="records-table">
+                  <colgroup>
+                    <col className="records-member-col" />
+                    <col className="records-scheduled-col" />
+                    <col className="records-time-col" />
+                    <col className="records-time-col" />
+                    <col className="records-date-col" />
+                    <col className="records-status-col" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>멤버 ↕</th>
@@ -286,6 +294,12 @@ export function Attendance() {
         >
           <DataTableScroll className="records-table-wrap">
             <table className="records-table">
+              <colgroup>
+                <col className="my-records-date-col" />
+                <col className="my-records-time-col" />
+                <col className="my-records-time-col" />
+                <col className="my-records-status-col" />
+              </colgroup>
               <thead>
                 <tr>
                   <th>날짜</th>

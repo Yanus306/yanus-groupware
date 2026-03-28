@@ -160,7 +160,7 @@ export function MemberManagementTable({
                   {showActions && (
                     <td className="member-table-actions-cell">
                       <div className="member-actions-stack">
-                        <div className="member-actions-inline">
+                        <div className={`member-actions-inline ${hasActionControls ? '' : 'is-disabled'}`.trim()}>
                           {canChangeTeam && (
                             <button
                               type="button"
@@ -173,14 +173,10 @@ export function MemberManagementTable({
                           {menuItems.length > 0 && (
                             <ActionMenu items={menuItems} />
                           )}
+                          {!hasActionControls && (
+                            <span className="member-actions-disabled">관리 불가</span>
+                          )}
                         </div>
-                        {hasActionControls ? (
-                          <span className="member-actions-caption">
-                            {canManageRole && canExpel ? '역할 변경 및 퇴출 관리' : '추가 관리 가능'}
-                          </span>
-                        ) : (
-                          <span className="member-actions-disabled">관리 불가</span>
-                        )}
                       </div>
                     </td>
                   )}
