@@ -36,7 +36,7 @@ describe('Register 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', email: 'new@yanus.kr', team: '1팀', role: 'MEMBER', online: true })
+    mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', email: 'new@yanus.kr', team: '신입', role: 'MEMBER', online: true })
     mockLogin.mockImplementation(async () => {
       localStorage.setItem('accessToken', 'mock-login-token')
       localStorage.setItem('refreshToken', 'mock-refresh-token')
@@ -44,11 +44,12 @@ describe('Register 페이지', () => {
     })
   })
 
-  it('이름, 이메일, 팀, 비밀번호 필드와 회원가입 버튼이 렌더링된다', () => {
+  it('이름, 이메일, 자동 배정 팀, 비밀번호 필드와 회원가입 버튼이 렌더링된다', () => {
     renderRegister()
     expect(screen.getByLabelText('이름')).toBeInTheDocument()
     expect(screen.getByLabelText('이메일')).toBeInTheDocument()
     expect(screen.getByLabelText('팀')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('신입')).toBeInTheDocument()
     expect(screen.getByLabelText('비밀번호')).toBeInTheDocument()
     expect(screen.getByLabelText('비밀번호 확인')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument()
@@ -61,14 +62,12 @@ describe('Register 페이지', () => {
     expect(screen.getByText('이메일을 입력해 주세요')).toBeInTheDocument()
     expect(screen.getByText('비밀번호를 입력해 주세요')).toBeInTheDocument()
     expect(screen.getByText('비밀번호 확인을 입력해 주세요')).toBeInTheDocument()
-    expect(screen.getByLabelText('팀')).toHaveClass('error')
   })
 
   it('비밀번호 확인이 다르면 에러를 표시한다', async () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), '1팀')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password456')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
@@ -80,11 +79,16 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'user@test.com')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), '1팀')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
     await waitFor(() => {
+      expect(mockRegister).toHaveBeenCalledWith({
+        name: '홍길동',
+        email: 'user@test.com',
+        password: 'password123',
+        teamId: 5,
+      })
       expect(localStorage.getItem('accessToken')).toBe('mock-login-token')
       expect(localStorage.getItem('refreshToken')).toBe('mock-refresh-token')
       expect(mockNavigate).toHaveBeenCalledWith('/')
@@ -96,16 +100,16 @@ describe('Register 페이지', () => {
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
     await userEvent.type(screen.getByLabelText('이메일'), 'admin@yanus.kr')
-    await userEvent.selectOptions(screen.getByLabelText('팀'), '1팀')
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
     await userEvent.type(screen.getByLabelText('비밀번호 확인'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: '회원가입' }))
     expect(await screen.findByText('이미 가입된 이메일입니다')).toBeInTheDocument()
   })
 
-  it('팀 목록을 불러오지 못하면 안내 문구를 표시한다', async () => {
+  it('신규 사용자가 신입 팀으로 자동 배정된다는 안내를 표시한다', async () => {
     renderRegister()
 
+    expect(screen.getByText('회원가입 시 모든 신규 사용자는 신입 팀으로 자동 배정됩니다.')).toBeInTheDocument()
     expect(await screen.findByText('실시간 팀 목록을 불러오지 못해 기본 팀 목록을 표시 중입니다. 최신 팀이 보이지 않으면 관리자에게 문의해 주세요.')).toBeInTheDocument()
   })
 })

@@ -2,12 +2,14 @@ import type { User } from '../../entities/user/model/types'
 import type { TeamResponse } from '../api/teamsApi'
 
 const TEAM_CACHE_KEY = 'yanus.team-options'
+export const DEFAULT_SIGNUP_TEAM_NAME = '신입'
 
 export const FALLBACK_TEAMS: TeamResponse[] = [
   { id: 1, name: '1팀' },
   { id: 2, name: '2팀' },
   { id: 3, name: '3팀' },
   { id: 4, name: '4팀' },
+  { id: 5, name: DEFAULT_SIGNUP_TEAM_NAME },
 ]
 
 export function formatTeamName(team?: string | null) {
@@ -17,6 +19,10 @@ export function formatTeamName(team?: string | null) {
 
 export function sortTeams<T extends { name: string }>(teams: T[]) {
   return [...teams].sort((left, right) => left.name.localeCompare(right.name, 'ko-KR', { numeric: true }))
+}
+
+export function getDefaultSignupTeam(teams: TeamResponse[]) {
+  return teams.find((team) => team.name === DEFAULT_SIGNUP_TEAM_NAME) ?? null
 }
 
 export function cacheTeams(teams: TeamResponse[]) {
