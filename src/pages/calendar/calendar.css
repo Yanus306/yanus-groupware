@@ -890,6 +890,12 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(238, 243, 251, 0.96) 100%);
 }
 
+:root[data-theme='light'] .calendar-main {
+  background:
+    radial-gradient(circle at top right, rgba(107, 79, 196, 0.06), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
 :root[data-theme='light'] .fullcalendar-wrapper .fc {
   --fc-border-color: rgba(84, 102, 146, 0.14);
   --fc-button-bg-color: rgba(255, 255, 255, 0.94);
@@ -901,8 +907,18 @@
   --fc-today-bg-color: rgba(107, 79, 196, 0.08);
 }
 
+:root[data-theme='light'] .fullcalendar-wrapper {
+  border-radius: 28px;
+}
+
 :root[data-theme='light'] .fullcalendar-wrapper .fc-col-header-cell {
   background: rgba(84, 102, 146, 0.08);
+}
+
+:root[data-theme='light'] .fullcalendar-wrapper .fc-scrollgrid,
+:root[data-theme='light'] .fullcalendar-wrapper .fc-theme-standard td,
+:root[data-theme='light'] .fullcalendar-wrapper .fc-theme-standard th {
+  border-color: rgba(84, 102, 146, 0.16);
 }
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc-daygrid-day:hover {
@@ -911,16 +927,26 @@
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary {
   color: var(--text-primary);
+  box-shadow: 0 10px 24px rgba(94, 109, 145, 0.08);
 }
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary:not(:disabled).fc-button-active,
 :root[data-theme='light'] .fullcalendar-wrapper .fc .fc-button-primary:not(:disabled):active {
   color: var(--accent-purple-dark);
+  background: rgba(107, 79, 196, 0.16);
+  border-color: rgba(107, 79, 196, 0.38);
 }
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc-button:disabled {
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.84);
+  color: rgba(111, 125, 153, 0.72);
+}
+
+:root[data-theme='light'] .tasks-sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 247, 253, 0.98) 100%);
+  border-left-color: rgba(84, 102, 146, 0.16);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.6);
 }
 
 :root[data-theme='light'] .tasks-tabs span {
@@ -931,15 +957,47 @@
   color: var(--accent-purple-dark);
 }
 
+:root[data-theme='light'] .add-task-title,
+:root[data-theme='light'] .add-task-date,
+:root[data-theme='light'] .add-task-time,
+:root[data-theme='light'] .add-task-priority,
+:root[data-theme='light'] .add-task-assignee,
+:root[data-theme='light'] .edit-task-title {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(84, 102, 146, 0.18);
+  box-shadow: 0 8px 18px rgba(97, 114, 150, 0.06);
+}
+
 :root[data-theme='light'] .add-task-time::-webkit-calendar-picker-indicator,
 :root[data-theme='light'] .add-task-date::-webkit-calendar-picker-indicator {
   filter: none;
   opacity: 0.8;
 }
 
+:root[data-theme='light'] .add-task-inline-btn,
+:root[data-theme='light'] .add-task-btn,
+:root[data-theme='light'] .edit-task-actions .add-btn {
+  box-shadow: 0 14px 30px rgba(107, 79, 196, 0.18);
+}
+
+:root[data-theme='light'] .task-item,
+:root[data-theme='light'] .event-item {
+  border-bottom-color: rgba(84, 102, 146, 0.12);
+}
+
 :root[data-theme='light'] .task-item:hover,
 :root[data-theme='light'] .event-item:hover {
   background: rgba(107, 79, 196, 0.05);
+}
+
+:root[data-theme='light'] .task-checkbox {
+  border-color: rgba(84, 102, 146, 0.26);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme='light'] .task-actions button:hover,
+:root[data-theme='light'] .event-item-delete:hover {
+  background: rgba(107, 79, 196, 0.08) !important;
 }
 
 @media (min-width: 1680px) {
