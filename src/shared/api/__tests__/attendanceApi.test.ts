@@ -32,7 +32,7 @@ const MEMBER_WORK_SCHEDULES = [
     memberId: 2,
     memberName: '박팀장',
     teamName: '2팀',
-    workSchedules: [
+    schedules: [
       { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
     ],
   },
@@ -153,6 +153,7 @@ describe('workScheduleApi', () => {
     const schedules = await getAllWorkSchedules()
     expect(schedules).toHaveLength(2)
     expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: '1팀' })
+    expect(schedules[1].workSchedules).toHaveLength(1)
   })
 
   it('getTeamWorkSchedules() 특정 팀 멤버 근무 일정을 반환한다', async () => {
