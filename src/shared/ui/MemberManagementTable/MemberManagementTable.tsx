@@ -15,6 +15,11 @@ const statusLabels: Record<string, string> = {
   INACTIVE: '비활성',
 }
 
+const statusToggleLabels: Record<string, string> = {
+  ACTIVE: '활성화',
+  INACTIVE: '비활성화',
+}
+
 interface MemberManagementTableProps {
   members: User[]
   saving?: boolean
@@ -128,29 +133,26 @@ export function MemberManagementTable({
                   {showStatus && (
                     <td className="member-table-status-cell">
                       <div className="member-status-stack">
-                        <span className={`member-status-tag ${status}`}>
-                          {statusLabels[status] ?? status}
-                        </span>
-                        {canManageStatus && (
-                          isInactive ? (
-                            <button
-                              type="button"
-                              className="member-action-btn activate-btn"
-                              disabled={saving || !onActivate}
-                              onClick={() => onActivate?.(member.id)}
-                            >
-                              활성화
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="member-action-btn mute-btn"
-                              disabled={saving || !onDeactivate}
-                              onClick={() => onDeactivate?.(member.id)}
-                            >
-                              비활성화
-                            </button>
-                          )
+                        {canManageStatus ? (
+                          <button
+                            type="button"
+                            className={`member-status-toggle ${status}`}
+                            aria-pressed={!isInactive}
+                            disabled={saving || (isInactive ? !onActivate : !onDeactivate)}
+                            onClick={() => {
+                              if (isInactive) {
+                                onActivate?.(member.id)
+                                return
+                              }
+                              onDeactivate?.(member.id)
+                            }}
+                          >
+                            {statusToggleLabels[status] ?? status}
+                          </button>
+                        ) : (
+                          <span className={`member-status-tag ${status}`}>
+                            {statusLabels[status] ?? status}
+                          </span>
                         )}
                       </div>
                     </td>
