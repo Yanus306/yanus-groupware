@@ -68,6 +68,31 @@
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.team-management-table .team-management-name-col {
+  width: 220px;
+}
+
+.team-management-table .team-management-email-col {
+  width: 240px;
+}
+
+.team-management-table .team-management-team-col {
+  width: 130px;
+}
+
+.team-management-table .team-management-role-col {
+  width: 110px;
+}
+
+.team-management-table .team-management-status-col {
+  width: 110px;
+}
+
+.team-management-table .team-management-action-col {
+  width: 140px;
 }
 
 .team-management-table th,
@@ -79,9 +104,18 @@
 }
 
 .team-member-cell {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
+
+.team-member-cell span:last-child,
+.team-management-table td:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-member-avatar {
@@ -107,7 +141,9 @@
 .team-change-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  min-height: 40px;
   padding: 10px 14px;
   border: 1px solid var(--border-color);
   border-radius: 12px;

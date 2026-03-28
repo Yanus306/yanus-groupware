@@ -128,6 +128,14 @@ export function TeamManagement() {
 
         <DataTableScroll className="team-management-table-wrap">
           <table className="team-management-table">
+            <colgroup>
+              <col className="team-management-name-col" />
+              <col className="team-management-email-col" />
+              <col className="team-management-team-col" />
+              <col className="team-management-role-col" />
+              <col className="team-management-status-col" />
+              <col className="team-management-action-col" />
+            </colgroup>
             <thead>
               <tr>
                 <th>이름</th>

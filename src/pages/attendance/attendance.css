@@ -178,6 +178,39 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
+  table-layout: fixed;
+}
+
+.records-table .records-member-col {
+  width: 180px;
+}
+
+.records-table .records-scheduled-col {
+  width: 148px;
+}
+
+.records-table .records-time-col {
+  width: 104px;
+}
+
+.records-table .records-date-col {
+  width: 132px;
+}
+
+.records-table .records-status-col {
+  width: 120px;
+}
+
+.records-table .my-records-date-col {
+  width: 180px;
+}
+
+.records-table .my-records-time-col {
+  width: 120px;
+}
+
+.records-table .my-records-status-col {
+  width: 140px;
 }
 
 .set-work-days-section .set-work-days-personal {
@@ -205,6 +238,8 @@
 .records-table td {
   color: var(--text-primary);
   font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .records-table tr.late {
