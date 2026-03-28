@@ -30,12 +30,12 @@
 }
 
 .member-management-table .member-actions-col {
-  width: 220px;
+  width: 208px;
 }
 
 .member-management-table th,
 .member-management-table td {
-  padding: 14px 16px;
+  padding: 16px;
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -132,39 +132,35 @@
 
 .member-status-stack,
 .member-actions-stack {
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  justify-items: start;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
   width: 100%;
   min-width: 0;
 }
 
 .member-status-stack {
-  display: flex;
-  align-items: center;
   justify-content: flex-start;
-  flex-wrap: nowrap;
-  width: 100%;
 }
 
 .member-actions-inline {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  width: 100%;
-}
-
-.member-actions-caption {
-  color: var(--text-tertiary);
-  font-size: 0.74rem;
-  line-height: 1.4;
+  min-height: 40px;
+  width: auto;
 }
 
 .member-actions-disabled {
   color: var(--text-tertiary);
-  font-size: 0.74rem;
-  line-height: 1.4;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.member-actions-inline.is-disabled {
+  justify-content: flex-start;
 }
 
 .member-status-tag {
@@ -356,7 +352,6 @@
   border-color: rgba(239, 68, 68, 0.14);
 }
 
-:root[data-theme='light'] .member-actions-caption,
 :root[data-theme='light'] .member-actions-disabled {
   color: #6f7d99;
 }
