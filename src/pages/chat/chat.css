@@ -644,6 +644,7 @@
 .link-modal-actions button.primary {
   background: var(--gradient-purple);
   border: none;
+  color: var(--text-on-accent);
 }
 
 .send-btn {

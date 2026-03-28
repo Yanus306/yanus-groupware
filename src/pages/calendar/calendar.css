@@ -474,7 +474,7 @@
 .edit-task-actions .add-btn {
   padding: 8px 20px;
   background: var(--accent-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 8px;
   font-weight: 600;
 }
@@ -588,7 +588,7 @@
 .add-task-inline-btn {
   padding: 12px 16px;
   background: var(--accent-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
@@ -725,7 +725,7 @@
   width: 100%;
   padding: 12px;
   background: var(--accent-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
@@ -920,7 +920,7 @@
 
 :root[data-theme='light'] .fullcalendar-wrapper .fc-button:disabled {
   background: rgba(255, 255, 255, 0.72);
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 :root[data-theme='light'] .tasks-tabs span {
