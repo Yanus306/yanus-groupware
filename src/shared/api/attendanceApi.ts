@@ -50,6 +50,23 @@ export interface MemberWorkScheduleItem {
   workSchedules: WorkScheduleItem[]
 }
 
+interface RawMemberWorkScheduleItem {
+  memberId: number
+  memberName: string
+  teamName: string
+  workSchedules?: WorkScheduleItem[]
+  schedules?: WorkScheduleItem[]
+}
+
+function normalizeMemberWorkSchedule(item: RawMemberWorkScheduleItem): MemberWorkScheduleItem {
+  return {
+    memberId: item.memberId,
+    memberName: item.memberName,
+    teamName: item.teamName,
+    workSchedules: item.workSchedules ?? item.schedules ?? [],
+  }
+}
+
 export const getMyWorkSchedule = () =>
   baseClient.get<WorkScheduleItem[]>('/api/v1/work-schedules/me')
 
@@ -60,7 +77,11 @@ export const deleteWorkScheduleDay = (dayOfWeek: DayOfWeek) =>
   baseClient.delete<null>(`/api/v1/work-schedules/${dayOfWeek}`)
 
 export const getAllWorkSchedules = () =>
-  baseClient.get<MemberWorkScheduleItem[]>('/api/v1/work-schedules/all')
+  baseClient
+    .get<RawMemberWorkScheduleItem[]>('/api/v1/work-schedules/all')
+    .then((items) => items.map(normalizeMemberWorkSchedule))
 
 export const getTeamWorkSchedules = (teamId: number) =>
-  baseClient.get<MemberWorkScheduleItem[]>(`/api/v1/work-schedules/team/${teamId}`)
+  baseClient
+    .get<RawMemberWorkScheduleItem[]>(`/api/v1/work-schedules/team/${teamId}`)
+    .then((items) => items.map(normalizeMemberWorkSchedule))

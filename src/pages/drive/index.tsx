@@ -4,6 +4,8 @@ import { getFiles, uploadFile, deleteFile, downloadFile } from '../../shared/api
 import type { DriveFile } from '../../shared/api/driveApi'
 import { useApp } from '../../features/auth/model'
 import { DEFAULT_SIGNUP_TEAM_NAME } from '../../shared/lib/team'
+import { canAccessDrive } from '../../shared/lib/permissions'
+import { EmptyState } from '../../shared/ui/EmptyState'
 import { Toast } from '../../shared/ui/Toast'
 import './drive.css'
 
@@ -13,15 +15,21 @@ export function Drive() {
   const [uploading, setUploading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const driveAccessible = canAccessDrive(state.currentUser)
 
   const sortFilesByNewest = (items: DriveFile[]) =>
     [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   useEffect(() => {
+    if (!driveAccessible) {
+      setFiles([])
+      return
+    }
+
     getFiles()
       .then((items) => setFiles(sortFilesByNewest(items)))
       .catch(() => setErrorMessage('파일 목록을 불러오지 못했습니다'))
-  }, [])
+  }, [driveAccessible, state.currentUser?.id])
 
   const isNewHireTeam = (state.currentUser?.team ?? '') === DEFAULT_SIGNUP_TEAM_NAME
 
@@ -96,6 +104,16 @@ export function Drive() {
       {errorMessage && (
         <Toast message={errorMessage} type="error" onClose={() => setErrorMessage(null)} />
       )}
+
+      {!driveAccessible ? (
+        <div className="drive-content glass">
+          <EmptyState
+            title="신입 팀은 드라이브를 사용할 수 없습니다."
+            description="최신 정책에 따라 신입 팀 계정은 공용 드라이브 조회와 업로드가 모두 제한됩니다. 필요한 자료는 관리자나 팀장에게 요청해 주세요."
+          />
+        </div>
+      ) : (
+        <>
 
       <header className="drive-header">
         <div className="drive-header-copy">
@@ -244,6 +262,8 @@ export function Drive() {
           )}
         </section>
       </div>
+        </>
+      )}
     </div>
   )
 }

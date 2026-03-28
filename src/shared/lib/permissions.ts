@@ -1,4 +1,5 @@
 import type { User } from '../../entities/user/model/types'
+import { DEFAULT_SIGNUP_TEAM_NAME } from './team'
 
 type MaybeUser = Pick<User, 'id' | 'role' | 'team'> | null | undefined
 type MaybeTargetUser = Pick<User, 'id' | 'role' | 'team' | 'status'> | null | undefined
@@ -9,6 +10,11 @@ export function canAccessAdmin(user: MaybeUser) {
 
 export function canAccessTeamManagement(user: MaybeUser) {
   return user?.role === 'TEAM_LEAD'
+}
+
+export function canAccessDrive(user: MaybeUser) {
+  if (!user) return true
+  return user.team !== DEFAULT_SIGNUP_TEAM_NAME
 }
 
 export function canManageMemberRoles(user: MaybeUser) {

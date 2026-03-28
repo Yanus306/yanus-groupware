@@ -1,7 +1,7 @@
 import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon, ArrowLeftRight } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
-import { canAccessAdmin, canAccessTeamManagement } from '../../shared/lib/permissions'
+import { canAccessAdmin, canAccessDrive, canAccessTeamManagement } from '../../shared/lib/permissions'
 import { useTheme } from '../../shared/theme'
 import logoImg from '../../assets/logo.png'
 import './Layout.css'
@@ -25,8 +25,9 @@ export function Layout() {
   const { currentUser } = state
   const canSeeAdmin = canAccessAdmin(currentUser)
   const canSeeTeamManagement = canAccessTeamManagement(currentUser)
+  const canSeeDrive = canAccessDrive(currentUser)
   const visibleNavItems = [
-    ...navItems,
+    ...navItems.filter((item) => item.to !== '/drive' || canSeeDrive),
     ...(canSeeTeamManagement ? [{ to: '/team-management', icon: ArrowLeftRight, label: '팀 관리' }] : []),
   ]
   const currentNav = visibleNavItems.find(({ to }) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)))
