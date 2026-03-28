@@ -64,7 +64,7 @@
 .chat-msg.user {
   align-self: flex-end;
   background: var(--accent-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
 }
 
 .chat-msg.ai {

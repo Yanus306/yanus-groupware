@@ -26,9 +26,9 @@
   position: relative;
   z-index: 1;
   box-shadow:
-    0 0 0 1px rgba(124, 58, 237, 0.18),
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    0 4px 16px rgba(124, 58, 237, 0.12);
+    0 0 0 1px color-mix(in srgb, var(--accent-purple) 18%, transparent),
+    var(--shadow-strong),
+    0 4px 16px color-mix(in srgb, var(--accent-purple) 12%, transparent);
 }
 
 .register-logo {
@@ -118,10 +118,10 @@
   align-items: center;
   gap: 8px;
   padding: 11px 14px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.28);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 24%, transparent);
   border-radius: 8px;
-  color: #fca5a5;
+  color: var(--error);
   font-size: 0.85rem;
   line-height: 1.4;
 }
@@ -148,7 +148,29 @@
 }
 
 .register-footer a:hover {
-  color: #c4b5fd;
+  color: var(--accent-purple);
+}
+
+:root[data-theme='light'] .register-page::after {
+  background:
+    radial-gradient(ellipse 72% 58% at 12% 18%, rgba(107, 79, 196, 0.14), transparent),
+    radial-gradient(ellipse 55% 55% at 84% 82%, rgba(59, 130, 246, 0.12), transparent),
+    radial-gradient(ellipse 40% 40% at 50% 8%, rgba(16, 185, 129, 0.08), transparent);
+}
+
+:root[data-theme='light'] .register-card {
+  box-shadow:
+    0 0 0 1px rgba(107, 79, 196, 0.12),
+    0 24px 52px rgba(97, 114, 150, 0.18),
+    0 6px 18px rgba(107, 79, 196, 0.08);
+}
+
+:root[data-theme='light'] .register-logo-img {
+  filter: drop-shadow(0 8px 18px rgba(107, 79, 196, 0.16));
+}
+
+:root[data-theme='light'] .register-btn {
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.16);
 }
 
 @media (max-width: 480px) {

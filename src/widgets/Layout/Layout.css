@@ -149,7 +149,7 @@
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
-  padding: 24px 28px 28px;
+  padding: 24px var(--page-shell-padding) 28px;
   min-height: 100vh;
   height: auto;
   display: flex;
@@ -185,6 +185,7 @@
 .content-body {
   flex: 1;
   min-height: 0;
+  width: 100%;
 }
 
 .sidebar-bottom {

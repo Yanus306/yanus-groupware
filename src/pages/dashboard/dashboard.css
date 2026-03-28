@@ -1,14 +1,16 @@
 .dashboard {
-  max-width: 1200px;
+  width: 100%;
+  max-width: var(--page-max-ultra);
   min-height: calc(100vh - 180px);
   height: auto;
   display: flex;
   flex-direction: column;
+  margin: 0 auto;
 }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 240px 1fr 1fr;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1.12fr) minmax(0, 1fr);
   grid-template-rows: 1fr 1fr;
   gap: 20px;
   flex: 1;
@@ -224,6 +226,17 @@
   grid-column: 3;
   grid-row: 2;
   min-height: 160px;
+}
+
+@media (min-width: 1680px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1.18fr) minmax(0, 1.02fr);
+    gap: 24px;
+  }
+
+  .card {
+    padding: 24px 26px;
+  }
 }
 
 .card {

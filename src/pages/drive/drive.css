@@ -1,8 +1,10 @@
 .drive-page {
-  max-width: 1180px;
+  width: 100%;
+  max-width: var(--page-max-wide);
   display: flex;
   flex-direction: column;
   gap: 24px;
+  margin: 0 auto;
 }
 
 .drive-header {
@@ -106,7 +108,7 @@
 
 .drive-layout {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: var(--panel-width-md) minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -202,7 +204,14 @@
 }
 
 .drive-content {
-  padding: 24px;
+  padding: clamp(22px, 1.8vw, 28px);
+}
+
+@media (min-width: 1680px) {
+  .drive-layout {
+    grid-template-columns: var(--panel-width-lg) minmax(0, 1fr);
+    gap: 24px;
+  }
 }
 
 .drive-section-head {
