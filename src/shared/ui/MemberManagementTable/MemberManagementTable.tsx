@@ -73,8 +73,8 @@ export function MemberManagementTable({
             <th>프로필</th>
             <th>팀</th>
             <th>역할</th>
-            {showStatus && <th>상태</th>}
-            {showActions && <th>관리</th>}
+            {showStatus && <th className="member-table-heading-center">상태</th>}
+            {showActions && <th className="member-table-heading-center">관리</th>}
           </tr>
         </thead>
         <tbody>
