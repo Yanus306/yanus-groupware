@@ -26,6 +26,8 @@
   --bg-soft: rgba(255, 255, 255, 0.06);
   --bg-soft-strong: rgba(255, 255, 255, 0.1);
   --bg-input: rgba(10, 14, 28, 0.42);
+  --surface-elevated: rgba(26, 31, 51, 0.9);
+  --surface-muted: rgba(255, 255, 255, 0.08);
   --bg-sidebar: rgba(11, 15, 28, 0.88);
   --bg-sidebar-solid: #101426;
   --bg-overlay: rgba(6, 10, 22, 0.62);
@@ -36,6 +38,7 @@
   --text-primary: #edf1ff;
   --text-secondary: #a8b4d3;
   --text-muted: #72809d;
+  --text-tertiary: #8d9ab7;
   --text-on-accent: #f8f7ff;
   --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.24);
   --shadow-strong: 0 24px 80px rgba(0, 0, 0, 0.34);
@@ -56,6 +59,8 @@
   --bg-soft: rgba(77, 92, 132, 0.1);
   --bg-soft-strong: rgba(77, 92, 132, 0.18);
   --bg-input: rgba(244, 247, 253, 0.98);
+  --surface-elevated: rgba(255, 255, 255, 0.98);
+  --surface-muted: rgba(84, 102, 146, 0.08);
   --bg-sidebar: rgba(248, 251, 255, 0.94);
   --bg-sidebar-solid: #f8fbff;
   --bg-overlay: rgba(73, 88, 126, 0.18);
@@ -66,6 +71,7 @@
   --text-primary: #19243d;
   --text-secondary: #4f5f7f;
   --text-muted: #6f7d99;
+  --text-tertiary: #8692ad;
   --text-on-accent: #ffffff;
   --shadow-soft: 0 18px 40px rgba(97, 114, 150, 0.16);
   --shadow-strong: 0 24px 64px rgba(97, 114, 150, 0.24);

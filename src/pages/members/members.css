@@ -478,7 +478,7 @@
 .confirm-btn {
   padding: 10px 24px;
   background: var(--gradient-purple);
-  color: var(--text-primary);
+  color: var(--text-on-accent);
   border-radius: 8px;
   font-weight: 600;
 }
