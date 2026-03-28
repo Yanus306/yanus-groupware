@@ -113,7 +113,7 @@ describe('Admin 페이지', () => {
     renderAdmin()
     await user.click(screen.getByRole('button', { name: '멤버 관리' }))
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: '비활성화' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: '활성화' }).length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('관리 메뉴 열기').length).toBeGreaterThan(0)
   })
 
@@ -127,7 +127,7 @@ describe('Admin 페이지', () => {
     const scoped = within(selfRow as HTMLTableRowElement)
 
     expect(scoped.getByText('관리 불가')).toBeInTheDocument()
-    expect(scoped.queryByRole('button', { name: '비활성화' })).not.toBeInTheDocument()
+    expect(scoped.queryByRole('button', { name: '활성화' })).not.toBeInTheDocument()
     expect(scoped.queryByLabelText('관리 메뉴 열기')).not.toBeInTheDocument()
   })
 
