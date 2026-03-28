@@ -224,6 +224,16 @@
   transform: translateY(-1px);
 }
 
+.save-btn:disabled,
+.danger-btn:disabled,
+.danger-confirm-btn:disabled,
+.danger-cancel-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
 .password-error {
   color: var(--error);
   font-size: 13px;
@@ -535,6 +545,18 @@
   color: #6f7d99;
 }
 
+:root[data-theme='light'] .save-btn {
+  background: linear-gradient(135deg, #6f57c5 0%, #8e69d9 100%);
+  color: #ffffff;
+  box-shadow: 0 16px 30px rgba(107, 79, 196, 0.22);
+}
+
+:root[data-theme='light'] .save-btn:disabled {
+  background: rgba(107, 79, 196, 0.18);
+  color: #4d3f8d;
+  border: 1px solid rgba(107, 79, 196, 0.14);
+}
+
 :root[data-theme='light'] .theme-option-card {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(84, 102, 146, 0.16);
@@ -575,6 +597,17 @@
 :root[data-theme='light'] .danger-cancel-btn {
   background: rgba(84, 102, 146, 0.08);
   color: #4f5f7f;
+}
+
+:root[data-theme='light'] .danger-btn:disabled,
+:root[data-theme='light'] .danger-confirm-btn:disabled {
+  background: rgba(239, 68, 68, 0.1);
+  color: rgba(180, 35, 24, 0.7);
+}
+
+:root[data-theme='light'] .danger-cancel-btn:disabled {
+  background: rgba(84, 102, 146, 0.06);
+  color: rgba(79, 95, 127, 0.72);
 }
 
 @media (max-width: 1080px) {
