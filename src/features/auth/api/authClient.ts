@@ -37,6 +37,9 @@ export async function login(email: string, password: string): Promise<string> {
     if (err instanceof ApiError && err.code === 'MEMBER_INACTIVE') {
       throw new Error('비활성화된 계정입니다. 관리자에게 문의해 주세요')
     }
+    if (err instanceof ApiError && err.code === 'ACCOUNT_LOCKED') {
+      throw new Error('로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요')
+    }
     throw err
   }
 }

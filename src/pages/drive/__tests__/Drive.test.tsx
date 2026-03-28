@@ -43,16 +43,14 @@ describe('Drive 페이지', () => {
     expect(screen.getByText('일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.')).toBeInTheDocument()
   })
 
-  it('신입 팀은 업로드 버튼이 비활성화된다', () => {
+  it('신입 팀은 드라이브 자체에 접근할 수 없다', () => {
     mockCurrentUserTeam = '신입'
 
     render(<Drive />)
 
-    expect(screen.getAllByRole('button', { name: '신입 팀은 업로드 불가' })).toHaveLength(2)
-    screen.getAllByRole('button', { name: '신입 팀은 업로드 불가' }).forEach((button) => {
-      expect(button).toBeDisabled()
-    })
-    expect(screen.getByText('신입 팀은 공유 드라이브를 조회만 할 수 있고 파일 업로드는 제한됩니다.')).toBeInTheDocument()
+    expect(screen.getByText('신입 팀은 드라이브를 사용할 수 없습니다.')).toBeInTheDocument()
+    expect(screen.getByText('최신 정책에 따라 신입 팀 계정은 공용 드라이브 조회와 업로드가 모두 제한됩니다. 필요한 자료는 관리자나 팀장에게 요청해 주세요.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /업로드/ })).not.toBeInTheDocument()
   })
 
   it('업로드 버튼이 렌더링된다', () => {

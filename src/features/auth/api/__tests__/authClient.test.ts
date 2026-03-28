@@ -19,6 +19,12 @@ const server = setupServer(
         { status: 403 },
       )
     }
+    if (body.email === 'locked@yanus.kr' && body.password === 'password') {
+      return HttpResponse.json(
+        { code: 'ACCOUNT_LOCKED', message: '로그인 5회 실패로 계정이 잠겼습니다', data: null },
+        { status: 403 },
+      )
+    }
     return HttpResponse.json(
       { code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다', data: null },
       { status: 401 },
@@ -69,6 +75,12 @@ describe('authClient', () => {
     it('비활성 계정이면 전용 안내 문구를 반환한다', async () => {
       await expect(login('inactive@yanus.kr', 'password')).rejects.toThrow(
         '비활성화된 계정입니다. 관리자에게 문의해 주세요',
+      )
+    })
+
+    it('계정 잠금 상태면 전용 안내 문구를 반환한다', async () => {
+      await expect(login('locked@yanus.kr', 'password')).rejects.toThrow(
+        '로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요',
       )
     })
   })

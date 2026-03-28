@@ -297,6 +297,13 @@
   border-color: rgba(239, 68, 68, 0.2);
 }
 
+.admin-team-delete-btn:disabled {
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .admin-role-tag {
   display: inline-flex;
   align-items: center;
@@ -317,6 +324,61 @@
   gap: 8px;
   align-items: start;
   justify-content: start;
+}
+
+.admin-audit-table-wrap {
+  margin-top: 18px;
+}
+
+.admin-audit-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.admin-audit-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-audit-table td {
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.admin-audit-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-audit-time-col {
+  width: 140px;
+}
+
+.admin-audit-actor-col,
+.admin-audit-action-col,
+.admin-audit-target-col {
+  width: 110px;
+}
+
+.admin-audit-before-col,
+.admin-audit-after-col {
+  width: 180px;
+}
+
+:root[data-theme='light'] .admin-audit-table th {
+  border-bottom-color: rgba(84, 102, 146, 0.14);
+}
+
+:root[data-theme='light'] .admin-audit-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.1);
 }
 
 .admin-status-cell {

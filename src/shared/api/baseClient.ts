@@ -29,11 +29,31 @@ function handleUnauthorized(message = '세션이 만료되어 다시 로그인�
   window.location.href = '/login'
 }
 
-let refreshPromise: Promise<boolean> | null = null
+function getRefreshFailureMessage(code = '') {
+  switch (code) {
+    case 'TOKEN_REUSED':
+      return '보안을 위해 모든 세션이 종료되었습니다. 다시 로그인해 주세요'
+    case 'REFRESH_TOKEN_NOT_FOUND':
+      return '로그인 정보가 만료되었습니다. 다시 로그인해 주세요'
+    case 'EXPIRED_TOKEN':
+      return '세션이 만료되어 다시 로그인해 주세요'
+    default:
+      return '세션이 만료되어 다시 로그인해 주세요'
+  }
+}
 
-async function tryRefreshToken(): Promise<boolean> {
+interface RefreshResult {
+  ok: boolean
+  message?: string
+}
+
+let refreshPromise: Promise<RefreshResult> | null = null
+
+async function tryRefreshToken(): Promise<RefreshResult> {
   const refreshToken = getRefreshToken()
-  if (!refreshToken) return false
+  if (!refreshToken) {
+    return { ok: false, message: '로그인 정보가 만료되었습니다. 다시 로그인해 주세요' }
+  }
 
   if (!refreshPromise) {
     refreshPromise = (async () => {
@@ -47,8 +67,15 @@ async function tryRefreshToken(): Promise<boolean> {
         })
 
         if (!res.ok) {
+          let code = ''
+          try {
+            const body = await res.json() as { code?: string }
+            code = body.code ?? ''
+          } catch {
+            // Ignore non-JSON errors.
+          }
           clearAuthTokens()
-          return false
+          return { ok: false, message: getRefreshFailureMessage(code) }
         }
 
         const body = await res.json() as unknown
@@ -62,14 +89,14 @@ async function tryRefreshToken(): Promise<boolean> {
 
         if (!data?.accessToken || !data?.refreshToken) {
           clearAuthTokens()
-          return false
+          return { ok: false, message: '로그인 정보가 만료되었습니다. 다시 로그인해 주세요' }
         }
 
         storeAuthTokens(data)
-        return true
+        return { ok: true }
       } catch {
         clearAuthTokens()
-        return false
+        return { ok: false, message: '세션이 만료되어 다시 로그인해 주세요' }
       } finally {
         refreshPromise = null
       }
@@ -102,10 +129,10 @@ async function request<T>(path: string, options: RequestInit = {}, canRetry = tr
     }
     if (res.status === 401 && hasAuthToken && canRetry) {
       const refreshed = await tryRefreshToken()
-      if (refreshed) {
+      if (refreshed.ok) {
         return request<T>(path, options, false)
       }
-      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
+      handleUnauthorized(refreshed.message)
     }
     throw new ApiError(res.status, message, code)
   }
@@ -131,10 +158,10 @@ async function requestBlob(path: string, canRetry = true): Promise<Blob> {
   if (res.status === 401) {
     if (hasAuthToken && canRetry) {
       const refreshed = await tryRefreshToken()
-      if (refreshed) {
+      if (refreshed.ok) {
         return requestBlob(path, false)
       }
-      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
+      handleUnauthorized(refreshed.message)
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
@@ -152,10 +179,10 @@ async function requestUpload<T>(path: string, formData: FormData, canRetry = tru
   if (res.status === 401) {
     if (hasAuthToken && canRetry) {
       const refreshed = await tryRefreshToken()
-      if (refreshed) {
+      if (refreshed.ok) {
         return requestUpload<T>(path, formData, false)
       }
-      handleUnauthorized('세션이 만료되어 다시 로그인해 주세요')
+      handleUnauthorized(refreshed.message)
     }
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }

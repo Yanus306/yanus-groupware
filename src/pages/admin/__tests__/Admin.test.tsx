@@ -29,6 +29,19 @@ const mockRecords = [
   },
 ]
 
+const mockAuditLogs = [
+  {
+    id: 1,
+    actorId: 99,
+    actorRole: 'ADMIN',
+    targetId: 2,
+    action: 'TEAM_CHANGE',
+    previousValue: '1팀',
+    newValue: '2팀',
+    createdAt: '2026-03-29T10:00:00',
+  },
+]
+
 const server = setupServer(
   http.get('/api/v1/auth/me', () =>
     HttpResponse.json({
@@ -52,8 +65,12 @@ const server = setupServer(
         { id: 2, name: '2팀' },
         { id: 3, name: '3팀' },
         { id: 4, name: '4팀' },
+        { id: 5, name: '신입' },
       ],
     }),
+  ),
+  http.get('/api/v1/audit-logs', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockAuditLogs }),
   ),
 )
 
@@ -72,6 +89,7 @@ function AdminBootstrap({ children }: { children: ReactNode }) {
       { id: 2, name: '2팀' },
       { id: 3, name: '3팀' },
       { id: 4, name: '4팀' },
+      { id: 5, name: '신입' },
     ])
   }, [loadMembers, loadTeams, loadUser])
 
@@ -106,6 +124,7 @@ describe('Admin 페이지', () => {
     renderAdmin()
     expect(screen.getByRole('button', { name: '멤버 관리' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '팀 관리' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '감사 로그' })).toBeInTheDocument()
   })
 
   it('멤버 관리 탭 클릭 시 멤버 테이블이 표시된다', async () => {
@@ -168,5 +187,28 @@ describe('Admin 페이지', () => {
       expect(screen.getByText('이서연')).toBeInTheDocument()
     })
     expect(screen.queryByText('김민준')).not.toBeInTheDocument()
+  })
+
+  it('감사 로그 탭 클릭 시 로그 테이블이 표시된다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '감사 로그' }))
+
+    expect(await screen.findByRole('heading', { name: '감사 로그' })).toBeInTheDocument()
+    expect(screen.getByText('팀 변경')).toBeInTheDocument()
+    expect(screen.getByText('2팀')).toBeInTheDocument()
+  })
+
+  it('팀 관리 탭에서 신입 팀 삭제 버튼은 비활성화된다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '팀 관리' }))
+
+    const recruitCard = screen.getByText('신입').closest('article')
+    expect(recruitCard).not.toBeNull()
+
+    const scoped = within(recruitCard as HTMLElement)
+    expect(scoped.getByRole('button', { name: '삭제 불가' })).toBeDisabled()
+    expect(scoped.getByText('신입 팀은 신규 가입자의 기본 배정 팀이라 삭제할 수 없습니다.')).toBeInTheDocument()
   })
 })
