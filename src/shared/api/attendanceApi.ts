@@ -17,6 +17,11 @@ export const getMyAttendance = () =>
 export const getAttendanceByDate = (date: string) =>
   baseClient.get<AttendanceRecord[]>(`/api/v1/attendances?date=${date}`)
 
+export const getAttendanceByDates = async (dates: string[]) => {
+  const responses = await Promise.all(dates.map((date) => getAttendanceByDate(date)))
+  return responses.flat()
+}
+
 export const clockIn = () =>
   baseClient.post<AttendanceRecord>('/api/v1/attendances/check-in', {})
 

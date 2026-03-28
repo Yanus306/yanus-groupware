@@ -5,6 +5,7 @@ import { SetWorkDaysPersonal, TeamAttendanceStatus, TeamWorkSchedulePanel } from
 import { LeaveSection } from '../../features/leave/ui/LeaveSection'
 import {
   getAttendanceByDate,
+  getAttendanceByDates,
   getMyAttendance,
   getAllWorkSchedules,
   getTeamWorkSchedules,
@@ -15,6 +16,14 @@ import { sortUsersByTeamAndName } from '../../shared/lib/team'
 import { DataTableScroll, DataTableSection } from '../../shared/ui/DataTableSection'
 import { Toast } from '../../shared/ui/Toast'
 import { canViewManagedAttendance } from '../../shared/lib/permissions'
+import {
+  formatDateRangeLabel,
+  formatDateRangeToken,
+  getDateStringsBetween,
+  getMonthRange,
+  getTodayStr,
+  getWeekRange,
+} from '../../shared/lib/date'
 import './attendance.css'
 
 const DAY_LABELS: Record<string, string> = {
@@ -42,18 +51,48 @@ const ATTENDANCE_STATUS_LABEL = {
   WORKING: '근무 중',
 } as const
 
+function dedupeAndSortRecords(records: AttendanceRecord[]) {
+  const unique = new Map<string, AttendanceRecord>()
+  records.forEach((record) => {
+    unique.set(`${record.id}-${record.memberId}-${record.workDate}`, record)
+  })
+
+  return Array.from(unique.values()).sort((left, right) => {
+    if (left.workDate !== right.workDate) {
+      return right.workDate.localeCompare(left.workDate)
+    }
+    const nameOrder = left.memberName.localeCompare(right.memberName, 'ko')
+    if (nameOrder !== 0) {
+      return nameOrder
+    }
+    return right.id - left.id
+  })
+}
+
 export function Attendance() {
   const { state } = useApp()
   const [filter, setFilter] = useState<'week' | 'month' | 'custom'>('month')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [todayRecords, setTodayRecords] = useState<AttendanceRecord[]>([])
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
   const [teamSchedules, setTeamSchedules] = useState<MemberWorkScheduleItem[]>([])
   const [page, setPage] = useState(1)
-  const [dateInput, setDateInput] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [activeRange, setActiveRange] = useState(() => {
+    const today = getTodayStr()
+    const monthRange = getMonthRange(today)
+    return {
+      start: monthRange.start,
+      end: monthRange.end,
+      label: formatDateRangeLabel(monthRange.start, monthRange.end),
+      token: formatDateRangeToken(monthRange.start, monthRange.end),
+    }
+  })
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const PAGE_SIZE = 10
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = getTodayStr()
   const isAdmin = state.currentUser?.role === 'ADMIN'
   const canSeeManagedAttendance = canViewManagedAttendance(state.currentUser)
   const members = sortUsersByTeamAndName(
@@ -61,6 +100,12 @@ export function Attendance() {
       ? state.users.filter((member) => member.team === state.currentUser?.team)
       : state.users,
   )
+  const usersScopeKey = state.users
+    .map((member) => `${member.id}:${member.team}:${member.status}:${member.role}`)
+    .join('|')
+  const teamsScopeKey = state.teams
+    .map((team) => `${team.id}:${team.name}`)
+    .join('|')
 
   const loadTeamSchedules = async () => {
     if (!canSeeManagedAttendance || !state.currentUser) return
@@ -86,34 +131,76 @@ export function Attendance() {
     }
   }
 
-  const loadManagedAttendance = async (targetDate: string) => {
+  const filterRecordsByScope = (attendanceList: AttendanceRecord[]) => {
+    if (!canSeeManagedAttendance || !state.currentUser) return
+
+    if (state.currentUser.role === 'ADMIN') {
+      return dedupeAndSortRecords(attendanceList)
+    }
+
+    const currentTeam = state.currentUser.team
+    const memberIds = new Set(
+      state.users
+        .filter((member) => member.team === currentTeam)
+        .map((member) => Number(member.id)),
+    )
+
+    return dedupeAndSortRecords(attendanceList.filter((record) => memberIds.has(record.memberId)))
+  }
+
+  const loadTodayManagedAttendance = async () => {
     if (!canSeeManagedAttendance || !state.currentUser) return
 
     try {
-      const attendanceList = await getAttendanceByDate(targetDate)
-      if (state.currentUser.role === 'ADMIN') {
-        setRecords(attendanceList)
-        return
-      }
+      const attendanceList = await getAttendanceByDate(todayStr)
+      setTodayRecords(filterRecordsByScope(attendanceList) ?? [])
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '오늘 출퇴근 기록을 불러오지 못했습니다')
+    }
+  }
 
-      const currentTeam = state.currentUser.team
-      const memberIds = new Set(
-        state.users
-          .filter((member) => member.team === currentTeam)
-          .map((member) => Number(member.id)),
-      )
-      setRecords(attendanceList.filter((record) => memberIds.has(record.memberId)))
+  const loadManagedAttendanceRange = async (startDate: string, endDate: string) => {
+    if (!canSeeManagedAttendance || !state.currentUser) return
+
+    try {
+      const dates = getDateStringsBetween(startDate, endDate)
+      const attendanceList = await getAttendanceByDates(dates)
+      setRecords(filterRecordsByScope(attendanceList) ?? [])
+      setActiveRange({
+        start: startDate,
+        end: endDate,
+        label: formatDateRangeLabel(startDate, endDate),
+        token: formatDateRangeToken(startDate, endDate),
+      })
+      setPage(1)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '출퇴근 기록을 불러오지 못했습니다')
     }
   }
 
-  // 관리자/팀장: 날짜별 관리 대상 기록 + 멤버 목록
   useEffect(() => {
-    loadManagedAttendance(todayStr)
-  }, [canSeeManagedAttendance, todayStr, state.currentUser?.id, state.currentUser?.team, state.users])
+    loadTodayManagedAttendance()
+  }, [canSeeManagedAttendance, todayStr, state.currentUser?.id, state.currentUser?.team, usersScopeKey])
 
-  // 일반 사용자: 내 출퇴근 기록 전체 이력
+  useEffect(() => {
+    if (!canSeeManagedAttendance) return
+
+    if (filter === 'week') {
+      const range = getWeekRange(todayStr)
+      setDateFrom(range.start)
+      setDateTo(range.end)
+      loadManagedAttendanceRange(range.start, range.end)
+      return
+    }
+
+    if (filter === 'month') {
+      const range = getMonthRange(todayStr)
+      setDateFrom(range.start)
+      setDateTo(range.end)
+      loadManagedAttendanceRange(range.start, range.end)
+    }
+  }, [filter, canSeeManagedAttendance, todayStr, state.currentUser?.id, state.currentUser?.team, usersScopeKey])
+
   useEffect(() => {
     getMyAttendance()
       .then(setMyRecords)
@@ -122,9 +209,8 @@ export function Attendance() {
 
   useEffect(() => {
     loadTeamSchedules()
-  }, [canSeeManagedAttendance, state.currentUser, state.teams])
+  }, [canSeeManagedAttendance, state.currentUser?.id, state.currentUser?.role, state.currentUser?.team, teamsScopeKey])
 
-  const todayRecords = records.filter((r) => r.workDate === todayStr)
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
   const pageRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -134,8 +220,17 @@ export function Attendance() {
   }
 
   const handleDateFilter = () => {
-    if (!dateInput) return
-    loadManagedAttendance(dateInput)
+    if (!dateFrom || !dateTo) {
+      setErrorMessage('조회 시작일과 종료일을 모두 선택해 주세요')
+      return
+    }
+
+    if (dateFrom > dateTo) {
+      setErrorMessage('시작일이 종료일보다 늦을 수 없습니다')
+      return
+    }
+
+    loadManagedAttendanceRange(dateFrom, dateTo)
   }
 
   const handleExport = () => {
@@ -149,7 +244,7 @@ export function Attendance() {
         clockOut: r.checkOutTime?.slice(11, 16),
         status: r.status === 'LEFT' ? 'done' : 'working',
       })),
-      todayStr
+      activeRange.token
     )
   }
 
@@ -169,7 +264,7 @@ export function Attendance() {
               CSV 내보내기
             </button>
           )}
-          <div className="date-range glass">{todayStr}</div>
+          <div className="date-range glass">{activeRange.label}</div>
           <div className="filter-tabs">
             <button className={filter === 'week' ? 'active' : ''} onClick={() => setFilter('week')}>
               이번 주
@@ -177,7 +272,16 @@ export function Attendance() {
             <button className={filter === 'month' ? 'active' : ''} onClick={() => setFilter('month')}>
               이번 달
             </button>
-            <button className={filter === 'custom' ? 'active' : ''} onClick={() => setFilter('custom')}>
+            <button
+              className={filter === 'custom' ? 'active' : ''}
+              onClick={() => {
+                if (!dateFrom || !dateTo) {
+                  setDateFrom(todayStr)
+                  setDateTo(todayStr)
+                }
+                setFilter('custom')
+              }}
+            >
               직접 선택
             </button>
           </div>
@@ -185,9 +289,18 @@ export function Attendance() {
             <div className="custom-date-filter">
               <input
                 type="date"
-                value={dateInput}
-                onChange={(e) => setDateInput(e.target.value)}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
                 className="date-input"
+                aria-label="조회 시작일"
+              />
+              <span className="date-range-separator">~</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="date-input"
+                aria-label="조회 종료일"
               />
               <button className="filter-apply-btn" onClick={handleDateFilter}>조회</button>
             </div>
@@ -198,7 +311,7 @@ export function Attendance() {
       <div className="attendance-content">
         {canSeeManagedAttendance && members.length > 0 && (
           <section className="team-status-section glass">
-            <TeamAttendanceStatus members={members} records={records} date={todayStr} />
+            <TeamAttendanceStatus members={members} records={todayRecords} date={todayStr} />
           </section>
         )}
 
@@ -219,7 +332,7 @@ export function Attendance() {
             <DataTableSection
               className="records-section"
               title="출퇴근 기록"
-              description="관리 대상 멤버의 근무 일정과 출퇴근 상태를 날짜 기준으로 확인합니다."
+              description={`${activeRange.label} 기준으로 관리 대상 멤버의 근무 일정과 출퇴근 상태를 확인합니다.`}
             >
               <DataTableScroll className="records-table-wrap">
                 <table className="records-table">

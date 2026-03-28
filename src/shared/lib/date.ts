@@ -3,6 +3,69 @@ export function getTodayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+export function toDateString(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+export function parseDateString(dateStr: string): Date {
+  return new Date(`${dateStr}T12:00:00`)
+}
+
+export function getWeekRange(baseDateStr: string): { start: string; end: string } {
+  const baseDate = parseDateString(baseDateStr)
+  const start = new Date(baseDate)
+  const day = start.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  start.setDate(start.getDate() + diffToMonday)
+
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+
+  return {
+    start: toDateString(start),
+    end: toDateString(end),
+  }
+}
+
+export function getMonthRange(baseDateStr: string): { start: string; end: string } {
+  const baseDate = parseDateString(baseDateStr)
+  const start = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1, 12)
+  const end = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0, 12)
+
+  return {
+    start: toDateString(start),
+    end: toDateString(end),
+  }
+}
+
+export function getDateStringsBetween(startDateStr: string, endDateStr: string): string[] {
+  const start = parseDateString(startDateStr)
+  const end = parseDateString(endDateStr)
+  const dates: string[] = []
+  const cursor = new Date(start)
+
+  while (cursor <= end) {
+    dates.push(toDateString(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return dates
+}
+
+export function formatDateRangeLabel(startDateStr: string, endDateStr: string): string {
+  if (startDateStr === endDateStr) {
+    return startDateStr
+  }
+  return `${startDateStr} ~ ${endDateStr}`
+}
+
+export function formatDateRangeToken(startDateStr: string, endDateStr: string): string {
+  if (startDateStr === endDateStr) {
+    return startDateStr
+  }
+  return `${startDateStr}_to_${endDateStr}`
+}
+
 export function formatDateDisplay(dateStr: string, baseDate: Date): string {
   const d = new Date(dateStr + 'T12:00:00')
   const today = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate())
