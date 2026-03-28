@@ -46,6 +46,12 @@
   --nav-hover: rgba(138, 114, 216, 0.12);
   --nav-active: rgba(138, 114, 216, 0.2);
   --bg-dark: var(--bg-app);
+  --page-max-regular: 1200px;
+  --page-max-wide: 1480px;
+  --page-max-ultra: 1760px;
+  --page-shell-padding: clamp(20px, 2vw, 36px);
+  --panel-width-md: clamp(280px, 20vw, 340px);
+  --panel-width-lg: clamp(300px, 24vw, 380px);
 }
 
 :root[data-theme='light'] {

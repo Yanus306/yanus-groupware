@@ -1,5 +1,6 @@
 .admin-page {
-  max-width: 1200px;
+  width: 100%;
+  max-width: var(--page-max-wide);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -97,7 +98,7 @@
 /* ── 탭 콘텐츠 ── */
 .admin-tab-content {
   border-radius: 16px;
-  padding: 24px;
+  padding: clamp(22px, 1.8vw, 28px);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -245,6 +246,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+}
+
+@media (min-width: 1680px) {
+  .admin-team-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
 }
 
 .admin-team-card {

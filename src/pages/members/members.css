@@ -1,6 +1,7 @@
 .members-page {
-  max-width: 1400px;
+  max-width: var(--page-max-ultra);
   width: 100%;
+  margin: 0 auto;
 }
 
 .members-header {
@@ -105,16 +106,23 @@
 
 .members-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) var(--panel-width-md);
   gap: 24px;
   align-items: start;
 }
 
 .table-section {
-  padding: 24px;
+  padding: clamp(22px, 1.8vw, 28px);
   overflow: hidden;
   overflow-y: hidden;
   min-width: 0;
+}
+
+@media (min-width: 1680px) {
+  .members-content {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 21vw, 380px);
+    gap: 28px;
+  }
 }
 
 .table-section h3 {
