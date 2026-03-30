@@ -263,6 +263,7 @@ export function Dashboard() {
             {status === 'idle' && !isLoading && (
               <span className="clock-hint">클릭하여 출근</span>
             )}
+            <span className="clock-policy-note">출근은 220.69 대역 IP에서만 가능합니다.</span>
             {status === 'working' && clockIn && (
               <span className="clock-checkin-time">
                 출근 {formatMessageTime(clockIn)}
@@ -281,6 +282,16 @@ export function Dashboard() {
                 disabled={isLoading}
               >
                 퇴근하기
+              </button>
+            )}
+            {status === 'done' && !isLoading && (
+              <button
+                type="button"
+                className="clock-reset-btn"
+                onClick={handleClockClick}
+                disabled={isLoading}
+              >
+                출근 내역 초기화
               </button>
             )}
           </div>

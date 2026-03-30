@@ -146,6 +146,13 @@
   line-height: 1.5;
 }
 
+.clock-policy-note {
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.5;
+}
+
 .attendance-alert-card {
   width: 100%;
   display: grid;
@@ -187,11 +194,9 @@
   font-weight: 700;
 }
 
-.clockout-btn {
+.clockout-btn,
+.clock-reset-btn {
   padding: 8px 24px;
-  background: rgba(219, 92, 99, 0.14);
-  color: var(--error);
-  border: 1px solid rgba(219, 92, 99, 0.28);
   border-radius: 20px;
   font-size: 0.88rem;
   font-weight: 600;
@@ -200,12 +205,30 @@
   width: 100%;
 }
 
+.clockout-btn {
+  background: rgba(219, 92, 99, 0.14);
+  color: var(--error);
+  border: 1px solid rgba(219, 92, 99, 0.28);
+}
+
 .clockout-btn:hover:not(:disabled) {
   background: rgba(219, 92, 99, 0.18);
   border-color: rgba(219, 92, 99, 0.42);
 }
 
-.clockout-btn:disabled {
+.clock-reset-btn {
+  background: color-mix(in srgb, var(--surface-muted) 84%, transparent);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.clock-reset-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface-muted) 94%, transparent);
+  border-color: color-mix(in srgb, var(--accent-purple) 24%, var(--border-color));
+}
+
+.clockout-btn:disabled,
+.clock-reset-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
