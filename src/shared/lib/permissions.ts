@@ -77,5 +77,5 @@ export function canViewAllWorkSchedules(user: MaybeUser) {
 }
 
 export function canViewTeamWorkSchedules(user: MaybeUser) {
-  return canAccessAdmin(user) || canAccessTeamManagement(user)
+  return Boolean(user)
 }

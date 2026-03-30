@@ -1,21 +1,156 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { WorkSchedules } from '../index'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
-vi.mock('../../../features/attendance/ui', () => ({
-  SetWorkDaysPersonal: () => <div data-testid="work-schedule-editor">mock-editor</div>,
+const mockGetAllWorkSchedules = vi.fn()
+const mockGetTeamWorkSchedules = vi.fn()
+const mockGetWorkScheduleEvents = vi.fn()
+const mockCreateWorkScheduleEvent = vi.fn()
+
+let mockState = {
+  currentUser: { id: '1', name: '관리자', role: 'ADMIN', team: '1팀' },
+  users: [
+    { id: '1', name: '관리자', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE' },
+    { id: '2', name: '팀원', role: 'MEMBER', team: '1팀', email: 'member@yanus.kr', status: 'ACTIVE' },
+  ],
+  teams: [
+    { id: 1, name: '1팀' },
+    { id: 2, name: '2팀' },
+  ],
+}
+
+vi.mock('@fullcalendar/react', () => ({
+  default: (props: { events?: unknown[]; dateClick?: (arg: { dateStr: string }) => void }) => (
+    <div data-testid="mock-calendar">
+      <button type="button" onClick={() => props.dateClick?.({ dateStr: '2026-03-30' })}>
+        날짜 클릭
+      </button>
+      <span>events:{props.events?.length ?? 0}</span>
+    </div>
+  ),
 }))
 
+vi.mock('../../../features/auth/model', () => ({
+  useApp: () => ({
+    state: mockState,
+    refreshMembers: vi.fn(async () => []),
+    refreshTeams: vi.fn(async () => []),
+  }),
+}))
+
+vi.mock('../../../features/attendance/ui', () => ({
+  SetWorkDaysPersonal: () => <div data-testid="recurring-editor">반복 근무 편집기</div>,
+}))
+
+vi.mock('../../../shared/api/attendanceApi', () => ({
+  getAllWorkSchedules: (...args: unknown[]) => mockGetAllWorkSchedules(...args),
+  getTeamWorkSchedules: (...args: unknown[]) => mockGetTeamWorkSchedules(...args),
+  getWorkScheduleEvents: (...args: unknown[]) => mockGetWorkScheduleEvents(...args),
+  createWorkScheduleEvent: (...args: unknown[]) => mockCreateWorkScheduleEvent(...args),
+  updateWorkScheduleEvent: vi.fn(),
+  deleteWorkScheduleEvent: vi.fn(),
+}))
+
+import { WorkSchedules } from '../index'
+
 describe('WorkSchedules 페이지', () => {
-  it('근무 일정 페이지는 캘린더 편집 카드만 렌더링한다', () => {
+  beforeEach(() => {
+    mockState = {
+      currentUser: { id: '1', name: '관리자', role: 'ADMIN', team: '1팀' },
+      users: [
+        { id: '1', name: '관리자', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE' },
+        { id: '2', name: '팀원', role: 'MEMBER', team: '1팀', email: 'member@yanus.kr', status: 'ACTIVE' },
+      ],
+      teams: [
+        { id: 1, name: '1팀' },
+        { id: 2, name: '2팀' },
+      ],
+    }
+    mockGetAllWorkSchedules.mockResolvedValue([
+      {
+        memberId: 1,
+        memberName: '관리자',
+        teamName: '1팀',
+        workSchedules: [{ id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' }],
+      },
+    ])
+    mockGetTeamWorkSchedules.mockResolvedValue([
+      {
+        memberId: 2,
+        memberName: '팀원',
+        teamName: '1팀',
+        workSchedules: [{ id: 2, dayOfWeek: 'TUESDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' }],
+      },
+    ])
+    mockGetWorkScheduleEvents.mockResolvedValue([
+      {
+        id: 101,
+        date: '2026-03-30',
+        startTime: '13:00:00',
+        endTime: '18:00:00',
+        memberId: 2,
+        memberName: '팀원',
+        teamName: '1팀',
+      },
+    ])
+    mockCreateWorkScheduleEvent.mockResolvedValue({
+      id: 999,
+      date: '2026-03-30',
+      startTime: '09:00:00',
+      endTime: '18:00:00',
+      memberId: 1,
+      memberName: '관리자',
+      teamName: '1팀',
+    })
+  })
+
+  it('관리자는 전체, 팀별, 개인 필터와 캘린더를 본다', async () => {
     render(<WorkSchedules />)
 
-    expect(screen.getByText('내 근무 일정')).toBeInTheDocument()
-    expect(screen.getByText('캘린더에서 반복 근무 일정을 바로 확인하고 수정할 수 있습니다.')).toBeInTheDocument()
-    expect(
-      screen.getByText('근무 일정 조회와 편집을 한 화면의 캘린더로 단순화했습니다.'),
-    ).toBeInTheDocument()
-    expect(screen.getByTestId('work-schedule-editor')).toBeInTheDocument()
-    expect(screen.queryByText('근무 일정 조회')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '전체' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '팀별' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '개인' })).toBeInTheDocument()
+    expect(screen.getByTestId('recurring-editor')).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(mockGetAllWorkSchedules).toHaveBeenCalled()
+      expect(mockGetWorkScheduleEvents).toHaveBeenCalled()
+      expect(screen.getByTestId('mock-calendar')).toBeInTheDocument()
+    })
+  })
+
+  it('일반 멤버는 우리 팀과 개인 필터만 본다', async () => {
+    mockState = {
+      currentUser: { id: '2', name: '팀원', role: 'MEMBER', team: '1팀' },
+      users: [
+        { id: '1', name: '관리자', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE' },
+        { id: '2', name: '팀원', role: 'MEMBER', team: '1팀', email: 'member@yanus.kr', status: 'ACTIVE' },
+      ],
+      teams: [{ id: 1, name: '1팀' }],
+    }
+
+    render(<WorkSchedules />)
+
+    expect(screen.queryByRole('button', { name: '전체' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '우리 팀' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '개인' })).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(mockGetTeamWorkSchedules).toHaveBeenCalled()
+    })
+  })
+
+  it('빠른 추가 버튼을 누르면 날짜별 근무 일정 추가 모달이 열린다', async () => {
+    render(<WorkSchedules />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '날짜별 일정 추가' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '날짜별 일정 추가' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('날짜별 근무 일정 추가')).toBeInTheDocument()
+      expect(document.querySelector('input[type="date"]')).not.toBeNull()
+    })
   })
 })

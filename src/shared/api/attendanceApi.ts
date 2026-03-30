@@ -32,18 +32,21 @@ export const resetMyAttendance = (date?: string) =>
   baseClient.delete<null>(`/api/v1/attendances/me${date ? `?date=${date}` : ''}`)
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+export type WeekPattern = 'EVERY' | 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'LAST'
 
 export interface WorkScheduleItem {
   id: number
   dayOfWeek: DayOfWeek
   startTime: string  // HH:mm:ss
   endTime: string    // HH:mm:ss
+  weekPattern?: WeekPattern
 }
 
 export interface WorkSchedulePayload {
   dayOfWeek: DayOfWeek
   startTime: string  // HH:mm:ss
   endTime: string    // HH:mm:ss
+  weekPattern?: WeekPattern
 }
 
 export interface MemberWorkScheduleItem {
@@ -51,6 +54,22 @@ export interface MemberWorkScheduleItem {
   memberName: string
   teamName: string
   workSchedules: WorkScheduleItem[]
+}
+
+export interface WorkScheduleEventItem {
+  id: number
+  date: string
+  startTime: string
+  endTime: string
+  memberId: number
+  memberName: string
+  teamName: string
+}
+
+export interface WorkScheduleEventPayload {
+  date: string
+  startTime: string
+  endTime: string
 }
 
 interface RawMemberWorkScheduleItem {
@@ -88,3 +107,15 @@ export const getTeamWorkSchedules = (teamId: number) =>
   baseClient
     .get<RawMemberWorkScheduleItem[]>(`/api/v1/work-schedules/team/${teamId}`)
     .then((items) => items.map(normalizeMemberWorkSchedule))
+
+export const getWorkScheduleEvents = (startDate: string, endDate: string) =>
+  baseClient.get<WorkScheduleEventItem[]>(`/api/v1/work-schedule-events?startDate=${startDate}&endDate=${endDate}`)
+
+export const createWorkScheduleEvent = (body: WorkScheduleEventPayload) =>
+  baseClient.post<WorkScheduleEventItem>('/api/v1/work-schedule-events', body)
+
+export const updateWorkScheduleEvent = (eventId: number, body: WorkScheduleEventPayload) =>
+  baseClient.put<WorkScheduleEventItem>(`/api/v1/work-schedule-events/${eventId}`, body)
+
+export const deleteWorkScheduleEvent = (eventId: number) =>
+  baseClient.delete<null>(`/api/v1/work-schedule-events/${eventId}`)

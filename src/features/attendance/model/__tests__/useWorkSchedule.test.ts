@@ -5,11 +5,11 @@ import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 
 const DEFAULT_SCHEDULES = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
 ]
 
 const server = setupServer(
@@ -61,9 +61,9 @@ describe('useWorkSchedule', () => {
       expect(result.current.weekPatterns).toEqual([
         'EVERY',
         'EVERY',
+        'SECOND',
         'EVERY',
-        'EVERY',
-        'EVERY',
+        'LAST',
         'EVERY',
         'EVERY',
       ])
@@ -180,6 +180,12 @@ describe('useWorkSchedule', () => {
     })
 
     it('localStorage에 저장된 weekPatterns를 마운트 시 복원한다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+        ),
+      )
+
       localStorage.setItem('yanus-work-week-patterns', JSON.stringify([
         'LAST',
         'EVERY',
@@ -213,6 +219,12 @@ describe('useWorkSchedule', () => {
       })
 
       expect(deletedDay).toBe('MONDAY')
+    })
+
+    it('API 응답의 weekPattern 값을 우선 반영한다', async () => {
+      const { result } = await mountHook()
+      expect(result.current.weekPatterns[2]).toBe('SECOND')
+      expect(result.current.weekPatterns[4]).toBe('LAST')
     })
 
     it('API 에러 시 error 메시지가 설정된다', async () => {
