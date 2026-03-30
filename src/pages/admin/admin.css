@@ -203,6 +203,19 @@
   font-size: 0.9rem;
 }
 
+.admin-settlement-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.admin-settlement-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-settlement-table tbody tr.is-selected td {
+  background: color-mix(in srgb, var(--accent-purple) 12%, transparent);
+}
+
 .admin-settlement-status {
   display: inline-flex;
   align-items: center;
@@ -237,6 +250,14 @@
 :root[data-theme='light'] .admin-settlement-table th,
 :root[data-theme='light'] .admin-settlement-table td {
   border-bottom-color: rgba(84, 102, 146, 0.12);
+}
+
+:root[data-theme='light'] .admin-settlement-table tbody tr:hover td {
+  background: rgba(84, 102, 146, 0.05);
+}
+
+:root[data-theme='light'] .admin-settlement-table tbody tr.is-selected td {
+  background: rgba(126, 91, 239, 0.08);
 }
 
 /* ── 멤버 관리 ── */
