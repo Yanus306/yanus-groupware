@@ -197,6 +197,11 @@
 .work-schedules-calendar-shell .fc {
   min-width: 0;
   color: var(--text-primary);
+  --fc-border-color: var(--border-color);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+  --fc-list-event-hover-bg-color: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+  --fc-today-bg-color: color-mix(in srgb, var(--surface-tint) 52%, transparent);
 }
 
 .work-schedules-calendar-shell .fc-theme-standard td,
@@ -208,6 +213,11 @@
 .work-schedules-calendar-shell .fc .fc-view-harness,
 .work-schedules-calendar-shell .fc .fc-daygrid-body,
 .work-schedules-calendar-shell .fc .fc-list {
+  background: transparent;
+}
+
+.work-schedules-calendar-shell .fc .fc-scrollgrid-section-header > *,
+.work-schedules-calendar-shell .fc .fc-scrollgrid-section-footer > * {
   background: transparent;
 }
 
@@ -226,6 +236,14 @@
 
 .work-schedules-calendar-shell .fc .fc-col-header-cell {
   background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.work-schedules-calendar-shell .fc .fc-col-header-cell-cushion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-weight: 700;
 }
 
 .work-schedules-calendar-shell .fc .fc-button {
@@ -258,6 +276,10 @@
   background: color-mix(in srgb, var(--surface-tint) 52%, transparent);
 }
 
+.work-schedules-calendar-shell .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--text-muted);
+}
+
 .work-schedules-calendar-shell .fc .fc-daygrid-day:hover {
   background: color-mix(in srgb, var(--surface-muted) 60%, transparent);
 }
@@ -274,6 +296,36 @@
 
 .work-schedules-calendar-shell .fc .fc-event-title {
   font-weight: 600;
+}
+
+.work-schedules-calendar-shell .fc .fc-daygrid-event-dot {
+  border-color: currentColor;
+}
+
+:root[data-theme='light'] .work-schedules-calendar-shell .fc {
+  --fc-border-color: rgba(84, 102, 146, 0.16);
+  --fc-button-bg-color: rgba(255, 255, 255, 0.96);
+  --fc-button-border-color: rgba(107, 79, 196, 0.26);
+  --fc-button-hover-bg-color: rgba(107, 79, 196, 0.08);
+  --fc-button-hover-border-color: rgba(107, 79, 196, 0.38);
+  --fc-button-active-bg-color: rgba(107, 79, 196, 0.14);
+  --fc-button-active-border-color: rgba(107, 79, 196, 0.42);
+  --fc-neutral-bg-color: rgba(84, 102, 146, 0.08);
+  --fc-list-event-hover-bg-color: rgba(84, 102, 146, 0.08);
+  --fc-today-bg-color: rgba(107, 79, 196, 0.08);
+}
+
+:root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-col-header-cell {
+  background: rgba(84, 102, 146, 0.08);
+}
+
+:root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button {
+  box-shadow: 0 10px 24px rgba(94, 109, 145, 0.08);
+}
+
+:root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button:disabled {
+  background: rgba(255, 255, 255, 0.84);
+  color: rgba(111, 125, 153, 0.72);
 }
 
 .work-schedules-modal-overlay {
