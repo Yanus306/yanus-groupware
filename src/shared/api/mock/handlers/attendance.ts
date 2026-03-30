@@ -68,6 +68,21 @@ export const attendanceHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
+  http.delete('/api/v1/attendances/me', ({ request }) => {
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date') ?? todayStr()
+
+    if (!myRecord || myRecord.workDate !== date) {
+      return HttpResponse.json(
+        { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
+        { status: 400 },
+      )
+    }
+
+    myRecord = null
+    return new HttpResponse(null, { status: 200 })
+  }),
+
   http.post('/api/v1/attendances/check-in', () => {
     const today = todayStr()
     if (myRecord && myRecord.workDate === today) {

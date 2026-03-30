@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { WorkStatus } from '../ui/AnimatedClockRing'
-import { clockIn as apiClockIn, clockOut as apiClockOut, getMyAttendance } from '../../../shared/api/attendanceApi'
+import { clockIn as apiClockIn, clockOut as apiClockOut, getMyAttendance, resetMyAttendance } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
 import { getTodayStr } from '../../../shared/lib/date'
 
@@ -14,24 +14,40 @@ export function useWorkSession() {
   const [toastType, setToastType] = useState<'error' | 'info'>('error')
   const [isLoading, setIsLoading] = useState(true)
 
+  const syncTodayAttendance = async () => {
+    const todayStr = getTodayStr()
+    const records = await getMyAttendance()
+    const todayRecord = records.find((record) => record.workDate === todayStr)
+
+    if (!todayRecord) {
+      setStatus('idle')
+      setClockIn(null)
+      setClockOut(null)
+      return null
+    }
+
+    if (todayRecord.status === 'LEFT') {
+      setStatus('done')
+      setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
+      setClockOut(todayRecord.checkOutTime ? new Date(todayRecord.checkOutTime) : null)
+      return todayRecord
+    }
+
+    setStatus('working')
+    setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
+    setClockOut(null)
+    return todayRecord
+  }
+
+  const isAttendanceIpError = (error: ApiError) =>
+    error.code.toUpperCase().includes('IP') ||
+    /220\.69|아이피|IP/.test(error.message)
+
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
-    const todayStr = getTodayStr()
-    getMyAttendance()
-      .then((records) => {
-        // API는 전체 기록 반환 → 오늘 날짜 기록만 필터
-        const todayRecord = records.find((r) => r.workDate === todayStr)
-        if (todayRecord) {
-          if (todayRecord.status === 'LEFT') {
-            setStatus('done')
-            setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
-            setClockOut(todayRecord.checkOutTime ? new Date(todayRecord.checkOutTime) : null)
-          } else if (todayRecord.status === 'WORKING') {
-            setStatus('working')
-            setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
-            setClockOut(null)
-          }
-        } else {
+    syncTodayAttendance()
+      .then((todayRecord) => {
+        if (!todayRecord) {
           const stored = localStorage.getItem(STORAGE_KEY)
           if (stored) {
             try {
@@ -81,14 +97,10 @@ export function useWorkSession() {
             // 이미 출근 처리됨 — 서버 기록으로 동기화 후 working 전환
             setToastType('info')
             setErrorMessage('이미 출근 처리된 기록이 있습니다')
-            getMyAttendance().then((records) => {
-              const todayStr = getTodayStr()
-              const rec = records.find((r) => r.workDate === todayStr)
-              if (rec) {
-                setClockIn(rec.checkInTime ? new Date(rec.checkInTime) : new Date())
-                setStatus('working')
-              }
-            }).catch(() => {})
+            syncTodayAttendance().catch(() => {})
+          } else if (isAttendanceIpError(err)) {
+            setToastType('error')
+            setErrorMessage('출근은 220.69 대역 IP에서만 가능합니다')
           } else {
             setToastType('error')
             setErrorMessage(err.message)
@@ -127,13 +139,37 @@ export function useWorkSession() {
           setToastType('error')
           setErrorMessage('퇴근 처리에 실패했습니다')
         }
+        } finally {
+          setIsLoading(false)
+        }
+    } else if (status === 'done') {
+      setIsLoading(true)
+      try {
+        await resetMyAttendance(getTodayStr())
+        setToastType('info')
+        setErrorMessage('오늘 출근 기록을 초기화했습니다')
+        setClockIn(null)
+        setClockOut(null)
+        setStatus('idle')
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.code === 'NOT_CHECKED_IN') {
+            setToastType('info')
+            setErrorMessage('초기화할 출근 기록이 없습니다')
+            setClockIn(null)
+            setClockOut(null)
+            setStatus('idle')
+          } else {
+            setToastType('error')
+            setErrorMessage(err.message)
+          }
+        } else {
+          setToastType('error')
+          setErrorMessage('출근 기록 초기화에 실패했습니다')
+        }
       } finally {
         setIsLoading(false)
       }
-    } else {
-      setClockIn(null)
-      setClockOut(null)
-      setStatus('idle')
     }
   }
 

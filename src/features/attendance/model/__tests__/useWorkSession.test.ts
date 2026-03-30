@@ -18,6 +18,9 @@ const server = setupServer(
   http.get('/api/v1/attendances/me', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
   ),
+  http.delete('/api/v1/attendances/me', () =>
+    new HttpResponse(null, { status: 200 }),
+  ),
   http.post('/api/v1/attendances/check-in', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: CLOCK_IN_RECORD }),
   ),
@@ -134,7 +137,7 @@ describe('useWorkSession', () => {
   })
 
   describe('재출근 처리', () => {
-    it('done 상태에서 handleClockClick 호출 시 idle로 초기화된다', async () => {
+    it('done 상태에서 handleClockClick 호출 시 서버 초기화 후 idle로 전환된다', async () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() }) // idle -> working
       await act(async () => { await result.current.handleClockClick() }) // working -> done
@@ -142,6 +145,7 @@ describe('useWorkSession', () => {
       expect(result.current.status).toBe('idle')
       expect(result.current.clockIn).toBeNull()
       expect(result.current.clockOut).toBeNull()
+      expect(result.current.errorMessage).toBe('오늘 출근 기록을 초기화했습니다')
     })
   })
 
@@ -176,6 +180,21 @@ describe('useWorkSession', () => {
       await act(async () => {}) // getMyAttendance() sync 완료 대기
       expect(result.current.status).toBe('working')
       expect(result.current.errorMessage).toBe('이미 출근 처리된 기록이 있습니다')
+    })
+
+    it('IP 제한 에러면 220.69 안내 메시지를 표시한다', async () => {
+      server.use(
+        http.post('/api/v1/attendances/check-in', () =>
+          HttpResponse.json(
+            { code: 'INVALID_ATTENDANCE_IP', message: '220.69 대역 IP만 출근 가능합니다.', data: null },
+            { status: 403 },
+          ),
+        ),
+      )
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() })
+      expect(result.current.status).toBe('idle')
+      expect(result.current.errorMessage).toBe('출근은 220.69 대역 IP에서만 가능합니다')
     })
 
     it('ALREADY_CHECKED_OUT: 이미 퇴근된 경우 done 상태 유지 및 info 메시지 설정', async () => {

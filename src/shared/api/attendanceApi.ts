@@ -28,6 +28,9 @@ export const clockIn = () =>
 export const clockOut = () =>
   baseClient.post<AttendanceRecord>('/api/v1/attendances/check-out', {})
 
+export const resetMyAttendance = (date?: string) =>
+  baseClient.delete<null>(`/api/v1/attendances/me${date ? `?date=${date}` : ''}`)
+
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
 
 export interface WorkScheduleItem {

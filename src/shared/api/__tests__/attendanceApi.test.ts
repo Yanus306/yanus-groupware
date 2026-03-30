@@ -6,6 +6,7 @@ import {
   getAttendanceByDate,
   clockIn,
   clockOut,
+  resetMyAttendance,
   getMyWorkSchedule,
   upsertWorkScheduleDay,
   deleteWorkScheduleDay,
@@ -99,6 +100,9 @@ const server = setupServer(
       data: { id: 10, memberId: 1, memberName: '김리더', workDate: '2026-03-22', checkInTime: '2026-03-22T09:05:00', checkOutTime: '2026-03-22T18:00:00', status: 'LEFT' },
     }),
   ),
+  http.delete('/api/v1/attendances/me', () =>
+    new HttpResponse(null, { status: 200 }),
+  ),
 )
 
 beforeAll(() => server.listen())
@@ -127,6 +131,10 @@ describe('attendanceApi', () => {
     const result = await clockOut()
     expect(result).toMatchObject({ id: 10, status: 'LEFT' })
     expect(result.checkOutTime).not.toBeNull()
+  })
+
+  it('resetMyAttendance() 오늘 출근 기록을 초기화한다', async () => {
+    await expect(resetMyAttendance('2026-03-22')).resolves.toBeNull()
   })
 })
 
