@@ -15,9 +15,10 @@ const WEEK_PATTERN_OPTIONS: { value: WeekPattern; label: string }[] = [
 
 interface SetWorkDaysPersonalProps {
   onSaved?: () => void | Promise<void>
+  hideHeader?: boolean
 }
 
-export function SetWorkDaysPersonal({ onSaved }: SetWorkDaysPersonalProps) {
+export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDaysPersonalProps) {
   const { state } = useApp()
   const {
     workDays,
@@ -42,16 +43,18 @@ export function SetWorkDaysPersonal({ onSaved }: SetWorkDaysPersonalProps) {
 
   return (
     <div className="set-work-days-personal">
-      <div className="schedule-header">
-        <div>
-          <h3>근무 일정 설정</h3>
-          <p className="desc">요일별 시간과 반복 주차를 함께 정리해 개인 근무 루틴을 관리할 수 있습니다.</p>
+      {!hideHeader && (
+        <div className="schedule-header">
+          <div>
+            <h3>근무 일정 설정</h3>
+            <p className="desc">요일별 시간과 반복 주차를 함께 정리해 개인 근무 루틴을 관리할 수 있습니다.</p>
+          </div>
+          <div className="member-info">
+            <span className="member-avatar">{state.currentUser?.name[0] ?? '?'}</span>
+            <span className="member-name">{state.currentUser?.name ?? ''}</span>
+          </div>
         </div>
-        <div className="member-info">
-          <span className="member-avatar">{state.currentUser?.name[0] ?? '?'}</span>
-          <span className="member-name">{state.currentUser?.name ?? ''}</span>
-        </div>
-      </div>
+      )}
 
       <div className="schedule-summary">
         <span className="summary-chip">활성 요일 {workDays.filter(Boolean).length}일</span>

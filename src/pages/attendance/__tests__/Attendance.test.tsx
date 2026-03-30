@@ -38,9 +38,7 @@ vi.mock('../../../features/auth/model', () => ({
 }))
 
 vi.mock('../../../features/attendance/ui', () => ({
-  SetWorkDaysPersonal: () => <div data-testid="set-work-days" />,
   TeamAttendanceStatus: () => <div data-testid="team-attendance-status" />,
-  TeamWorkSchedulePanel: () => <div data-testid="team-work-schedule-panel" />,
 }))
 
 vi.mock('../../../features/leave/ui/LeaveSection', () => ({
@@ -50,7 +48,7 @@ vi.mock('../../../features/leave/ui/LeaveSection', () => ({
 describe('Attendance 페이지', () => {
   it('출퇴근 헤더가 렌더링된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('오늘 근무 현황과 개인 근무 일정을 한 화면에서 관리합니다.')).toBeInTheDocument()
+    expect(screen.getByText('오늘 근무 현황과 출퇴근 이력을 한 화면에서 확인합니다.')).toBeInTheDocument()
   })
 
   it('관리자에게 Export CSV 버튼이 표시된다', () => {
@@ -72,11 +70,6 @@ describe('Attendance 페이지', () => {
     await waitFor(() => {
       expect(screen.getAllByText(new RegExp(`${monthStart} ~ ${year}-${month}`)).length).toBeGreaterThan(0)
     })
-  })
-
-  it('관리자에게 팀 근무 일정 패널이 표시된다', () => {
-    render(<Attendance />)
-    expect(screen.getByTestId('team-work-schedule-panel')).toBeInTheDocument()
   })
 
   it('출퇴근 기록을 로드한다', async () => {

@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon, ArrowLeftRight } from 'lucide-react'
+import { Home, MessageSquare, Calendar, RotateCw, FolderUp, Bot, Users, Settings, LogOut, ShieldCheck, Sun, Moon, ArrowLeftRight, CalendarDays } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import { canAccessAdmin, canAccessDrive, canAccessTeamManagement } from '../../shared/lib/permissions'
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/calendar', icon: Calendar, label: '캘린더' },
   { to: '/members', icon: Users, label: '멤버' },
   { to: '/attendance', icon: RotateCw, label: '출퇴근' },
+  { to: '/work-schedules', icon: CalendarDays, label: '근무 일정' },
   { to: '/drive', icon: FolderUp, label: '드라이브' },
   { to: '/ai', icon: Bot, label: 'AI' },
   { to: '/settings', icon: Settings, label: '설정' },

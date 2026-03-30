@@ -18,6 +18,7 @@ function renderLayout(initialPath = '/') {
             <Route path="/" element={<Layout />}>
               <Route index element={<div>홈 페이지</div>} />
               <Route path="chat" element={<div>채팅 페이지</div>} />
+              <Route path="work-schedules" element={<div>근무 일정 페이지</div>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -43,7 +44,7 @@ describe('Layout', () => {
 
   it('모든 네비게이션 아이템이 렌더링된다', () => {
     renderLayout()
-    const labels = ['홈', '채팅', '캘린더', '멤버', '출퇴근', '드라이브', 'AI', '설정']
+    const labels = ['홈', '채팅', '캘린더', '멤버', '출퇴근', '근무 일정', '드라이브', 'AI', '설정']
     labels.forEach((label) => {
       expect(screen.getByTitle(label)).toBeInTheDocument()
     })

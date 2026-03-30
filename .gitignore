@@ -36,3 +36,6 @@ api.md
 .env*.local
 playwright-report
 test-results
+.playwright-cli/
+output/
+docs/architecture/*.svg
