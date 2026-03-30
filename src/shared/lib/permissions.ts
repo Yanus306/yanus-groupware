@@ -71,3 +71,11 @@ export function canManageTeams(user: MaybeUser) {
 export function canViewManagedAttendance(user: MaybeUser) {
   return canAccessAdmin(user) || canAccessTeamManagement(user)
 }
+
+export function canViewAllWorkSchedules(user: MaybeUser) {
+  return canAccessAdmin(user)
+}
+
+export function canViewTeamWorkSchedules(user: MaybeUser) {
+  return canAccessAdmin(user) || canAccessTeamManagement(user)
+}

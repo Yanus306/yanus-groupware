@@ -4,6 +4,9 @@ import './TeamWorkSchedulePanel.css'
 interface Props {
   schedules: MemberWorkScheduleItem[]
   title?: string
+  description?: string
+  emptyMessage?: string
+  showHeader?: boolean
 }
 
 const DAY_LABEL: Record<string, string> = {
@@ -22,19 +25,27 @@ function formatTimeRange(startTime: string, endTime: string) {
   return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`
 }
 
-export function TeamWorkSchedulePanel({ schedules, title = '팀 근무 일정' }: Props) {
+export function TeamWorkSchedulePanel({
+  schedules,
+  title = '팀 근무 일정',
+  description = '권한에 따라 조회 가능한 멤버의 요일별 근무 일정을 확인할 수 있습니다.',
+  emptyMessage = '표시할 근무 일정이 없습니다.',
+  showHeader = true,
+}: Props) {
   return (
     <div className="team-work-schedule-panel">
-      <div className="team-work-schedule-header">
-        <div>
-          <h3>{title}</h3>
-          <p>권한에 따라 조회 가능한 멤버의 요일별 근무 일정을 확인할 수 있습니다.</p>
+      {showHeader && (
+        <div className="team-work-schedule-header">
+          <div>
+            <h3>{title}</h3>
+            <p>{description}</p>
+          </div>
+          <span className="team-work-schedule-count">{schedules.length}명</span>
         </div>
-        <span className="team-work-schedule-count">{schedules.length}명</span>
-      </div>
+      )}
 
       {schedules.length === 0 ? (
-        <p className="team-work-schedule-empty">표시할 근무 일정이 없습니다.</p>
+        <p className="team-work-schedule-empty">{emptyMessage}</p>
       ) : (
         <div className="team-work-schedule-list">
           {schedules.map((member) => (
