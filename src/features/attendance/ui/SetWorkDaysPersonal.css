@@ -89,13 +89,9 @@
 }
 
 .schedule-calendar-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
+  display: block;
 }
 
-.schedule-calendar-board,
 .schedule-day-editor {
   display: flex;
   flex-direction: column;
@@ -108,88 +104,6 @@
 
 .schedule-day-editor.active {
   background: color-mix(in srgb, var(--accent-purple) 8%, var(--bg-soft));
-}
-
-.schedule-calendar-head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.schedule-calendar-head strong {
-  font-size: 1rem;
-}
-
-.schedule-calendar-head span {
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-.schedule-calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.schedule-calendar-days {
-  align-items: stretch;
-}
-
-.schedule-calendar-weekday {
-  padding-bottom: 4px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.schedule-calendar-cell {
-  min-height: 96px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 18px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card-solid);
-  color: var(--text-primary);
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.schedule-calendar-cell:hover {
-  transform: translateY(-1px);
-}
-
-.schedule-calendar-cell.outside {
-  opacity: 0.52;
-}
-
-.schedule-calendar-cell.active {
-  border-color: rgba(138, 114, 216, 0.32);
-  background: color-mix(in srgb, var(--accent-purple) 11%, var(--bg-card-solid));
-}
-
-.schedule-calendar-cell.selected {
-  box-shadow: 0 0 0 1px var(--accent-purple), 0 16px 32px rgba(15, 23, 42, 0.14);
-}
-
-.schedule-calendar-date {
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.schedule-calendar-state {
-  font-size: 0.74rem;
-  line-height: 1.45;
-  color: var(--text-secondary);
-}
-
-.schedule-calendar-cell.active .schedule-calendar-state {
-  color: var(--text-primary);
 }
 
 .schedule-day-tabs {
@@ -427,18 +341,6 @@
     grid-template-columns: 1fr;
   }
 
-  .schedule-calendar-grid,
-  .schedule-day-tabs {
-    gap: 6px;
-  }
-
-  .schedule-calendar-cell {
-    min-height: 78px;
-    padding: 8px;
-    border-radius: 14px;
-  }
-
-  .schedule-calendar-board,
   .schedule-day-editor {
     padding: 14px;
   }
