@@ -3,12 +3,20 @@ import { formatDateDisplay, getTodayStr } from '../../shared/lib/date'
 
 describe('getTodayStr', () => {
   it('오늘 날짜를 YYYY-MM-DD 형식으로 반환한다', () => {
-    const today = new Date()
-    const expected = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, '0'),
-      String(today.getDate()).padStart(2, '0'),
-    ].join('-')
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date())
+      .reduce<Record<string, string>>((acc, part) => {
+        if (part.type !== 'literal') {
+          acc[part.type] = part.value
+        }
+        return acc
+      }, {})
+
+    const expected = [parts.year, parts.month, parts.day].join('-')
     expect(getTodayStr()).toBe(expected)
   })
 })

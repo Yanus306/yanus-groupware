@@ -1,6 +1,24 @@
+const KOREA_TIMEZONE = 'Asia/Seoul'
+
+function formatParts(date: Date, timeZone = KOREA_TIMEZONE) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  return formatter.formatToParts(date).reduce<Record<string, string>>((acc, part) => {
+    if (part.type !== 'literal') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, {})
+}
+
 export function getTodayStr(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const parts = formatParts(new Date())
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 export function toDateString(date: Date): string {
