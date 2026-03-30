@@ -137,7 +137,16 @@ async function request<T>(path: string, options: RequestInit = {}, canRetry = tr
     throw new ApiError(res.status, message, code)
   }
 
-  const body = await res.json() as unknown
+  if (res.status === 204) {
+    return null as T
+  }
+
+  const rawBody = await res.text()
+  if (!rawBody.trim()) {
+    return null as T
+  }
+
+  const body = JSON.parse(rawBody) as unknown
   // 백엔드 표준 응답 래퍼 { code, message, data } 자동 unwrap
   if (
     body !== null &&

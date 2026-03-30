@@ -101,6 +101,15 @@ describe('Dashboard 페이지', () => {
     expect(screen.getByText('오늘 일정')).toBeInTheDocument()
   })
 
+  it('출근 가능 IP 안내 문구가 표시된다', () => {
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+    expect(screen.getByText('출근은 220.69 대역 IP에서만 가능합니다.')).toBeInTheDocument()
+  })
+
   it('일정이 없을 때 빈 상태 메시지를 표시한다', () => {
     render(
       <MemoryRouter>

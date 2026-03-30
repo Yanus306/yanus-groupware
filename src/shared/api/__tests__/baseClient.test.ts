@@ -139,4 +139,13 @@ describe('baseClient', () => {
     const result = await baseClient.post<{ id: number }>('/test-post', { name: '신규' })
     expect(result).toEqual({ id: 42 })
   })
+
+  it('본문이 없는 DELETE 응답도 null로 안전하게 처리한다', async () => {
+    server.use(
+      http.delete('/test-empty-delete', () =>
+        new HttpResponse(null, { status: 200 }),
+      ),
+    )
+    await expect(baseClient.delete<null>('/test-empty-delete')).resolves.toBeNull()
+  })
 })
