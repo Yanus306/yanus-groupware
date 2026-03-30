@@ -598,12 +598,12 @@ export function WorkSchedules() {
                 headerToolbar={{
                   left: 'prev,next today',
                   center: 'title',
-                  right: 'dayGridMonth,listWeek',
+                  right: 'dayGridMonth,listMonth',
                 }}
                 buttonText={{
                   today: '오늘',
                   month: '월',
-                  list: '목록',
+                  listMonth: '목록',
                 }}
                 height="auto"
                 events={calendarEvents}
