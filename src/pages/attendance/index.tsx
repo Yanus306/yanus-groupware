@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { SetWorkDaysPersonal, TeamAttendanceStatus, TeamWorkSchedulePanel } from '../../features/attendance/ui'
+import { TeamAttendanceStatus } from '../../features/attendance/ui'
 import { LeaveSection } from '../../features/leave/ui/LeaveSection'
 import {
   getAttendanceByDate,
@@ -255,7 +255,7 @@ export function Attendance() {
       )}
       <header className="attendance-header">
         <div className="attendance-header-copy">
-          <p>오늘 근무 현황과 개인 근무 일정을 한 화면에서 관리합니다.</p>
+          <p>오늘 근무 현황과 출퇴근 이력을 한 화면에서 확인합니다.</p>
         </div>
         <div className="header-actions">
           {isAdmin && (
@@ -316,19 +316,7 @@ export function Attendance() {
         )}
 
         {canSeeManagedAttendance && (
-          <section className="team-schedule-section glass">
-            <TeamWorkSchedulePanel
-              schedules={teamSchedules}
-              title={state.currentUser?.role === 'ADMIN' ? '전체 근무 일정' : '팀 근무 일정'}
-            />
-          </section>
-        )}
-
-        <div className={`two-cards-row ${canSeeManagedAttendance ? 'admin-wide' : 'single'}`}>
-          <section className="set-work-days-section glass">
-            <SetWorkDaysPersonal onSaved={loadTeamSchedules} />
-          </section>
-          {canSeeManagedAttendance && (
+          <div className="two-cards-row admin-wide">
             <DataTableSection
               className="records-section"
               title="출퇴근 기록"
@@ -396,8 +384,8 @@ export function Attendance() {
                 <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight size={18} /></button>
               </div>
             </DataTableSection>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 내 출퇴근 이력 — 모든 유저 */}
         <DataTableSection
