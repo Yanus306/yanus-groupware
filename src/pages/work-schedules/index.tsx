@@ -182,7 +182,7 @@ function expandRecurringSchedules(
 
       events.push({
         id: `recurring-${member.memberId}-${schedule.dayOfWeek}-${schedule.weekPattern ?? 'EVERY'}-${isoDate}`,
-        title: `${member.memberName} · ${startTime}`,
+        title: member.memberName,
         start: `${isoDate}T${schedule.startTime}`,
         end: `${isoDate}T${schedule.endTime}`,
         allDay: false,
@@ -211,7 +211,7 @@ function toDateEvents(items: WorkScheduleEventItem[], currentUserId: string): Ev
     const colors = getEventColors('date-event', isMine)
     return {
       id: `date-event-${item.id}`,
-      title: `${item.memberName} · ${formatTimeLabel(item.startTime)}`,
+      title: item.memberName,
       start: `${item.date}T${item.startTime}`,
       end: `${item.date}T${item.endTime}`,
       allDay: false,
