@@ -44,7 +44,7 @@ describe('Layout', () => {
 
   it('모든 네비게이션 아이템이 렌더링된다', () => {
     renderLayout()
-    const labels = ['홈', '채팅', '캘린더', '멤버', '출퇴근', '근무 일정', '드라이브', 'AI', '설정']
+    const labels = ['홈', '채팅', '캘린더', '멤버', '출퇴근', '근무 일정', '드라이브', 'AI', '마이페이지']
     labels.forEach((label) => {
       expect(screen.getByTitle(label)).toBeInTheDocument()
     })
