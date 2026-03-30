@@ -90,7 +90,7 @@
 
 .schedule-calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -132,6 +132,10 @@
   gap: 10px;
 }
 
+.schedule-calendar-days {
+  align-items: stretch;
+}
+
 .schedule-calendar-weekday {
   padding-bottom: 4px;
   text-align: center;
@@ -141,7 +145,7 @@
 }
 
 .schedule-calendar-cell {
-  min-height: 88px;
+  min-height: 96px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -407,12 +411,6 @@
   transform: translateY(-1px);
 }
 
-@media (max-width: 1180px) {
-  .schedule-calendar-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 960px) {
   .member-info {
     width: 100%;
@@ -435,7 +433,7 @@
   }
 
   .schedule-calendar-cell {
-    min-height: 72px;
+    min-height: 78px;
     padding: 8px;
     border-radius: 14px;
   }
