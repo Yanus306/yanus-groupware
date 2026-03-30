@@ -42,6 +42,30 @@ const mockAuditLogs = [
   },
 ]
 
+const mockSettlement = {
+  yearMonth: '2026-03',
+  memberId: 2,
+  memberName: '강민준',
+  teamName: '1팀',
+  scheduledDays: 12,
+  attendedDays: 11,
+  lateDays: 3,
+  totalLateMinutes: 27,
+  lateFee: 2700,
+  items: [
+    {
+      date: '2026-03-04',
+      scheduledStartTime: '09:00:00',
+      scheduledEndTime: '18:00:00',
+      checkInTime: '2026-03-04T09:07:10',
+      checkOutTime: '2026-03-04T18:02:01',
+      lateMinutes: 7,
+      fee: 700,
+      status: 'LATE',
+    },
+  ],
+}
+
 const server = setupServer(
   http.get('/api/v1/auth/me', () =>
     HttpResponse.json({
@@ -72,6 +96,21 @@ const server = setupServer(
   http.get('/api/v1/audit-logs', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockAuditLogs }),
   ),
+  http.get('/api/v1/attendance-settlements/monthly', ({ request }) => {
+    const url = new URL(request.url)
+    const targetMemberId = Number(url.searchParams.get('targetMemberId') ?? '2')
+    const targetMember = mockMembers.find((member) => Number(member.id) === targetMemberId) ?? mockMembers[2]
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        ...mockSettlement,
+        memberId: Number(targetMember.id),
+        memberName: targetMember.name,
+        teamName: targetMember.team,
+      },
+    })
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -125,6 +164,7 @@ describe('Admin 페이지', () => {
     expect(screen.getByRole('button', { name: '멤버 관리' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '팀 관리' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '감사 로그' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '지각비 정산' })).toBeInTheDocument()
   })
 
   it('멤버 관리 탭 클릭 시 멤버 테이블이 표시된다', async () => {
@@ -197,6 +237,20 @@ describe('Admin 페이지', () => {
     expect(await screen.findByRole('heading', { name: '감사 로그' })).toBeInTheDocument()
     expect(screen.getByText('팀 변경')).toBeInTheDocument()
     expect(screen.getByText('2팀')).toBeInTheDocument()
+  })
+
+  it('지각비 정산 탭에서 월별 요약과 상세 내역이 표시된다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '지각비 정산' }))
+
+    expect(await screen.findByRole('heading', { name: '월별 지각비 정산' })).toBeInTheDocument()
+    expect(screen.getByDisplayValue('2026-03')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('강민준')).toBeInTheDocument()
+    expect(screen.getByText('총 지각비')).toBeInTheDocument()
+    expect(screen.getByText('2,700원')).toBeInTheDocument()
+    expect(screen.getByText('2026-03-04')).toBeInTheDocument()
+    expect(screen.getByText('700원')).toBeInTheDocument()
   })
 
   it('팀 관리 탭에서 신입 팀 삭제 버튼은 비활성화된다', async () => {

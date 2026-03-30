@@ -102,6 +102,143 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.admin-settlement-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-settlement-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-settlement-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-settlement-field span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.admin-settlement-field input,
+.admin-settlement-field select {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-settlement-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-settlement-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.admin-settlement-card {
+  padding: 18px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-muted) 74%, transparent);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-settlement-card strong {
+  font-size: 1.45rem;
+  color: var(--text-primary);
+}
+
+.admin-settlement-card p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.admin-settlement-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.admin-settlement-table-wrap {
+  margin-top: 4px;
+}
+
+.admin-settlement-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+}
+
+.admin-settlement-table th,
+.admin-settlement-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.admin-settlement-table th {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.admin-settlement-table td {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.admin-settlement-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.admin-settlement-status.ON_TIME {
+  background: color-mix(in srgb, #28c76f 16%, transparent);
+  color: #28c76f;
+}
+
+.admin-settlement-status.LATE {
+  background: color-mix(in srgb, #ff9f43 16%, transparent);
+  color: #ff9f43;
+}
+
+.admin-settlement-status.ABSENT {
+  background: color-mix(in srgb, #ff5d73 16%, transparent);
+  color: #ff5d73;
+}
+
+.admin-settlement-status.NO_SCHEDULE {
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .admin-settlement-table th,
+:root[data-theme='light'] .admin-settlement-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.12);
+}
+
 /* ── 멤버 관리 ── */
 .admin-section-title {
   font-size: 1rem;

@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import { Crown, Download, FolderPlus, History, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
-import { getAttendanceByDate } from '../../shared/api/attendanceApi'
+import { getAttendanceByDate, getAttendanceByDates } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
+import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import { getAuditLogs } from '../../shared/api/auditLogsApi'
 import type { AuditLog } from '../../shared/api/auditLogsApi'
 import { updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
 import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
-import { getTodayStr } from '../../shared/lib/date'
+import { getDateStringsBetween, getMonthRange, getTodayStr } from '../../shared/lib/date'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { DEFAULT_SIGNUP_TEAM_NAME, formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
@@ -26,7 +28,7 @@ import { EmptyState } from '../../shared/ui/EmptyState'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
-type Tab = 'attendance' | 'members' | 'teams' | 'audit'
+type Tab = 'attendance' | 'members' | 'teams' | 'audit' | 'settlement'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 const roleLabels: Record<string, string> = {
@@ -42,6 +44,13 @@ const auditActionLabels: Record<string, string> = {
   ACTIVATE: '활성화',
 }
 
+const settlementStatusLabels: Record<string, string> = {
+  ON_TIME: '정상 출근',
+  LATE: '지각',
+  ABSENT: '미출근',
+  NO_SCHEDULE: '근무 일정 없음',
+}
+
 function formatAuditDateTime(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: '2-digit',
@@ -49,6 +58,14 @@ function formatAuditDateTime(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+function formatCurrency(amount: number) {
+  return `${amount.toLocaleString('ko-KR')}원`
+}
+
+function formatTime(value: string | null) {
+  return value ? value.slice(11, 16) : '-'
 }
 
 export function Admin() {
@@ -60,15 +77,26 @@ export function Admin() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [settlementLoading, setSettlementLoading] = useState(false)
+  const [exportingSettlementAttendance, setExportingSettlementAttendance] = useState(false)
   const [changeRoleFor, setChangeRoleFor] = useState<{ id: string; name: string; current: UserRole } | null>(null)
   const [changeTeamFor, setChangeTeamFor] = useState<User | null>(null)
   const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [newTeamName, setNewTeamName] = useState('')
+  const [selectedSettlementMemberId, setSelectedSettlementMemberId] = useState<string>('')
+  const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(getTodayStr().slice(0, 7))
+  const [settlement, setSettlement] = useState<AttendanceSettlement | null>(null)
 
   const todayStr = getTodayStr()
   const members = sortUsersByTeamAndName(state.users)
   const teamOptions = getTeamOptions(members, state.teams)
+  const settlementMemberOptions = members.filter((member) => member.status !== 'INACTIVE')
+
+  useEffect(() => {
+    if (selectedSettlementMemberId || settlementMemberOptions.length === 0) return
+    setSelectedSettlementMemberId(settlementMemberOptions[0].id)
+  }, [selectedSettlementMemberId, settlementMemberOptions])
 
   const loadAuditLogList = async () => {
     setAuditLoading(true)
@@ -94,6 +122,25 @@ export function Admin() {
     if (tab !== 'audit') return
     void loadAuditLogList()
   }, [tab])
+
+  useEffect(() => {
+    if (tab !== 'settlement' || !selectedSettlementMemberId) return
+
+    const targetMemberId = Number(selectedSettlementMemberId)
+    if (Number.isNaN(targetMemberId)) return
+
+    setSettlementLoading(true)
+    getMonthlyAttendanceSettlement(selectedSettlementMonth, targetMemberId)
+      .then((data) => {
+        setSettlement(data)
+      })
+      .catch((err) => {
+        setErrorMessage(err instanceof Error ? err.message : '월별 지각비 정산을 불러오지 못했습니다')
+      })
+      .finally(() => {
+        setSettlementLoading(false)
+      })
+  }, [tab, selectedSettlementMemberId, selectedSettlementMonth])
 
   const reloadMembersAndTeams = async () => {
     const [memberList] = await Promise.all([
@@ -269,6 +316,42 @@ export function Admin() {
     )
   }
 
+  const handleExportMemberAttendanceCsv = async () => {
+    if (!selectedSettlementMemberId) return
+
+    const selectedMember = members.find((member) => member.id === selectedSettlementMemberId)
+    if (!selectedMember) return
+
+    setExportingSettlementAttendance(true)
+    try {
+      const monthAnchor = `${selectedSettlementMonth}-01`
+      const { start, end } = getMonthRange(monthAnchor)
+      const dates = getDateStringsBetween(start, end)
+      const monthlyRecords = await getAttendanceByDates(dates)
+      const targetRecords = monthlyRecords.filter(
+        (record) => String(record.memberId) === selectedSettlementMemberId,
+      )
+
+      exportAttendanceToCsv(
+        targetRecords.map((record) => ({
+          id: String(record.id),
+          userId: String(record.memberId),
+          userName: record.memberName,
+          date: record.workDate,
+          clockIn: record.checkInTime?.slice(11, 16) ?? '',
+          clockOut: record.checkOutTime?.slice(11, 16) ?? '',
+          status: record.status === 'LEFT' ? 'done' : 'working',
+        })),
+        `${selectedSettlementMonth}_${selectedMember.name}`,
+      )
+      setSuccessMessage(`${selectedMember.name}의 ${selectedSettlementMonth} 출근 내역을 내보냈습니다`)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '개인 출근 내역을 내보내지 못했습니다')
+    } finally {
+      setExportingSettlementAttendance(false)
+    }
+  }
+
   return (
     <div className="admin-page">
       {errorMessage && (
@@ -321,6 +404,13 @@ export function Admin() {
           onClick={() => setTab('audit')}
         >
           감사 로그
+        </button>
+        <button
+          type="button"
+          className={`admin-tab-btn ${tab === 'settlement' ? 'active' : ''}`}
+          onClick={() => setTab('settlement')}
+        >
+          지각비 정산
         </button>
       </div>
 
@@ -474,6 +564,129 @@ export function Admin() {
                 </tbody>
               </table>
             </DataTableScroll>
+          )}
+        </div>
+      )}
+
+      {tab === 'settlement' && (
+        <div className="admin-tab-content glass">
+          <SectionHeader
+            title="월별 지각비 정산"
+            description="관리자만 멤버별 월간 출근 내역과 지각비를 조회하고 내보낼 수 있습니다."
+            actions={(
+              <div className="admin-settlement-actions">
+                <button
+                  type="button"
+                  className="admin-export-btn glass"
+                  onClick={() => void handleExportMemberAttendanceCsv()}
+                  disabled={exportingSettlementAttendance || !selectedSettlementMemberId}
+                >
+                  <Download size={16} />
+                  {exportingSettlementAttendance ? '내보내는 중...' : '개인 출근 내역 CSV'}
+                </button>
+              </div>
+            )}
+          />
+
+          <div className="admin-settlement-toolbar">
+            <label className="admin-settlement-field">
+              <span>정산 월</span>
+              <input
+                type="month"
+                value={selectedSettlementMonth}
+                onChange={(event) => setSelectedSettlementMonth(event.target.value)}
+              />
+            </label>
+            <label className="admin-settlement-field">
+              <span>대상 멤버</span>
+              <select
+                value={selectedSettlementMemberId}
+                onChange={(event) => setSelectedSettlementMemberId(event.target.value)}
+              >
+                {settlementMemberOptions.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {settlementLoading ? (
+            <EmptyState
+              compact
+              title="월별 지각비 정산을 불러오는 중입니다."
+              description="선택한 월과 멤버 기준으로 출근 기록을 정리하고 있습니다."
+            />
+          ) : !settlement ? (
+            <EmptyState
+              compact
+              title="조회할 정산 데이터가 없습니다."
+              description="월과 멤버를 선택하면 지각비 정산 결과가 이곳에 표시됩니다."
+            />
+          ) : (
+            <div className="admin-settlement-content">
+              <div className="admin-settlement-summary-grid">
+                <article className="admin-settlement-card">
+                  <span className="admin-settlement-label">대상 멤버</span>
+                  <strong>{settlement.memberName}</strong>
+                  <p>{formatTeamName(settlement.teamName)}</p>
+                </article>
+                <article className="admin-settlement-card">
+                  <span className="admin-settlement-label">총 지각비</span>
+                  <strong>{formatCurrency(settlement.lateFee)}</strong>
+                  <p>지각 {settlement.lateDays}회 · 총 {settlement.totalLateMinutes}분</p>
+                </article>
+                <article className="admin-settlement-card">
+                  <span className="admin-settlement-label">근무 일수</span>
+                  <strong>{settlement.scheduledDays}일</strong>
+                  <p>출근 {settlement.attendedDays}일</p>
+                </article>
+              </div>
+
+              {settlement.items.length === 0 ? (
+                <EmptyState
+                  compact
+                  title="선택한 월의 정산 상세 내역이 없습니다."
+                  description="근무 일정과 출근 기록이 있으면 날짜별 지각비 내역이 표시됩니다."
+                />
+              ) : (
+                <DataTableScroll className="admin-settlement-table-wrap">
+                  <table className="admin-settlement-table">
+                    <thead>
+                      <tr>
+                        <th>날짜</th>
+                        <th>예정 출근</th>
+                        <th>예정 퇴근</th>
+                        <th>실제 출근</th>
+                        <th>실제 퇴근</th>
+                        <th>지각 분</th>
+                        <th>지각비</th>
+                        <th>상태</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {settlement.items.map((item) => (
+                        <tr key={`${item.date}-${item.scheduledStartTime}`}>
+                          <td>{item.date}</td>
+                          <td>{item.scheduledStartTime.slice(0, 5)}</td>
+                          <td>{item.scheduledEndTime.slice(0, 5)}</td>
+                          <td>{formatTime(item.checkInTime)}</td>
+                          <td>{formatTime(item.checkOutTime)}</td>
+                          <td>{item.lateMinutes}분</td>
+                          <td>{formatCurrency(item.fee)}</td>
+                          <td>
+                            <span className={`admin-settlement-status ${item.status}`}>
+                              {settlementStatusLabels[item.status] ?? item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </DataTableScroll>
+              )}
+            </div>
           )}
         </div>
       )}
