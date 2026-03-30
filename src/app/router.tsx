@@ -9,6 +9,7 @@ import { Dashboard } from '../pages/dashboard'
 import { Chat } from '../pages/chat'
 import { Calendar } from '../pages/calendar'
 import { Attendance } from '../pages/attendance'
+import { WorkSchedules } from '../pages/work-schedules'
 import { Drive } from '../pages/drive'
 import { AIChat } from '../pages/ai-chat'
 import { Members } from '../pages/members'
@@ -29,6 +30,7 @@ export function AppRouter() {
             <Route path="calendar" element={<Calendar />} />
             <Route path="tasks" element={<Navigate to="/calendar" replace />} />
             <Route path="attendance" element={<Attendance />} />
+            <Route path="work-schedules" element={<WorkSchedules />} />
             <Route path="drive" element={<Drive />} />
             <Route path="ai" element={<AIChat />} />
             <Route path="members" element={<Members />} />
