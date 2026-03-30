@@ -254,6 +254,12 @@
   box-shadow: none;
 }
 
+.work-schedules-calendar-shell .fc .fc-button .fc-icon,
+.work-schedules-calendar-shell .fc .fc-button-primary,
+.work-schedules-calendar-shell .fc .fc-button-primary .fc-icon {
+  color: inherit;
+}
+
 .work-schedules-calendar-shell .fc .fc-button:hover {
   background: color-mix(in srgb, var(--surface-muted) 84%, transparent);
 }
@@ -262,6 +268,7 @@
 .work-schedules-calendar-shell .fc .fc-button-primary:not(:disabled):active {
   background: color-mix(in srgb, var(--accent-purple) 18%, var(--surface));
   border-color: var(--accent-purple);
+  color: var(--text-primary);
 }
 
 .work-schedules-calendar-shell .fc .fc-button:disabled {
@@ -294,6 +301,20 @@
   background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
 }
 
+.work-schedules-calendar-shell .fc .fc-list-table th,
+.work-schedules-calendar-shell .fc .fc-list-table td,
+.work-schedules-calendar-shell .fc .fc-list-empty,
+.work-schedules-calendar-shell .fc .fc-list-day-text,
+.work-schedules-calendar-shell .fc .fc-list-day-side-text,
+.work-schedules-calendar-shell .fc .fc-list-event-time,
+.work-schedules-calendar-shell .fc .fc-list-event-title a {
+  color: var(--text-primary);
+}
+
+.work-schedules-calendar-shell .fc .fc-list-day-cushion {
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
 .work-schedules-calendar-shell .fc .fc-event-title {
   font-weight: 600;
 }
@@ -321,11 +342,17 @@
 
 :root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button {
   box-shadow: 0 10px 24px rgba(94, 109, 145, 0.08);
+  color: var(--text-primary);
 }
 
 :root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button:disabled {
   background: rgba(255, 255, 255, 0.84);
   color: rgba(111, 125, 153, 0.72);
+}
+
+:root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button-primary:not(:disabled).fc-button-active,
+:root[data-theme='light'] .work-schedules-calendar-shell .fc .fc-button-primary:not(:disabled):active {
+  color: var(--accent-purple-dark);
 }
 
 .work-schedules-modal-overlay {
