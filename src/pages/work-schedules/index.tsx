@@ -242,6 +242,7 @@ export function WorkSchedules() {
   const [recurringSchedules, setRecurringSchedules] = useState<MemberWorkScheduleItem[]>([])
   const [dateEvents, setDateEvents] = useState<WorkScheduleEventItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedCalendar, setHasLoadedCalendar] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [modalState, setModalState] = useState<ScheduleModalState | null>(null)
   const [isModalSaving, setIsModalSaving] = useState(false)
@@ -332,6 +333,7 @@ export function WorkSchedules() {
       setRecurringSchedules([])
       setDateEvents([])
       setIsLoading(false)
+      setHasLoadedCalendar(true)
       return
     }
 
@@ -375,6 +377,7 @@ export function WorkSchedules() {
       setRecurringSchedules([])
     } finally {
       setIsLoading(false)
+      setHasLoadedCalendar(true)
     }
   }, [calendarRange.end, calendarRange.start, canViewAll, currentTeam, currentUser, scope, selectedMemberId, selectedTeam])
 
@@ -582,15 +585,13 @@ export function WorkSchedules() {
             </button>
           </div>
 
-          {isLoading ? (
+          {isLoading && !hasLoadedCalendar ? (
             <div className="work-schedules-loading">근무 일정을 불러오는 중...</div>
-          ) : calendarEvents.length === 0 ? (
-            <EmptyState
-              title="표시할 근무 일정이 없습니다."
-              description="반복 근무를 저장하거나 날짜를 눌러 개별 근무 일정을 추가해 주세요."
-            />
           ) : (
             <div className="work-schedules-calendar-shell">
+              {isLoading && hasLoadedCalendar && (
+                <div className="work-schedules-calendar-overlay">근무 일정을 새로 불러오는 중...</div>
+              )}
               <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
                 locale={koLocale}
@@ -598,12 +599,12 @@ export function WorkSchedules() {
                 headerToolbar={{
                   left: 'prev,next today',
                   center: 'title',
-                  right: 'dayGridMonth,listWeek',
+                  right: 'dayGridMonth,listMonth',
                 }}
                 buttonText={{
                   today: '오늘',
                   month: '월',
-                  list: '목록',
+                  listMonth: '목록',
                 }}
                 height="auto"
                 events={calendarEvents}
@@ -618,6 +619,14 @@ export function WorkSchedules() {
                 dayMaxEventRows={3}
                 eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
               />
+              {!isLoading && calendarEvents.length === 0 && (
+                <div className="work-schedules-empty-state">
+                  <EmptyState
+                    title="표시할 근무 일정이 없습니다."
+                    description="반복 근무를 저장하거나 날짜를 눌러 개별 근무 일정을 추가해 주세요."
+                  />
+                </div>
+              )}
             </div>
           )}
         </DataTableSection>
