@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { deleteWorkScheduleDay, getMyWorkSchedule, upsertWorkScheduleDay } from '../../../shared/api/attendanceApi'
-import type { DayOfWeek } from '../../../shared/api/attendanceApi'
+import type { DayOfWeek, WeekPattern } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
 
 export interface DaySchedule {
@@ -8,7 +8,7 @@ export interface DaySchedule {
   checkOutTime: string  // "HH:mm"
 }
 
-export type WeekPattern = 'EVERY' | 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'LAST'
+export type { WeekPattern } from '../../../shared/api/attendanceApi'
 
 // 배열 인덱스 ↔ DayOfWeek 매핑 (0=Mon, 1=Tue, ..., 6=Sun)
 const INDEX_TO_DOW: DayOfWeek[] = [
@@ -82,6 +82,16 @@ export function useWorkSchedule() {
           }
           return next
         })
+        setWeekPatterns((prev) => {
+          const next = [...prev]
+          for (const item of items) {
+            const idx = INDEX_TO_DOW.indexOf(item.dayOfWeek)
+            if (idx >= 0) {
+              next[idx] = item.weekPattern ?? 'EVERY'
+            }
+          }
+          return next
+        })
       })
       .catch(() => {
         if (parsedStoredDays) {
@@ -116,6 +126,7 @@ export function useWorkSchedule() {
             dayOfWeek: INDEX_TO_DOW[i],
             startTime: daySchedules[i].checkInTime + ':00',
             endTime: daySchedules[i].checkOutTime + ':00',
+            weekPattern: weekPatterns[i],
           })
         })
         .filter(Boolean)

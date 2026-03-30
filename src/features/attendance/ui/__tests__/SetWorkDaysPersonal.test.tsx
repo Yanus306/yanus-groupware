@@ -62,7 +62,7 @@ describe('SetWorkDaysPersonal', () => {
   it('활성화된 요일(월-금)에 출근/퇴근 라벨이 표시된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      expect(screen.getByText(/반복 미리보기/)).toBeInTheDocument()
+      expect(screen.getByText(/특정 날짜 예외 일정은 우측 캘린더/)).toBeInTheDocument()
       expect(screen.getByText('출근')).toBeInTheDocument()
       expect(screen.getByText('퇴근')).toBeInTheDocument()
     })

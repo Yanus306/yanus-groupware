@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import {
+  createWorkScheduleEvent,
+  deleteWorkScheduleEvent,
   getMyAttendance,
   getAttendanceByDate,
   clockIn,
@@ -12,14 +14,28 @@ import {
   deleteWorkScheduleDay,
   getAllWorkSchedules,
   getTeamWorkSchedules,
+  getWorkScheduleEvents,
+  updateWorkScheduleEvent,
 } from '../attendanceApi'
 
 const WORK_SCHEDULES = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
+]
+
+const WORK_SCHEDULE_EVENTS = [
+  {
+    id: 101,
+    date: '2026-03-31',
+    startTime: '13:00:00',
+    endTime: '18:00:00',
+    memberId: 1,
+    memberName: '김리더',
+    teamName: '1팀',
+  },
 ]
 
 const MEMBER_WORK_SCHEDULES = [
@@ -60,6 +76,26 @@ const server = setupServer(
       data: MEMBER_WORK_SCHEDULES.filter((item) => String(params.teamId) === (item.teamName === '1팀' ? '1' : '2')),
     }),
   ),
+  http.get('/api/v1/work-schedule-events', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULE_EVENTS }),
+  ),
+  http.post('/api/v1/work-schedule-events', async ({ request }) => {
+    const body = await request.json() as Record<string, string>
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { id: 999, memberId: 1, memberName: '김리더', teamName: '1팀', ...body },
+    })
+  }),
+  http.put('/api/v1/work-schedule-events/:eventId', async ({ request, params }) => {
+    const body = await request.json() as Record<string, string>
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { id: Number(params.eventId), memberId: 1, memberName: '김리더', teamName: '1팀', ...body },
+    })
+  }),
+  http.delete('/api/v1/work-schedule-events/:eventId', () => new HttpResponse(null, { status: 200 })),
   http.get('/api/v1/attendances/me', ({ request }) => {
     const url = new URL(request.url)
     const date = url.searchParams.get('date')
@@ -147,10 +183,16 @@ describe('workScheduleApi', () => {
   })
 
   it('upsertWorkScheduleDay() 특정 요일 근무 일정을 저장하고 반환한다', async () => {
-    const result = await upsertWorkScheduleDay({ dayOfWeek: 'MONDAY', startTime: '08:00:00', endTime: '17:00:00' })
+    const result = await upsertWorkScheduleDay({
+      dayOfWeek: 'MONDAY',
+      startTime: '08:00:00',
+      endTime: '17:00:00',
+      weekPattern: 'FIRST',
+    })
     expect(result.dayOfWeek).toBe('MONDAY')
     expect(result.startTime).toBe('08:00:00')
     expect(result.endTime).toBe('17:00:00')
+    expect(result.weekPattern).toBe('FIRST')
   })
 
   it('deleteWorkScheduleDay() 특정 요일 근무 일정을 삭제한다', async () => {
@@ -168,5 +210,35 @@ describe('workScheduleApi', () => {
     const schedules = await getTeamWorkSchedules(1)
     expect(schedules).toHaveLength(1)
     expect(schedules[0]).toMatchObject({ memberName: '김리더', teamName: '1팀' })
+  })
+
+  it('getWorkScheduleEvents() 날짜 범위의 근무 일정 이벤트를 반환한다', async () => {
+    const events = await getWorkScheduleEvents('2026-03-01', '2026-03-31')
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ memberName: '김리더', date: '2026-03-31' })
+  })
+
+  it('createWorkScheduleEvent() 날짜별 근무 일정을 생성한다', async () => {
+    const result = await createWorkScheduleEvent({
+      date: '2026-03-30',
+      startTime: '09:00:00',
+      endTime: '18:00:00',
+    })
+
+    expect(result).toMatchObject({ id: 999, date: '2026-03-30', memberName: '김리더' })
+  })
+
+  it('updateWorkScheduleEvent() 날짜별 근무 일정을 수정한다', async () => {
+    const result = await updateWorkScheduleEvent(101, {
+      date: '2026-03-31',
+      startTime: '10:00:00',
+      endTime: '19:00:00',
+    })
+
+    expect(result).toMatchObject({ id: 101, startTime: '10:00:00', endTime: '19:00:00' })
+  })
+
+  it('deleteWorkScheduleEvent() 날짜별 근무 일정을 삭제한다', async () => {
+    await expect(deleteWorkScheduleEvent(101)).resolves.toBeNull()
   })
 })
