@@ -192,6 +192,7 @@
 
 .work-schedules-calendar-shell {
   min-width: 0;
+  position: relative;
 }
 
 .work-schedules-calendar-shell .fc {
@@ -321,6 +322,28 @@
 
 .work-schedules-calendar-shell .fc .fc-daygrid-event-dot {
   border-color: currentColor;
+}
+
+.work-schedules-calendar-overlay {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+}
+
+.work-schedules-empty-state {
+  margin-top: 16px;
 }
 
 :root[data-theme='light'] .work-schedules-calendar-shell .fc {
@@ -459,5 +482,10 @@
 
   .work-schedules-calendar-shell .fc .fc-toolbar-title {
     font-size: 1rem;
+  }
+
+  .work-schedules-calendar-overlay {
+    top: 10px;
+    right: 10px;
   }
 }
