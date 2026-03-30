@@ -46,44 +46,50 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
 
     await waitFor(() => {
-      expect(screen.getAllByText('휴무').length).toBe(7)
+      expect(screen.getByText('활성 요일 0일')).toBeInTheDocument()
+      expect(screen.getByText('월요일은 비활성 상태입니다.')).toBeInTheDocument()
     })
   })
 
   it('7개의 요일 이름이 렌더링된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      expect(screen.getByText('월')).toBeInTheDocument()
-      expect(screen.getByText('일')).toBeInTheDocument()
+      expect(screen.getAllByText('월').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('일').length).toBeGreaterThan(0)
     })
   })
 
   it('활성화된 요일(월-금)에 출근/퇴근 라벨이 표시된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      const checkInLabels = screen.getAllByText('출근')
-      expect(checkInLabels.length).toBe(5)
+      expect(screen.getByText(/반복 미리보기/)).toBeInTheDocument()
+      expect(screen.getByText('출근')).toBeInTheDocument()
+      expect(screen.getByText('퇴근')).toBeInTheDocument()
     })
   })
 
-  it('비활성 요일(토/일)에는 출근/퇴근 라벨이 없다', async () => {
+  it('비활성 요일을 선택하면 휴무 안내가 표시된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
+
+    await waitFor(() => expect(screen.getByText('출근')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('tab', { name: '토' }))
+
     await waitFor(() => {
-      const checkInLabels = screen.getAllByText('출근')
-      expect(checkInLabels.length).toBe(5)
+      expect(screen.getByText('토요일은 비활성 상태입니다.')).toBeInTheDocument()
     })
   })
 
   it('요일 토글 클릭 시 해당 요일 시간 입력이 나타난다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
-    await waitFor(() => expect(screen.getAllByText('출근').length).toBe(5))
+    await waitFor(() => expect(screen.getByText('출근')).toBeInTheDocument())
 
-    const toggleButtons = screen.getAllByRole('button').filter((btn) => btn.classList.contains('toggle'))
-    fireEvent.click(toggleButtons[5])
+    fireEvent.click(screen.getByRole('tab', { name: '토' }))
+    fireEvent.click(screen.getByRole('button', { name: '토 토글' }))
 
     await waitFor(() => {
-      const checkInLabels = screen.getAllByText('출근')
-      expect(checkInLabels.length).toBe(6)
+      expect(screen.getByText('출근')).toBeInTheDocument()
+      expect(screen.getByText('퇴근')).toBeInTheDocument()
     })
   })
 
@@ -91,7 +97,7 @@ describe('SetWorkDaysPersonal', () => {
     render(<SetWorkDaysPersonal />, { wrapper })
 
     await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: '매주' }).length).toBe(5)
+      expect(screen.getByRole('button', { name: '매주' })).toBeInTheDocument()
     })
   })
 
