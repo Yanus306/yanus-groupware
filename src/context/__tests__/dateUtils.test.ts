@@ -1,34 +1,38 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateDisplay, getTodayStr } from '../../shared/lib/date'
+import { formatDateDisplay, getTodayStr, parseDateString, toDateString } from '../../shared/lib/date'
 
 describe('getTodayStr', () => {
   it('오늘 날짜를 YYYY-MM-DD 형식으로 반환한다', () => {
-    const today = new Date()
-    const expected = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, '0'),
-      String(today.getDate()).padStart(2, '0'),
-    ].join('-')
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date())
+      .reduce<Record<string, string>>((acc, part) => {
+        if (part.type !== 'literal') {
+          acc[part.type] = part.value
+        }
+        return acc
+      }, {})
+
+    const expected = [parts.year, parts.month, parts.day].join('-')
     expect(getTodayStr()).toBe(expected)
   })
 })
 
 describe('formatDateDisplay', () => {
   it('오늘 날짜를 "오늘"로 반환한다', () => {
-    const today = new Date()
-    expect(formatDateDisplay(getTodayStr(), today)).toBe('오늘')
+    const todayStr = getTodayStr()
+    expect(formatDateDisplay(todayStr, parseDateString(todayStr))).toBe('오늘')
   })
 
   it('내일 날짜를 "내일"로 반환한다', () => {
-    const today = new Date()
+    const todayStr = getTodayStr()
+    const today = parseDateString(todayStr)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const tomorrowStr = [
-      tomorrow.getFullYear(),
-      String(tomorrow.getMonth() + 1).padStart(2, '0'),
-      String(tomorrow.getDate()).padStart(2, '0'),
-    ].join('-')
-    expect(formatDateDisplay(tomorrowStr, today)).toBe('내일')
+    expect(formatDateDisplay(toDateString(tomorrow), today)).toBe('내일')
   })
 
   it('다른 날짜는 "X요일, M월 D일" 형식으로 반환한다', () => {

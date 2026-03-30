@@ -117,6 +117,118 @@
   min-width: 0;
 }
 
+.my-settlement-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.my-settlement-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.my-settlement-card {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 74%, transparent);
+}
+
+.my-settlement-card strong {
+  display: block;
+  margin: 6px 0 4px;
+  font-size: 1.35rem;
+}
+
+.my-settlement-card p,
+.my-settlement-label {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.my-settlement-label {
+  font-size: 0.82rem;
+}
+
+.my-settlement-table-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.my-settlement-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.my-settlement-table th,
+.my-settlement-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.my-settlement-table th {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.my-settlement-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.my-settlement-status.ON_TIME {
+  background: color-mix(in srgb, #28c76f 16%, transparent);
+  color: #28c76f;
+}
+
+.my-settlement-status.LATE {
+  background: color-mix(in srgb, #ff9f43 16%, transparent);
+  color: #ff9f43;
+}
+
+.my-settlement-status.ABSENT {
+  background: color-mix(in srgb, #ff5d73 16%, transparent);
+  color: #ff5d73;
+}
+
+.my-settlement-status.NO_SCHEDULE {
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+}
+
+.settlement-empty-panel {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.settlement-empty-panel.compact {
+  padding: 16px 18px;
+}
+
+.settlement-empty-title {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.settlement-empty-description {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 @media (min-width: 1680px) {
   .settings-page {
     gap: 28px;

@@ -34,7 +34,8 @@ export function AppRouter() {
             <Route path="drive" element={<Drive />} />
             <Route path="ai" element={<AIChat />} />
             <Route path="members" element={<Members />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="my-page" element={<Settings />} />
+            <Route path="settings" element={<Navigate to="/my-page" replace />} />
             <Route element={<TeamLeadRoute />}>
               <Route path="team-management" element={<TeamManagement />} />
             </Route>

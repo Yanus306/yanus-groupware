@@ -4,16 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import App from '../../App'
+import { getTodayStr } from '../../shared/lib/date'
 
-function getToday() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const today = getToday()
+const today = getTodayStr()
 
 const initialTeams = [
   { id: 1, name: '1팀' },

@@ -15,7 +15,7 @@ const navItems = [
   { to: '/work-schedules', icon: CalendarDays, label: '근무 일정' },
   { to: '/drive', icon: FolderUp, label: '드라이브' },
   { to: '/ai', icon: Bot, label: 'AI' },
-  { to: '/settings', icon: Settings, label: '설정' },
+  { to: '/my-page', icon: Settings, label: '마이페이지' },
 ]
 
 export function Layout() {
@@ -47,7 +47,7 @@ export function Layout() {
           <div className="logo">
             <img src={logoImg} alt="yANUs" className="logo-img" />
             <div className="logo-copy">
-              <strong>yANUs Groupware</strong>
+              <strong>yANUs</strong>
             </div>
           </div>
           <button

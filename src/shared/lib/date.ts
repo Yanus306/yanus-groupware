@@ -1,6 +1,24 @@
+const KOREA_TIMEZONE = 'Asia/Seoul'
+
+function formatParts(date: Date, timeZone = KOREA_TIMEZONE) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  return formatter.formatToParts(date).reduce<Record<string, string>>((acc, part) => {
+    if (part.type !== 'literal') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, {})
+}
+
 export function getTodayStr(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const parts = formatParts(new Date())
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 export function toDateString(date: Date): string {
@@ -68,13 +86,14 @@ export function formatDateRangeToken(startDateStr: string, endDateStr: string): 
 
 export function formatDateDisplay(dateStr: string, baseDate: Date): string {
   const d = new Date(dateStr + 'T12:00:00')
-  const today = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate())
-  const tomorrow = new Date(today)
+  const baseParts = formatParts(baseDate)
+  const todayStr = `${baseParts.year}-${baseParts.month}-${baseParts.day}`
+  const tomorrow = parseDateString(todayStr)
   tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowStr = toDateString(tomorrow)
 
-  const taskDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  if (taskDay.getTime() === today.getTime()) return '오늘'
-  if (taskDay.getTime() === tomorrow.getTime()) return '내일'
+  if (dateStr === todayStr) return '오늘'
+  if (dateStr === tomorrowStr) return '내일'
   const days = ['일', '월', '화', '수', '목', '금', '토']
   return `${days[d.getDay()]}요일, ${d.getMonth() + 1}월 ${d.getDate()}일`
 }

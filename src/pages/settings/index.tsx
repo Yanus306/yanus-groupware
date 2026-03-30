@@ -1,13 +1,19 @@
-import { useState } from 'react'
-import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun, AlertTriangle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun, AlertTriangle, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import { useTheme, type ThemeMode } from '../../shared/theme'
 import { updateMyProfile, deactivateMember } from '../../shared/api/membersApi'
+import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
+import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
-type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security'
+type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security' | 'settlement'
+
+function formatCurrency(amount: number) {
+  return `${amount.toLocaleString('ko-KR')}원`
+}
 
 export function Settings() {
   const navigate = useNavigate()
@@ -30,6 +36,25 @@ export function Settings() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
   const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [settlementLoading, setSettlementLoading] = useState(false)
+  const [settlement, setSettlement] = useState<AttendanceSettlement | null>(null)
+
+  useEffect(() => {
+    if (activeTab !== 'settlement') return
+
+    setSettlementLoading(true)
+    getMonthlyAttendanceSettlement(selectedSettlementMonth)
+      .then((data) => {
+        setSettlement(data)
+      })
+      .catch((err) => {
+        setErrorMessage(err instanceof Error ? err.message : '개인 지각비 정산을 불러오지 못했습니다')
+      })
+      .finally(() => {
+        setSettlementLoading(false)
+      })
+  }, [activeTab, selectedSettlementMonth])
 
   const handleSave = async () => {
     try {
@@ -83,6 +108,7 @@ export function Settings() {
     { id: 'profile', label: '프로필', icon: <User size={18} /> },
     { id: 'notifications', label: '알림', icon: <Bell size={18} /> },
     { id: 'appearance', label: '테마', icon: <Palette size={18} /> },
+    { id: 'settlement', label: '정산', icon: <Wallet size={18} /> },
     { id: 'security', label: '보안', icon: <Shield size={18} /> },
   ]
   const themeOptions: { id: ThemeMode; label: string; description: string; icon: React.ReactNode }[] = [
@@ -97,8 +123,8 @@ export function Settings() {
       )}
       <header className="settings-header">
         <div className="settings-header-copy">
-          <p className="settings-kicker">환경 관리</p>
-          <p className="settings-subtitle">프로필, 알림, 테마, 보안 환경을 한 곳에서 관리하세요.</p>
+          <p className="settings-kicker">My Page</p>
+          <p className="settings-subtitle">프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.</p>
         </div>
         <div className="settings-summary-card glass">
           <div className="settings-summary-icon">
@@ -218,6 +244,91 @@ export function Settings() {
                 <h4>테마 전환 안내</h4>
                 <p>레이아웃, 카드, 입력창, 플로팅 UI까지 모두 선택한 테마에 맞춰 함께 전환됩니다.</p>
               </div>
+            </section>
+          )}
+
+          {activeTab === 'settlement' && (
+            <section className="settings-section">
+              <h3>개인 지각비 정산</h3>
+              <div className="setting-field">
+                <label>정산 월</label>
+                <input
+                  type="month"
+                  value={selectedSettlementMonth}
+                  onChange={(e) => setSelectedSettlementMonth(e.target.value)}
+                  className="setting-input"
+                />
+              </div>
+
+              {settlementLoading ? (
+                <div className="settlement-empty-panel">
+                  <p className="settlement-empty-title">정산 데이터를 불러오는 중입니다.</p>
+                  <p className="settlement-empty-description">선택한 월 기준으로 개인 지각비를 계산하고 있습니다.</p>
+                </div>
+              ) : !settlement ? (
+                <div className="settlement-empty-panel">
+                  <p className="settlement-empty-title">표시할 정산 정보가 없습니다.</p>
+                  <p className="settlement-empty-description">월을 선택하면 개인 지각비와 상세 내역을 확인할 수 있습니다.</p>
+                </div>
+              ) : (
+                <div className="my-settlement-layout">
+                  <div className="my-settlement-summary-grid">
+                    <article className="my-settlement-card">
+                      <span className="my-settlement-label">총 지각비</span>
+                      <strong>{formatCurrency(settlement.lateFee)}</strong>
+                      <p>{settlement.lateDays}건 · 총 {settlement.totalLateMinutes}분</p>
+                    </article>
+                    <article className="my-settlement-card">
+                      <span className="my-settlement-label">근무 일수</span>
+                      <strong>{settlement.scheduledDays}일</strong>
+                      <p>출근 {settlement.attendedDays}일</p>
+                    </article>
+                    <article className="my-settlement-card">
+                      <span className="my-settlement-label">소속 정보</span>
+                      <strong>{settlement.memberName}</strong>
+                      <p>{settlement.teamName}</p>
+                    </article>
+                  </div>
+
+                  {settlement.items.length === 0 ? (
+                    <div className="settlement-empty-panel compact">
+                      <p className="settlement-empty-title">이 달의 정산 상세 내역이 없습니다.</p>
+                      <p className="settlement-empty-description">지각 또는 근무 일정 기준 출근 기록이 생기면 상세가 표시됩니다.</p>
+                    </div>
+                  ) : (
+                    <div className="my-settlement-table-wrap">
+                      <table className="my-settlement-table">
+                        <thead>
+                          <tr>
+                            <th>날짜</th>
+                            <th>예정 출근</th>
+                            <th>실제 출근</th>
+                            <th>지각 분</th>
+                            <th>지각비</th>
+                            <th>상태</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {settlement.items.map((item) => (
+                            <tr key={`${item.date}-${item.scheduledStartTime}`}>
+                              <td>{item.date}</td>
+                              <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
+                              <td>{item.checkInTime ? item.checkInTime.slice(11, 16) : '-'}</td>
+                              <td>{item.lateMinutes}분</td>
+                              <td>{formatCurrency(item.fee)}</td>
+                              <td>
+                                <span className={`my-settlement-status ${item.status}`}>
+                                  {item.status === 'ON_TIME' ? '정상 출근' : item.status === 'LATE' ? '지각' : item.status === 'ABSENT' ? '미출근' : '근무 일정 없음'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           )}
 
