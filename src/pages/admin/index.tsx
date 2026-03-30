@@ -13,6 +13,7 @@ import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
 import { getDateStringsBetween, getMonthRange, getTodayStr } from '../../shared/lib/date'
+import { applyNoScheduleAttendanceFee, rollupAttendanceSettlements } from '../../shared/lib/attendanceSettlement'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { DEFAULT_SIGNUP_TEAM_NAME, formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
@@ -86,12 +87,15 @@ export function Admin() {
   const [newTeamName, setNewTeamName] = useState('')
   const [selectedSettlementMemberId, setSelectedSettlementMemberId] = useState<string>('')
   const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(getTodayStr().slice(0, 7))
-  const [settlement, setSettlement] = useState<AttendanceSettlement | null>(null)
+  const [settlements, setSettlements] = useState<AttendanceSettlement[]>([])
+  const [settlementAttendanceRecords, setSettlementAttendanceRecords] = useState<AttendanceRecord[]>([])
 
   const todayStr = getTodayStr()
   const members = sortUsersByTeamAndName(state.users)
   const teamOptions = getTeamOptions(members, state.teams)
   const settlementMemberOptions = members.filter((member) => member.status !== 'INACTIVE')
+  const settlement = settlements.find((item) => String(item.memberId) === selectedSettlementMemberId) ?? null
+  const settlementSummary = rollupAttendanceSettlements(settlements)
 
   useEffect(() => {
     if (selectedSettlementMemberId || settlementMemberOptions.length === 0) return
@@ -124,15 +128,32 @@ export function Admin() {
   }, [tab])
 
   useEffect(() => {
-    if (tab !== 'settlement' || !selectedSettlementMemberId) return
-
-    const targetMemberId = Number(selectedSettlementMemberId)
-    if (Number.isNaN(targetMemberId)) return
+    if (tab !== 'settlement' || settlementMemberOptions.length === 0) return
 
     setSettlementLoading(true)
-    getMonthlyAttendanceSettlement(selectedSettlementMonth, targetMemberId)
-      .then((data) => {
-        setSettlement(data)
+    const monthAnchor = `${selectedSettlementMonth}-01`
+    const { start, end } = getMonthRange(monthAnchor)
+    const dates = getDateStringsBetween(start, end)
+
+    Promise.all([
+      getAttendanceByDates(dates),
+      Promise.all(
+        settlementMemberOptions.map(async (member) => {
+          const data = await getMonthlyAttendanceSettlement(selectedSettlementMonth, Number(member.id))
+          return data
+        }),
+      ),
+    ])
+      .then(([monthlyRecords, monthlySettlements]) => {
+        setSettlementAttendanceRecords(monthlyRecords)
+        setSettlements(
+          monthlySettlements.map((item) =>
+            applyNoScheduleAttendanceFee(
+              item,
+              monthlyRecords.filter((record) => String(record.memberId) === String(item.memberId)),
+            ),
+          ),
+        )
       })
       .catch((err) => {
         setErrorMessage(err instanceof Error ? err.message : '월별 지각비 정산을 불러오지 못했습니다')
@@ -140,7 +161,7 @@ export function Admin() {
       .finally(() => {
         setSettlementLoading(false)
       })
-  }, [tab, selectedSettlementMemberId, selectedSettlementMonth])
+  }, [tab, selectedSettlementMonth, settlementMemberOptions])
 
   const reloadMembersAndTeams = async () => {
     const [memberList] = await Promise.all([
@@ -327,7 +348,9 @@ export function Admin() {
       const monthAnchor = `${selectedSettlementMonth}-01`
       const { start, end } = getMonthRange(monthAnchor)
       const dates = getDateStringsBetween(start, end)
-      const monthlyRecords = await getAttendanceByDates(dates)
+      const monthlyRecords = settlementAttendanceRecords.length > 0
+        ? settlementAttendanceRecords
+        : await getAttendanceByDates(dates)
       const targetRecords = monthlyRecords.filter(
         (record) => String(record.memberId) === selectedSettlementMemberId,
       )
@@ -572,7 +595,7 @@ export function Admin() {
         <div className="admin-tab-content glass">
           <SectionHeader
             title="월별 지각비 정산"
-            description="관리자만 멤버별 월간 출근 내역과 지각비를 조회하고 내보낼 수 있습니다."
+            description="활성 멤버만 대상으로 월별 전체 정산과 개인 상세 지각비를 함께 확인할 수 있습니다."
             actions={(
               <div className="admin-settlement-actions">
                 <button
@@ -628,21 +651,59 @@ export function Admin() {
             <div className="admin-settlement-content">
               <div className="admin-settlement-summary-grid">
                 <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">대상 멤버</span>
-                  <strong>{settlement.memberName}</strong>
-                  <p>{formatTeamName(settlement.teamName)}</p>
+                  <span className="admin-settlement-label">활성 멤버 수</span>
+                  <strong>{settlementSummary.memberCount}명</strong>
+                  <p>월별 전체 정산 대상</p>
                 </article>
                 <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">총 지각비</span>
-                  <strong>{formatCurrency(settlement.lateFee)}</strong>
-                  <p>지각 {settlement.lateDays}회 · 총 {settlement.totalLateMinutes}분</p>
+                  <span className="admin-settlement-label">월별 전체 지각비</span>
+                  <strong>{formatCurrency(settlementSummary.totalLateFee)}</strong>
+                  <p>지각 {settlementSummary.lateDays}건 · 총 {settlementSummary.totalLateMinutes}분</p>
                 </article>
                 <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">근무 일수</span>
-                  <strong>{settlement.scheduledDays}일</strong>
-                  <p>출근 {settlement.attendedDays}일</p>
+                  <span className="admin-settlement-label">미기재 출근</span>
+                  <strong>{settlementSummary.noScheduleAttendanceCount}건</strong>
+                  <p>건당 {formatCurrency(3000)} 정산</p>
                 </article>
               </div>
+
+              <DataTableScroll className="admin-settlement-table-wrap">
+                <table className="admin-settlement-table">
+                  <thead>
+                    <tr>
+                      <th>멤버</th>
+                      <th>팀</th>
+                      <th>근무 일수</th>
+                      <th>출근 일수</th>
+                      <th>지각 건수</th>
+                      <th>지각 분</th>
+                      <th>정산 금액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {settlements.map((memberSettlement) => (
+                      <tr
+                        key={memberSettlement.memberId}
+                        className={String(memberSettlement.memberId) === selectedSettlementMemberId ? 'is-selected' : ''}
+                        onClick={() => setSelectedSettlementMemberId(String(memberSettlement.memberId))}
+                      >
+                        <td>{memberSettlement.memberName}</td>
+                        <td>{formatTeamName(memberSettlement.teamName)}</td>
+                        <td>{memberSettlement.scheduledDays}일</td>
+                        <td>{memberSettlement.attendedDays}일</td>
+                        <td>{memberSettlement.lateDays}건</td>
+                        <td>{memberSettlement.totalLateMinutes}분</td>
+                        <td>{formatCurrency(memberSettlement.lateFee)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </DataTableScroll>
+
+              <SectionHeader
+                title={`${settlement.memberName} 상세 정산`}
+                description={`${selectedSettlementMonth} 기준 개인 지각비 상세 내역입니다.`}
+              />
 
               {settlement.items.length === 0 ? (
                 <EmptyState
@@ -669,8 +730,8 @@ export function Admin() {
                       {settlement.items.map((item) => (
                         <tr key={`${item.date}-${item.scheduledStartTime}`}>
                           <td>{item.date}</td>
-                          <td>{item.scheduledStartTime.slice(0, 5)}</td>
-                          <td>{item.scheduledEndTime.slice(0, 5)}</td>
+                          <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
+                          <td>{item.scheduledEndTime ? item.scheduledEndTime.slice(0, 5) : '-'}</td>
                           <td>{formatTime(item.checkInTime)}</td>
                           <td>{formatTime(item.checkOutTime)}</td>
                           <td>{item.lateMinutes}분</td>

@@ -22,10 +22,28 @@ const mockRecords = [
     id: 1,
     memberId: 1,
     memberName: '이서연',
-    workDate: '2026-03-23',
-    checkInTime: '2026-03-23T09:00:00',
+    workDate: '2026-03-31',
+    checkInTime: '2026-03-31T09:00:00',
     checkOutTime: null,
     status: 'WORKING',
+  },
+  {
+    id: 2,
+    memberId: 2,
+    memberName: '강민준',
+    workDate: '2026-03-04',
+    checkInTime: '2026-03-04T09:07:10',
+    checkOutTime: '2026-03-04T18:02:01',
+    status: 'LEFT',
+  },
+  {
+    id: 3,
+    memberId: 3,
+    memberName: '김민준',
+    workDate: '2026-03-18',
+    checkInTime: '2026-03-18T09:05:00',
+    checkOutTime: '2026-03-18T18:03:00',
+    status: 'LEFT',
   },
 ]
 
@@ -77,9 +95,12 @@ const server = setupServer(
   http.get('/api/v1/members', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockMembers }),
   ),
-  http.get('/api/v1/attendances', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: mockRecords }),
-  ),
+  http.get('/api/v1/attendances', ({ request }) => {
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date')
+    const data = date ? mockRecords.filter((record) => record.workDate === date) : mockRecords
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
+  }),
   http.get('/api/v1/teams', () =>
     HttpResponse.json({
       code: 'SUCCESS',
@@ -100,11 +121,35 @@ const server = setupServer(
     const url = new URL(request.url)
     const targetMemberId = Number(url.searchParams.get('targetMemberId') ?? '2')
     const targetMember = mockMembers.find((member) => Number(member.id) === targetMemberId) ?? mockMembers[2]
+    const settlementByMemberId: Record<number, typeof mockSettlement> = {
+      2: mockSettlement,
+      3: {
+        ...mockSettlement,
+        memberId: 3,
+        memberName: '김민준',
+        teamName: '1팀',
+        scheduledDays: 0,
+        attendedDays: 1,
+        lateDays: 0,
+        totalLateMinutes: 0,
+        lateFee: 0,
+        items: [],
+      },
+    }
+
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
       data: {
-        ...mockSettlement,
+        ...(settlementByMemberId[targetMemberId] ?? {
+          ...mockSettlement,
+          scheduledDays: 0,
+          attendedDays: 0,
+          lateDays: 0,
+          totalLateMinutes: 0,
+          lateFee: 0,
+          items: [],
+        }),
         memberId: Number(targetMember.id),
         memberName: targetMember.name,
         teamName: targetMember.team,
@@ -247,10 +292,14 @@ describe('Admin 페이지', () => {
     expect(await screen.findByRole('heading', { name: '월별 지각비 정산' })).toBeInTheDocument()
     expect(screen.getByDisplayValue('2026-03')).toBeInTheDocument()
     expect(screen.getByDisplayValue('강민준')).toBeInTheDocument()
-    expect(screen.getByText('총 지각비')).toBeInTheDocument()
-    expect(screen.getByText('2,700원')).toBeInTheDocument()
+    expect(screen.getByText('월별 전체 지각비')).toBeInTheDocument()
+    expect(screen.getByText('6,700원')).toBeInTheDocument()
+    expect(screen.getByText('미기재 출근')).toBeInTheDocument()
+    expect(screen.getByText('2건')).toBeInTheDocument()
     expect(screen.getByText('2026-03-04')).toBeInTheDocument()
-    expect(screen.getByText('700원')).toBeInTheDocument()
+    expect(screen.getAllByText('700원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('김민준').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('3,000원').length).toBeGreaterThan(0)
   })
 
   it('팀 관리 탭에서 신입 팀 삭제 버튼은 비활성화된다', async () => {
