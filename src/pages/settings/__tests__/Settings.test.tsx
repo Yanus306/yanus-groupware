@@ -4,6 +4,7 @@ import { Settings } from '../index'
 
 const mockUpdateMyProfile = vi.fn()
 const mockDeactivateMember = vi.fn()
+const mockGetMonthlyAttendanceSettlement = vi.fn()
 const mockSetTheme = vi.fn()
 const mockLogout = vi.fn()
 const mockNavigate = vi.fn()
@@ -26,6 +27,10 @@ vi.mock('../../../shared/api/membersApi', () => ({
   deactivateMember: (...args: unknown[]) => mockDeactivateMember(...args),
 }))
 
+vi.mock('../../../shared/api/attendanceSettlementApi', () => ({
+  getMonthlyAttendanceSettlement: (...args: unknown[]) => mockGetMonthlyAttendanceSettlement(...args),
+}))
+
 vi.mock('../../../shared/theme', () => ({
   useTheme: () => ({
     theme: 'dark',
@@ -45,18 +50,42 @@ vi.mock('react-router-dom', async () => {
 describe('Settings 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetMonthlyAttendanceSettlement.mockResolvedValue({
+      yearMonth: '2026-03',
+      memberId: 1,
+      memberName: '홍길동',
+      teamName: '1팀',
+      scheduledDays: 10,
+      attendedDays: 9,
+      lateDays: 2,
+      totalLateMinutes: 12,
+      lateFee: 1200,
+      items: [
+        {
+          date: '2026-03-04',
+          scheduledStartTime: '09:00:00',
+          scheduledEndTime: '18:00:00',
+          checkInTime: '2026-03-04T09:07:00',
+          checkOutTime: '2026-03-04T18:02:00',
+          lateMinutes: 7,
+          fee: 700,
+          status: 'LATE',
+        },
+      ],
+    })
   })
 
   it('설정 페이지 설명이 렌더링된다', () => {
     render(<Settings />)
-    expect(screen.getByText('프로필, 알림, 테마, 보안 환경을 한 곳에서 관리하세요.')).toBeInTheDocument()
+    expect(screen.getByText('프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.')).toBeInTheDocument()
   })
 
-  it('4개의 탭이 렌더링된다', () => {
+  it('5개의 탭이 렌더링된다', () => {
     render(<Settings />)
     expect(screen.getByText('프로필')).toBeInTheDocument()
     expect(screen.getByText('알림')).toBeInTheDocument()
     expect(screen.getByText('테마')).toBeInTheDocument()
+    expect(screen.getByText('정산')).toBeInTheDocument()
     expect(screen.getByText('보안')).toBeInTheDocument()
   })
 
@@ -75,6 +104,15 @@ describe('Settings 페이지', () => {
     render(<Settings />)
     fireEvent.click(screen.getByText('보안'))
     expect(screen.getByText('비밀번호 변경')).toBeInTheDocument()
+  })
+
+  it('정산 탭 클릭 시 개인 지각비 정산이 표시된다', async () => {
+    render(<Settings />)
+    fireEvent.click(screen.getByText('정산'))
+
+    expect(await screen.findByText('개인 지각비 정산')).toBeInTheDocument()
+    expect(screen.getByText('1,200원')).toBeInTheDocument()
+    expect(screen.getByText('2026-03-04')).toBeInTheDocument()
   })
 
   it('테마 카드 클릭 시 setTheme가 호출된다', () => {
