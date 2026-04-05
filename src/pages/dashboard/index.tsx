@@ -57,6 +57,7 @@ export function Dashboard() {
   const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [showScheduleConfirmModal, setShowScheduleConfirmModal] = useState(false)
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [eventForm, setEventForm] = useState({
     title: '',
@@ -184,6 +185,22 @@ export function Dashboard() {
     closeEventDetail()
   }
 
+  const handleClockButtonClick = () => {
+    if (status !== 'idle' || isLoading) return
+
+    if (!todayWorkEnabled) {
+      setShowScheduleConfirmModal(true)
+      return
+    }
+
+    handleClockClick()
+  }
+
+  const handleContinueClockIn = () => {
+    setShowScheduleConfirmModal(false)
+    handleClockClick()
+  }
+
   let centerText = ''
   let centerClass = 'clock-time'
 
@@ -223,7 +240,7 @@ export function Dashboard() {
           <button
             type="button"
             className={`clock-ring-btn ${status === 'idle' && !isLoading ? 'clickable' : ''}`}
-            onClick={status === 'idle' && !isLoading ? handleClockClick : undefined}
+            onClick={status === 'idle' && !isLoading ? handleClockButtonClick : undefined}
             disabled={isLoading || status !== 'idle'}
             aria-label="출근하기"
           >
@@ -514,6 +531,44 @@ export function Dashboard() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScheduleConfirmModal && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowScheduleConfirmModal(false)}>
+          <div className="dashboard-detail-modal glass" onClick={(event) => event.stopPropagation()}>
+            <div className="dashboard-detail-head">
+              <h3>근무 일정을 등록하셨나요?</h3>
+              <button
+                type="button"
+                className="dashboard-detail-close"
+                aria-label="닫기"
+                onClick={() => setShowScheduleConfirmModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="dashboard-detail-body">
+              <p>오늘 등록된 근무 일정이 없어도 출근을 계속 진행할 수 있습니다.</p>
+              <span>근무 일정이 있다면 먼저 확인한 뒤 진행해 주세요.</span>
+            </div>
+            <div className="dashboard-detail-actions">
+              <button
+                type="button"
+                className="dashboard-secondary-btn"
+                onClick={() => setShowScheduleConfirmModal(false)}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="dashboard-primary-btn"
+                onClick={handleContinueClockIn}
+              >
+                계속하기
+              </button>
             </div>
           </div>
         </div>
