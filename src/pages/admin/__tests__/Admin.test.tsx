@@ -7,7 +7,13 @@ import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { AppProvider, useApp } from '../../../features/auth/model'
 import type { User } from '../../../entities/user/model/types'
+import { getTodayStr } from '../../../shared/lib/date'
 import { Admin } from '../index'
+
+const TODAY_STR = getTodayStr()
+const CURRENT_YEAR_MONTH = TODAY_STR.slice(0, 7)
+const CURRENT_LATE_DATE = `${CURRENT_YEAR_MONTH}-04`
+const CURRENT_NO_SCHEDULE_DATE = `${CURRENT_YEAR_MONTH}-18`
 
 const mockMembers = [
   { id: '99', name: '관리자', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE' },
@@ -22,8 +28,8 @@ const mockRecords = [
     id: 1,
     memberId: 1,
     memberName: '이서연',
-    workDate: '2026-03-31',
-    checkInTime: '2026-03-31T09:00:00',
+    workDate: TODAY_STR,
+    checkInTime: `${TODAY_STR}T09:00:00`,
     checkOutTime: null,
     status: 'WORKING',
   },
@@ -31,18 +37,18 @@ const mockRecords = [
     id: 2,
     memberId: 2,
     memberName: '강민준',
-    workDate: '2026-03-04',
-    checkInTime: '2026-03-04T09:07:10',
-    checkOutTime: '2026-03-04T18:02:01',
+    workDate: CURRENT_LATE_DATE,
+    checkInTime: `${CURRENT_LATE_DATE}T09:07:10`,
+    checkOutTime: `${CURRENT_LATE_DATE}T18:02:01`,
     status: 'LEFT',
   },
   {
     id: 3,
     memberId: 3,
     memberName: '김민준',
-    workDate: '2026-03-18',
-    checkInTime: '2026-03-18T09:05:00',
-    checkOutTime: '2026-03-18T18:03:00',
+    workDate: CURRENT_NO_SCHEDULE_DATE,
+    checkInTime: `${CURRENT_NO_SCHEDULE_DATE}T09:05:00`,
+    checkOutTime: `${CURRENT_NO_SCHEDULE_DATE}T18:03:00`,
     status: 'LEFT',
   },
 ]
@@ -61,7 +67,7 @@ const mockAuditLogs = [
 ]
 
 const mockSettlement = {
-  yearMonth: '2026-03',
+  yearMonth: CURRENT_YEAR_MONTH,
   memberId: 2,
   memberName: '강민준',
   teamName: '1팀',
@@ -72,11 +78,11 @@ const mockSettlement = {
   lateFee: 2700,
   items: [
     {
-      date: '2026-03-04',
+      date: CURRENT_LATE_DATE,
       scheduledStartTime: '09:00:00',
       scheduledEndTime: '18:00:00',
-      checkInTime: '2026-03-04T09:07:10',
-      checkOutTime: '2026-03-04T18:02:01',
+      checkInTime: `${CURRENT_LATE_DATE}T09:07:10`,
+      checkOutTime: `${CURRENT_LATE_DATE}T18:02:01`,
       lateMinutes: 7,
       fee: 700,
       status: 'LATE',
@@ -284,22 +290,50 @@ describe('Admin 페이지', () => {
     expect(screen.getByText('2팀')).toBeInTheDocument()
   })
 
-  it('지각비 정산 탭에서 월별 요약과 상세 내역이 표시된다', async () => {
+  it('지각비 정산 탭은 기본적으로 전체 섹션을 보여준다', async () => {
     const user = userEvent.setup()
     renderAdmin()
     await user.click(screen.getByRole('button', { name: '지각비 정산' }))
 
     expect(await screen.findByRole('heading', { name: '월별 지각비 정산' })).toBeInTheDocument()
-    expect(screen.getByDisplayValue('2026-03')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('강민준')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(CURRENT_YEAR_MONTH)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '전체' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('heading', { name: '전체 정산 요약' })).toBeInTheDocument()
     expect(screen.getByText('월별 전체 지각비')).toBeInTheDocument()
     expect(screen.getByText('6,700원')).toBeInTheDocument()
     expect(screen.getByText('미기재 출근')).toBeInTheDocument()
     expect(screen.getByText('2건')).toBeInTheDocument()
-    expect(screen.getByText('2026-03-04')).toBeInTheDocument()
-    expect(screen.getAllByText('700원').length).toBeGreaterThan(0)
     expect(screen.getAllByText('김민준').length).toBeGreaterThan(0)
     expect(screen.getAllByText('3,000원').length).toBeGreaterThan(0)
+  })
+
+  it('지각비 정산 탭의 팀 섹션에서 팀별 정산을 볼 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '지각비 정산' }))
+    await user.click(screen.getByRole('tab', { name: '팀' }))
+
+    expect(screen.getByRole('tab', { name: '팀' })).toHaveAttribute('aria-selected', 'true')
+    await user.selectOptions(screen.getByRole('combobox', { name: '팀 선택' }), '1팀')
+
+    expect(await screen.findByRole('heading', { name: '1팀 정산 요약' })).toBeInTheDocument()
+    expect(screen.getByText('팀 전체 지각비')).toBeInTheDocument()
+    expect(screen.getAllByText('강민준').length).toBeGreaterThan(0)
+  })
+
+  it('지각비 정산 탭의 개인 섹션에서 멤버별 상세 정산을 볼 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '지각비 정산' }))
+    await user.click(screen.getByRole('tab', { name: '개인' }))
+
+    expect(screen.getByRole('tab', { name: '개인' })).toHaveAttribute('aria-selected', 'true')
+    await user.selectOptions(screen.getByRole('combobox', { name: '상세 멤버' }), '2')
+
+    expect(await screen.findByRole('heading', { name: '강민준 상세 정산' })).toBeInTheDocument()
+    expect(screen.getByText(CURRENT_LATE_DATE)).toBeInTheDocument()
+    expect(screen.getAllByText('700원').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: '개인 출근 내역 CSV' })).toBeInTheDocument()
   })
 
   it('팀 관리 탭에서 신입 팀 삭제 버튼은 비활성화된다', async () => {

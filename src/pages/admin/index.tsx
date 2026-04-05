@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Crown, Download, FolderPlus, History, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
@@ -13,7 +13,11 @@ import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
 import { getDateStringsBetween, getMonthRange, getTodayStr } from '../../shared/lib/date'
-import { applyNoScheduleAttendanceFee, rollupAttendanceSettlements } from '../../shared/lib/attendanceSettlement'
+import {
+  applyNoScheduleAttendanceFee,
+  rollupAttendanceSettlements,
+} from '../../shared/lib/attendanceSettlement'
+import type { AttendanceSettlementRollup } from '../../shared/lib/attendanceSettlement'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import { DEFAULT_SIGNUP_TEAM_NAME, formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
@@ -30,6 +34,7 @@ import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams' | 'audit' | 'settlement'
+type SettlementView = 'overall' | 'team' | 'member'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 const roleLabels: Record<string, string> = {
@@ -69,6 +74,12 @@ function formatTime(value: string | null) {
   return value ? value.slice(11, 16) : '-'
 }
 
+interface TeamSettlementGroup {
+  teamName: string
+  settlements: AttendanceSettlement[]
+  summary: AttendanceSettlementRollup
+}
+
 export function Admin() {
   const { state, loadMembers, refreshMembers, refreshTeams } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
@@ -85,22 +96,55 @@ export function Admin() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [newTeamName, setNewTeamName] = useState('')
+  const [settlementView, setSettlementView] = useState<SettlementView>('overall')
+  const [selectedSettlementTeamName, setSelectedSettlementTeamName] = useState('')
   const [selectedSettlementMemberId, setSelectedSettlementMemberId] = useState<string>('')
   const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(getTodayStr().slice(0, 7))
   const [settlements, setSettlements] = useState<AttendanceSettlement[]>([])
   const [settlementAttendanceRecords, setSettlementAttendanceRecords] = useState<AttendanceRecord[]>([])
 
   const todayStr = getTodayStr()
-  const members = sortUsersByTeamAndName(state.users)
-  const teamOptions = getTeamOptions(members, state.teams)
-  const settlementMemberOptions = members.filter((member) => member.status !== 'INACTIVE')
+  const members = useMemo(() => sortUsersByTeamAndName(state.users), [state.users])
+  const teamOptions = useMemo(() => getTeamOptions(members, state.teams), [members, state.teams])
+  const settlementMemberOptions = useMemo(
+    () => members.filter((member) => member.status !== 'INACTIVE'),
+    [members],
+  )
+  const settlementTeamOptions = useMemo(() => {
+    const activeTeamNames = new Set(settlementMemberOptions.map((member) => member.team))
+    return teamOptions
+      .filter((team) => activeTeamNames.has(team.name))
+      .map((team) => team.name)
+  }, [settlementMemberOptions, teamOptions])
   const settlement = settlements.find((item) => String(item.memberId) === selectedSettlementMemberId) ?? null
-  const settlementSummary = rollupAttendanceSettlements(settlements)
+  const settlementSummary = useMemo(() => rollupAttendanceSettlements(settlements), [settlements])
+  const teamSettlementGroups = useMemo<TeamSettlementGroup[]>(
+    () => settlementTeamOptions.map((teamName) => {
+      const teamMemberSettlements = settlements.filter((item) => item.teamName === teamName)
+      return {
+        teamName,
+        settlements: teamMemberSettlements,
+        summary: rollupAttendanceSettlements(teamMemberSettlements),
+      }
+    }),
+    [settlementTeamOptions, settlements],
+  )
+  const selectedTeamSettlement = teamSettlementGroups.find((item) => item.teamName === selectedSettlementTeamName) ?? null
+  const selectedMemberNoScheduleCount = settlement?.items.filter(
+    (item) => item.status === 'NO_SCHEDULE' && item.fee > 0,
+  ).length ?? 0
 
   useEffect(() => {
-    if (selectedSettlementMemberId || settlementMemberOptions.length === 0) return
-    setSelectedSettlementMemberId(settlementMemberOptions[0].id)
+    if (!selectedSettlementMemberId) return
+    if (settlementMemberOptions.some((member) => member.id === selectedSettlementMemberId)) return
+    setSelectedSettlementMemberId('')
   }, [selectedSettlementMemberId, settlementMemberOptions])
+
+  useEffect(() => {
+    if (!selectedSettlementTeamName) return
+    if (settlementTeamOptions.includes(selectedSettlementTeamName)) return
+    setSelectedSettlementTeamName('')
+  }, [selectedSettlementTeamName, settlementTeamOptions])
 
   const loadAuditLogList = async () => {
     setAuditLoading(true)
@@ -595,8 +639,8 @@ export function Admin() {
         <div className="admin-tab-content glass">
           <SectionHeader
             title="월별 지각비 정산"
-            description="활성 멤버만 대상으로 월별 전체 정산과 개인 상세 지각비를 함께 확인할 수 있습니다."
-            actions={(
+            description="활성 멤버 기준으로 전체, 팀, 개인 단위 정산을 나눠서 확인할 수 있습니다."
+            actions={settlementView === 'member' ? (
               <div className="admin-settlement-actions">
                 <button
                   type="button"
@@ -608,7 +652,7 @@ export function Admin() {
                   {exportingSettlementAttendance ? '내보내는 중...' : '개인 출근 내역 CSV'}
                 </button>
               </div>
-            )}
+            ) : undefined}
           />
 
           <div className="admin-settlement-toolbar">
@@ -620,19 +664,36 @@ export function Admin() {
                 onChange={(event) => setSelectedSettlementMonth(event.target.value)}
               />
             </label>
-            <label className="admin-settlement-field">
-              <span>대상 멤버</span>
-              <select
-                value={selectedSettlementMemberId}
-                onChange={(event) => setSelectedSettlementMemberId(event.target.value)}
-              >
-                {settlementMemberOptions.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          </div>
+
+          <div className="admin-settlement-view-tabs" role="tablist" aria-label="지각비 정산 보기">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={settlementView === 'overall'}
+              className={`admin-tab-btn ${settlementView === 'overall' ? 'active' : ''}`}
+              onClick={() => setSettlementView('overall')}
+            >
+              전체
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={settlementView === 'team'}
+              className={`admin-tab-btn ${settlementView === 'team' ? 'active' : ''}`}
+              onClick={() => setSettlementView('team')}
+            >
+              팀
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={settlementView === 'member'}
+              className={`admin-tab-btn ${settlementView === 'member' ? 'active' : ''}`}
+              onClick={() => setSettlementView('member')}
+            >
+              개인
+            </button>
           </div>
 
           {settlementLoading ? (
@@ -641,7 +702,7 @@ export function Admin() {
               title="월별 지각비 정산을 불러오는 중입니다."
               description="선택한 월과 멤버 기준으로 출근 기록을 정리하고 있습니다."
             />
-          ) : !settlement ? (
+          ) : settlements.length === 0 ? (
             <EmptyState
               compact
               title="조회할 정산 데이터가 없습니다."
@@ -649,103 +710,260 @@ export function Admin() {
             />
           ) : (
             <div className="admin-settlement-content">
-              <div className="admin-settlement-summary-grid">
-                <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">활성 멤버 수</span>
-                  <strong>{settlementSummary.memberCount}명</strong>
-                  <p>월별 전체 정산 대상</p>
-                </article>
-                <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">월별 전체 지각비</span>
-                  <strong>{formatCurrency(settlementSummary.totalLateFee)}</strong>
-                  <p>지각 {settlementSummary.lateDays}건 · 총 {settlementSummary.totalLateMinutes}분</p>
-                </article>
-                <article className="admin-settlement-card">
-                  <span className="admin-settlement-label">미기재 출근</span>
-                  <strong>{settlementSummary.noScheduleAttendanceCount}건</strong>
-                  <p>건당 {formatCurrency(3000)} 정산</p>
-                </article>
-              </div>
+              {settlementView === 'overall' && (
+                <>
+                  <SectionHeader
+                    title="전체 정산 요약"
+                    description="활성 멤버 전체를 기준으로 월별 지각비를 집계한 결과입니다."
+                  />
 
-              <DataTableScroll className="admin-settlement-table-wrap">
-                <table className="admin-settlement-table">
-                  <thead>
-                    <tr>
-                      <th>멤버</th>
-                      <th>팀</th>
-                      <th>근무 일수</th>
-                      <th>출근 일수</th>
-                      <th>지각 건수</th>
-                      <th>지각 분</th>
-                      <th>정산 금액</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {settlements.map((memberSettlement) => (
-                      <tr
-                        key={memberSettlement.memberId}
-                        className={String(memberSettlement.memberId) === selectedSettlementMemberId ? 'is-selected' : ''}
-                        onClick={() => setSelectedSettlementMemberId(String(memberSettlement.memberId))}
-                      >
-                        <td>{memberSettlement.memberName}</td>
-                        <td>{formatTeamName(memberSettlement.teamName)}</td>
-                        <td>{memberSettlement.scheduledDays}일</td>
-                        <td>{memberSettlement.attendedDays}일</td>
-                        <td>{memberSettlement.lateDays}건</td>
-                        <td>{memberSettlement.totalLateMinutes}분</td>
-                        <td>{formatCurrency(memberSettlement.lateFee)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </DataTableScroll>
+                  <div className="admin-settlement-summary-grid">
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">활성 멤버 수</span>
+                      <strong>{settlementSummary.memberCount}명</strong>
+                      <p>월별 전체 정산 대상</p>
+                    </article>
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">월별 전체 지각비</span>
+                      <strong>{formatCurrency(settlementSummary.totalLateFee)}</strong>
+                      <p>지각 {settlementSummary.lateDays}건 · 총 {settlementSummary.totalLateMinutes}분</p>
+                    </article>
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">미기재 출근</span>
+                      <strong>{settlementSummary.noScheduleAttendanceCount}건</strong>
+                      <p>건당 {formatCurrency(3000)} 정산</p>
+                    </article>
+                  </div>
 
-              <SectionHeader
-                title={`${settlement.memberName} 상세 정산`}
-                description={`${selectedSettlementMonth} 기준 개인 지각비 상세 내역입니다.`}
-              />
+                  <SectionHeader
+                    title="전체 멤버 정산"
+                    description="행을 클릭하면 개인 섹션으로 이동해 상세 정산 내역을 확인할 수 있습니다."
+                  />
 
-              {settlement.items.length === 0 ? (
-                <EmptyState
-                  compact
-                  title="선택한 월의 정산 상세 내역이 없습니다."
-                  description="근무 일정과 출근 기록이 있으면 날짜별 지각비 내역이 표시됩니다."
-                />
-              ) : (
-                <DataTableScroll className="admin-settlement-table-wrap">
-                  <table className="admin-settlement-table">
-                    <thead>
-                      <tr>
-                        <th>날짜</th>
-                        <th>예정 출근</th>
-                        <th>예정 퇴근</th>
-                        <th>실제 출근</th>
-                        <th>실제 퇴근</th>
-                        <th>지각 분</th>
-                        <th>지각비</th>
-                        <th>상태</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {settlement.items.map((item) => (
-                        <tr key={`${item.date}-${item.scheduledStartTime}`}>
-                          <td>{item.date}</td>
-                          <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
-                          <td>{item.scheduledEndTime ? item.scheduledEndTime.slice(0, 5) : '-'}</td>
-                          <td>{formatTime(item.checkInTime)}</td>
-                          <td>{formatTime(item.checkOutTime)}</td>
-                          <td>{item.lateMinutes}분</td>
-                          <td>{formatCurrency(item.fee)}</td>
-                          <td>
-                            <span className={`admin-settlement-status ${item.status}`}>
-                              {settlementStatusLabels[item.status] ?? item.status}
-                            </span>
-                          </td>
+                  <DataTableScroll className="admin-settlement-table-wrap">
+                    <table className="admin-settlement-table is-clickable">
+                      <thead>
+                        <tr>
+                          <th>멤버</th>
+                          <th>팀</th>
+                          <th>근무 일수</th>
+                          <th>출근 일수</th>
+                          <th>지각 건수</th>
+                          <th>지각 분</th>
+                          <th>정산 금액</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </DataTableScroll>
+                      </thead>
+                      <tbody>
+                        {settlements.map((memberSettlement) => (
+                          <tr
+                            key={memberSettlement.memberId}
+                            onClick={() => {
+                              setSelectedSettlementMemberId(String(memberSettlement.memberId))
+                              setSettlementView('member')
+                            }}
+                          >
+                            <td>{memberSettlement.memberName}</td>
+                            <td>{formatTeamName(memberSettlement.teamName)}</td>
+                            <td>{memberSettlement.scheduledDays}일</td>
+                            <td>{memberSettlement.attendedDays}일</td>
+                            <td>{memberSettlement.lateDays}건</td>
+                            <td>{memberSettlement.totalLateMinutes}분</td>
+                            <td>{formatCurrency(memberSettlement.lateFee)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </DataTableScroll>
+                </>
+              )}
+
+              {settlementView === 'team' && (
+                <>
+                  <div className="admin-settlement-toolbar">
+                    <label className="admin-settlement-field">
+                      <span>팀 선택</span>
+                      <select
+                        value={selectedSettlementTeamName}
+                        onChange={(event) => setSelectedSettlementTeamName(event.target.value)}
+                      >
+                        <option value="">팀을 선택해 주세요</option>
+                        {settlementTeamOptions.map((teamName) => (
+                          <option key={teamName} value={teamName}>
+                            {formatTeamName(teamName)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {!selectedTeamSettlement ? (
+                    <EmptyState
+                      compact
+                      title="팀 정산 대상을 선택해 주세요."
+                      description="팀을 선택하면 해당 팀의 월별 지각비 요약과 멤버별 정산 결과가 표시됩니다."
+                    />
+                  ) : (
+                    <>
+                      <SectionHeader
+                        title={`${formatTeamName(selectedTeamSettlement.teamName)} 정산 요약`}
+                        description={`${selectedSettlementMonth} 기준 팀 단위 지각비 집계입니다.`}
+                      />
+
+                      <div className="admin-settlement-summary-grid">
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">팀 활성 멤버 수</span>
+                          <strong>{selectedTeamSettlement.summary.memberCount}명</strong>
+                          <p>{formatTeamName(selectedTeamSettlement.teamName)} 소속 기준</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">팀 전체 지각비</span>
+                          <strong>{formatCurrency(selectedTeamSettlement.summary.totalLateFee)}</strong>
+                          <p>지각 {selectedTeamSettlement.summary.lateDays}건 · 총 {selectedTeamSettlement.summary.totalLateMinutes}분</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">미기재 출근</span>
+                          <strong>{selectedTeamSettlement.summary.noScheduleAttendanceCount}건</strong>
+                          <p>건당 {formatCurrency(3000)} 정산</p>
+                        </article>
+                      </div>
+
+                      <SectionHeader
+                        title="팀 멤버 정산"
+                        description="행을 클릭하면 개인 섹션으로 이동해 해당 멤버의 상세 정산을 확인할 수 있습니다."
+                      />
+
+                      <DataTableScroll className="admin-settlement-table-wrap">
+                        <table className="admin-settlement-table is-clickable">
+                          <thead>
+                            <tr>
+                              <th>멤버</th>
+                              <th>근무 일수</th>
+                              <th>출근 일수</th>
+                              <th>지각 건수</th>
+                              <th>지각 분</th>
+                              <th>정산 금액</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedTeamSettlement.settlements.map((memberSettlement) => (
+                              <tr
+                                key={memberSettlement.memberId}
+                                onClick={() => {
+                                  setSelectedSettlementMemberId(String(memberSettlement.memberId))
+                                  setSettlementView('member')
+                                }}
+                              >
+                                <td>{memberSettlement.memberName}</td>
+                                <td>{memberSettlement.scheduledDays}일</td>
+                                <td>{memberSettlement.attendedDays}일</td>
+                                <td>{memberSettlement.lateDays}건</td>
+                                <td>{memberSettlement.totalLateMinutes}분</td>
+                                <td>{formatCurrency(memberSettlement.lateFee)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </DataTableScroll>
+                    </>
+                  )}
+                </>
+              )}
+
+              {settlementView === 'member' && (
+                <>
+                  <div className="admin-settlement-toolbar">
+                    <label className="admin-settlement-field">
+                      <span>상세 멤버</span>
+                      <select
+                        value={selectedSettlementMemberId}
+                        onChange={(event) => setSelectedSettlementMemberId(event.target.value)}
+                      >
+                        <option value="">멤버를 선택해 주세요</option>
+                        {settlementMemberOptions.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {!settlement ? (
+                    <EmptyState
+                      compact
+                      title="개인 정산 대상을 선택해 주세요."
+                      description="멤버를 선택하면 월별 지각비 상세 내역과 개인 출근 CSV 내보내기를 사용할 수 있습니다."
+                    />
+                  ) : (
+                    <>
+                      <SectionHeader
+                        title={`${settlement.memberName} 상세 정산`}
+                        description={`${selectedSettlementMonth} 기준 개인 지각비 상세 내역입니다.`}
+                      />
+
+                      <div className="admin-settlement-summary-grid">
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">소속 팀</span>
+                          <strong>{formatTeamName(settlement.teamName)}</strong>
+                          <p>근무 {settlement.scheduledDays}일 · 출근 {settlement.attendedDays}일</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">개인 지각비</span>
+                          <strong>{formatCurrency(settlement.lateFee)}</strong>
+                          <p>지각 {settlement.lateDays}건 · 총 {settlement.totalLateMinutes}분</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">미기재 출근</span>
+                          <strong>{selectedMemberNoScheduleCount}건</strong>
+                          <p>건당 {formatCurrency(3000)} 정산</p>
+                        </article>
+                      </div>
+
+                      {settlement.items.length === 0 ? (
+                        <EmptyState
+                          compact
+                          title="선택한 월의 정산 상세 내역이 없습니다."
+                          description="근무 일정과 출근 기록이 있으면 날짜별 지각비 내역이 표시됩니다."
+                        />
+                      ) : (
+                        <DataTableScroll className="admin-settlement-table-wrap">
+                          <table className="admin-settlement-table">
+                            <thead>
+                              <tr>
+                                <th>날짜</th>
+                                <th>예정 출근</th>
+                                <th>예정 퇴근</th>
+                                <th>실제 출근</th>
+                                <th>실제 퇴근</th>
+                                <th>지각 분</th>
+                                <th>지각비</th>
+                                <th>상태</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {settlement.items.map((item) => (
+                                <tr key={`${item.date}-${item.scheduledStartTime}`}>
+                                  <td>{item.date}</td>
+                                  <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
+                                  <td>{item.scheduledEndTime ? item.scheduledEndTime.slice(0, 5) : '-'}</td>
+                                  <td>{formatTime(item.checkInTime)}</td>
+                                  <td>{formatTime(item.checkOutTime)}</td>
+                                  <td>{item.lateMinutes}분</td>
+                                  <td>{formatCurrency(item.fee)}</td>
+                                  <td>
+                                    <span className={`admin-settlement-status ${item.status}`}>
+                                      {settlementStatusLabels[item.status] ?? item.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </DataTableScroll>
+                      )}
+                    </>
+                  )}
+                </>
               )}
             </div>
           )}
