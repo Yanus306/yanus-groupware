@@ -115,6 +115,14 @@
   margin-bottom: 18px;
 }
 
+.admin-settlement-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
 .admin-settlement-field {
   display: flex;
   flex-direction: column;
@@ -204,15 +212,18 @@
 }
 
 .admin-settlement-table tbody tr {
-  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.admin-settlement-table tbody tr:hover td {
+.admin-settlement-table.is-clickable tbody tr {
+  cursor: pointer;
+}
+
+.admin-settlement-table.is-clickable tbody tr:hover td {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.admin-settlement-table tbody tr.is-selected td {
+.admin-settlement-table.is-clickable tbody tr.is-selected td {
   background: color-mix(in srgb, var(--accent-purple) 12%, transparent);
 }
 
@@ -252,11 +263,11 @@
   border-bottom-color: rgba(84, 102, 146, 0.12);
 }
 
-:root[data-theme='light'] .admin-settlement-table tbody tr:hover td {
+:root[data-theme='light'] .admin-settlement-table.is-clickable tbody tr:hover td {
   background: rgba(84, 102, 146, 0.05);
 }
 
-:root[data-theme='light'] .admin-settlement-table tbody tr.is-selected td {
+:root[data-theme='light'] .admin-settlement-table.is-clickable tbody tr.is-selected td {
   background: rgba(126, 91, 239, 0.08);
 }
 
