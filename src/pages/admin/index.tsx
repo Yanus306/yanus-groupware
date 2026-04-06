@@ -8,7 +8,13 @@ import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettl
 import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import { getAuditLogs } from '../../shared/api/auditLogsApi'
 import type { AuditLog } from '../../shared/api/auditLogsApi'
-import { updateMemberRole, deactivateMember, activateMember, updateMemberTeam } from '../../shared/api/membersApi'
+import {
+  updateMemberRole,
+  deactivateMember,
+  activateMember,
+  updateMemberTeam,
+  resetMemberPassword,
+} from '../../shared/api/membersApi'
 import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
@@ -96,6 +102,7 @@ export function Admin() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('MEMBER')
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [newTeamName, setNewTeamName] = useState('')
+  const [resetPasswordResult, setResetPasswordResult] = useState<{ name: string; temporaryPassword: string } | null>(null)
   const [settlementView, setSettlementView] = useState<SettlementView>('overall')
   const [selectedSettlementTeamName, setSelectedSettlementTeamName] = useState('')
   const [selectedSettlementMemberId, setSelectedSettlementMemberId] = useState<string>('')
@@ -254,6 +261,26 @@ export function Admin() {
       await reloadMembersAndTeams()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '비활성화에 실패했습니다')
+    }
+    setSaving(false)
+  }
+
+  const handleResetPassword = async (member: User) => {
+    if (!canManageMemberStatusFor(state.currentUser, member)) {
+      setErrorMessage('본인 계정의 비밀번호는 이 화면에서 초기화할 수 없습니다')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const result = await resetMemberPassword(member.id)
+      setResetPasswordResult({
+        name: member.name,
+        temporaryPassword: result.temporaryPassword,
+      })
+      setSuccessMessage(`${member.name}의 임시 비밀번호를 발급했습니다`)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '임시 비밀번호 발급에 실패했습니다')
     }
     setSaving(false)
   }
@@ -498,6 +525,7 @@ export function Admin() {
             saving={saving}
             showStatus
             showActions
+            onResetPassword={handleResetPassword}
             onOpenRoleChange={(member) => handleOpenRoleChange(member.id, member.name, member.role)}
             onOpenTeamChange={handleOpenTeamChange}
             onDeactivate={handleDeactivate}
@@ -1033,6 +1061,26 @@ export function Admin() {
                 onClick={handleConfirmRoleChange}
               >
                 {saving ? '저장 중...' : '변경 확인'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetPasswordResult && (
+        <div className="admin-modal-overlay" onClick={() => setResetPasswordResult(null)}>
+          <div className="admin-modal glass" onClick={(event) => event.stopPropagation()}>
+            <h3>임시 비밀번호가 발급되었습니다</h3>
+            <div className="admin-reset-password-result">
+              <p>
+                <strong>{resetPasswordResult.name}</strong> 계정의 임시 비밀번호입니다.
+              </p>
+              <code>{resetPasswordResult.temporaryPassword}</code>
+              <span>로그인 후 반드시 비밀번호를 변경하도록 안내해 주세요.</span>
+            </div>
+            <div className="admin-modal-actions">
+              <button type="button" className="confirm-btn" onClick={() => setResetPasswordResult(null)}>
+                확인
               </button>
             </div>
           </div>
