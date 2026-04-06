@@ -10,6 +10,10 @@ export interface UpdateMemberTeamPayload {
   teamId: number
 }
 
+export interface TemporaryPasswordResponse {
+  temporaryPassword: string
+}
+
 // OpenAPI MemberResponse: id는 integer(int64) — User.id(string)로 변환 필요
 interface MemberResponse {
   id: number
@@ -64,3 +68,6 @@ export const activateMember = (id: string) =>
 
 export const updateMyProfile = (payload: ProfileUpdatePayload) =>
   baseClient.put<null>('/api/v1/members/me', payload)
+
+export const resetMemberPassword = (id: string) =>
+  baseClient.post<TemporaryPasswordResponse>(`/api/v1/members/${id}/reset-password`, {})
