@@ -90,6 +90,8 @@ const mockSettlement = {
   ],
 }
 
+const mockTemporaryPassword = 'A1b2C3d4'
+
 const server = setupServer(
   http.get('/api/v1/auth/me', () =>
     HttpResponse.json({
@@ -162,6 +164,13 @@ const server = setupServer(
       },
     })
   }),
+  http.post('/api/v1/members/:memberId/reset-password', () =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { temporaryPassword: mockTemporaryPassword },
+    }),
+  ),
 )
 
 beforeAll(() => server.listen())
@@ -225,6 +234,22 @@ describe('Admin 페이지', () => {
     expect(screen.getByText('멤버 목록')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: '활성화' }).length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('관리 메뉴 열기').length).toBeGreaterThan(0)
+  })
+
+  it('관리자는 멤버 관리 메뉴에서 임시 비밀번호를 발급할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '멤버 관리' }))
+
+    const targetRow = screen.getByText('강민준').closest('tr')
+    expect(targetRow).not.toBeNull()
+
+    const scoped = within(targetRow as HTMLTableRowElement)
+    await user.click(scoped.getByLabelText('관리 메뉴 열기'))
+    await user.click(screen.getByRole('menuitem', { name: '임시 비밀번호 발급' }))
+
+    expect(await screen.findByText('임시 비밀번호가 발급되었습니다')).toBeInTheDocument()
+    expect(screen.getByText(mockTemporaryPassword)).toBeInTheDocument()
   })
 
   it('관리자는 본인 계정에 대해 역할, 상태, 퇴출 액션을 볼 수 없다', async () => {
