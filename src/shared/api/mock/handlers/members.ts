@@ -86,6 +86,13 @@ export const membersHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 
+  http.post('/api/v1/members/:id/reset-password', ({ params }) =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { temporaryPassword: `temp-${params.id}-pw` },
+    })),
+
   http.put('/api/v1/members/me', async ({ request }) => {
     const body = await request.json() as { name?: string; password?: string }
     const auth = request.headers.get('Authorization') ?? ''

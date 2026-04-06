@@ -685,6 +685,36 @@
   font-weight: 600;
 }
 
+.admin-reset-password-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-reset-password-result p,
+.admin-reset-password-result span {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.admin-reset-password-result strong {
+  color: var(--text-primary);
+}
+
+.admin-reset-password-result code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-purple) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 18%, transparent);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .admin-role-options {
   display: flex;
   flex-direction: column;

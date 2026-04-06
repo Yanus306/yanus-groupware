@@ -26,6 +26,7 @@ interface MemberManagementTableProps {
   emptyMessage?: string
   showStatus?: boolean
   showActions?: boolean
+  onResetPassword?: (member: User) => void
   onOpenRoleChange?: (member: User) => void
   onOpenTeamChange?: (member: User) => void
   onDeactivate?: (memberId: string) => void
@@ -43,6 +44,7 @@ export function MemberManagementTable({
   emptyMessage = '표시할 멤버가 없습니다.',
   showStatus = false,
   showActions = false,
+  onResetPassword,
   onOpenRoleChange,
   onOpenTeamChange,
   onDeactivate,
@@ -54,6 +56,7 @@ export function MemberManagementTable({
   canExpelFor,
 }: MemberManagementTableProps) {
   const showRoleChange = typeof onOpenRoleChange === 'function'
+  const showResetPassword = typeof onResetPassword === 'function'
   const showTeamChange = typeof onOpenTeamChange === 'function'
   const showStatusAction = typeof onDeactivate === 'function' || typeof onActivate === 'function'
   const showExpel = typeof onExpel === 'function'
@@ -100,6 +103,14 @@ export function MemberManagementTable({
                   ? [{
                       label: '역할 변경',
                       onSelect: () => onOpenRoleChange?.(member),
+                    }]
+                  : []),
+                ...(canManageRole && showResetPassword
+                  ? [{
+                      label: '임시 비밀번호 발급',
+                      tone: 'warning' as const,
+                      disabled: saving,
+                      onSelect: () => onResetPassword?.(member),
                     }]
                   : []),
                 ...(canExpel

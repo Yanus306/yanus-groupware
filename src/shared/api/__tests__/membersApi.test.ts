@@ -1,7 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMembers, getMember, updateMemberRole, deactivateMember, activateMember, getMyProfile, updateMyProfile, updateMemberTeam } from '../membersApi'
+import {
+  getMembers,
+  getMember,
+  updateMemberRole,
+  deactivateMember,
+  activateMember,
+  getMyProfile,
+  updateMyProfile,
+  updateMemberTeam,
+  resetMemberPassword,
+} from '../membersApi'
 
 const server = setupServer(
   http.get('/api/v1/members', () =>
@@ -42,6 +52,13 @@ const server = setupServer(
   ),
   http.put('/api/v1/members/me', async () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
+  ),
+  http.post('/api/v1/members/:id/reset-password', ({ params }) =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { temporaryPassword: `temp-${params.id}` },
+    }),
   ),
 )
 
@@ -84,5 +101,9 @@ describe('membersApi', () => {
 
   it('updateMyProfile() 내 프로필을 업데이트한다', async () => {
     await expect(updateMyProfile({ name: '새이름' })).resolves.not.toThrow()
+  })
+
+  it('resetMemberPassword() 임시 비밀번호를 발급한다', async () => {
+    await expect(resetMemberPassword('2')).resolves.toEqual({ temporaryPassword: 'temp-2' })
   })
 })
