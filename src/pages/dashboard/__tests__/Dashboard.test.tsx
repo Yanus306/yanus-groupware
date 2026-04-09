@@ -9,18 +9,10 @@ const mockDeleteEvent = vi.fn()
 const mockToggleTaskDone = vi.fn()
 const mockHandleClockClick = vi.fn()
 const mockUseWorkSchedule = vi.fn()
+const mockUseWorkSession = vi.fn()
 
 vi.mock('../../../features/attendance/model/useWorkSession', () => ({
-  useWorkSession: () => ({
-    status: 'idle',
-    clockIn: null,
-    clockOut: null,
-    handleClockClick: mockHandleClockClick,
-    errorMessage: null,
-    toastType: 'info',
-    clearError: vi.fn(),
-    isLoading: false,
-  }),
+  useWorkSession: () => mockUseWorkSession(),
 }))
 
 vi.mock('../../../features/attendance/ui', () => ({
@@ -64,6 +56,16 @@ vi.mock('../../../shared/lib/date', () => ({
 describe('Dashboard 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseWorkSession.mockReturnValue({
+      status: 'idle',
+      clockIn: null,
+      clockOut: null,
+      handleClockClick: mockHandleClockClick,
+      errorMessage: null,
+      toastType: 'info',
+      clearError: vi.fn(),
+      isLoading: false,
+    })
     mockUseWorkSchedule.mockReturnValue({
       workDays: [true, false, false, false, false, false, false],
       daySchedules: [
@@ -165,6 +167,56 @@ describe('Dashboard 페이지', () => {
     )
 
     await user.click(screen.getByRole('button', { name: '출근하기' }))
+    await user.click(screen.getByRole('button', { name: '계속하기' }))
+
+    expect(mockHandleClockClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('퇴근 완료 상태에서 출근 내역 초기화 버튼 클릭 시 확인 모달이 열린다', async () => {
+    const user = userEvent.setup()
+    mockUseWorkSession.mockReturnValue({
+      status: 'done',
+      clockIn: new Date('2026-03-23T09:00:00'),
+      clockOut: new Date('2026-03-23T18:00:00'),
+      handleClockClick: mockHandleClockClick,
+      errorMessage: null,
+      toastType: 'info',
+      clearError: vi.fn(),
+      isLoading: false,
+    })
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '출근 내역 초기화' }))
+
+    expect(screen.getByText('출근 내역을 초기화할까요?')).toBeInTheDocument()
+    expect(mockHandleClockClick).not.toHaveBeenCalled()
+  })
+
+  it('출근 내역 초기화 확인 모달에서 계속하기를 누르면 초기화한다', async () => {
+    const user = userEvent.setup()
+    mockUseWorkSession.mockReturnValue({
+      status: 'done',
+      clockIn: new Date('2026-03-23T09:00:00'),
+      clockOut: new Date('2026-03-23T18:00:00'),
+      handleClockClick: mockHandleClockClick,
+      errorMessage: null,
+      toastType: 'info',
+      clearError: vi.fn(),
+      isLoading: false,
+    })
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '출근 내역 초기화' }))
     await user.click(screen.getByRole('button', { name: '계속하기' }))
 
     expect(mockHandleClockClick).toHaveBeenCalledTimes(1)
