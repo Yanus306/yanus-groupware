@@ -58,6 +58,7 @@ export function Dashboard() {
   const [now, setNow] = useState(() => new Date())
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showScheduleConfirmModal, setShowScheduleConfirmModal] = useState(false)
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false)
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [eventForm, setEventForm] = useState({
     title: '',
@@ -201,6 +202,16 @@ export function Dashboard() {
     handleClockClick()
   }
 
+  const handleResetClick = () => {
+    if (status !== 'done' || isLoading) return
+    setShowResetConfirmModal(true)
+  }
+
+  const handleContinueReset = () => {
+    setShowResetConfirmModal(false)
+    handleClockClick()
+  }
+
   let centerText = ''
   let centerClass = 'clock-time'
 
@@ -305,7 +316,7 @@ export function Dashboard() {
               <button
                 type="button"
                 className="clock-reset-btn"
-                onClick={handleClockClick}
+                onClick={handleResetClick}
                 disabled={isLoading}
               >
                 출근 내역 초기화
@@ -566,6 +577,44 @@ export function Dashboard() {
                 type="button"
                 className="dashboard-primary-btn"
                 onClick={handleContinueClockIn}
+              >
+                계속하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResetConfirmModal && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowResetConfirmModal(false)}>
+          <div className="dashboard-detail-modal glass" onClick={(event) => event.stopPropagation()}>
+            <div className="dashboard-detail-head">
+              <h3>출근 내역을 초기화할까요?</h3>
+              <button
+                type="button"
+                className="dashboard-detail-close"
+                aria-label="닫기"
+                onClick={() => setShowResetConfirmModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="dashboard-detail-body">
+              <p>오늘 기록된 출근과 퇴근 시간이 초기화됩니다.</p>
+              <span>다시 출근 기록을 남겨야 하는 경우에만 계속 진행해 주세요.</span>
+            </div>
+            <div className="dashboard-detail-actions">
+              <button
+                type="button"
+                className="dashboard-secondary-btn"
+                onClick={() => setShowResetConfirmModal(false)}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="dashboard-primary-btn"
+                onClick={handleContinueReset}
               >
                 계속하기
               </button>
