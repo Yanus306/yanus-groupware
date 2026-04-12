@@ -5,6 +5,7 @@ import { AdminRoute } from '../shared/ui/AdminRoute'
 import { TeamLeadRoute } from '../shared/ui/TeamLeadRoute'
 import { Login } from '../pages/login'
 import { Register } from '../pages/register'
+import { VerifyEmail } from '../pages/verify-email'
 import { Dashboard } from '../pages/dashboard'
 import { Chat } from '../pages/chat'
 import { Calendar } from '../pages/calendar'
@@ -23,6 +24,7 @@ export function AppRouter() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
