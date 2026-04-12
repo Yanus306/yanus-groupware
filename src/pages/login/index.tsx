@@ -8,7 +8,9 @@ import { setPendingVerificationEmail } from '../../shared/lib/emailVerification'
 import logoSrc from '../../assets/logo.png'
 import './login.css'
 
-const EMAIL_NOT_VERIFIED_MESSAGE = '이메일 인증을 완료한 뒤 로그인해 주세요'
+function isEmailVerificationPendingMessage(message: string) {
+  return message.includes('이메일 인증')
+}
 
 interface FormErrors {
   email?: string
@@ -64,7 +66,7 @@ export function Login() {
       navigate('/')
     } catch (err) {
       const message = err instanceof Error ? err.message : '로그인에 실패했습니다'
-      if (message === EMAIL_NOT_VERIFIED_MESSAGE) {
+      if (isEmailVerificationPendingMessage(message)) {
         setPendingVerificationEmail(email)
         navigate('/verify-email', {
           state: { email },
