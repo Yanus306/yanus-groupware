@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { login, register, getMe, logout } from '../authClient'
+import { login, register, getMe, logout, verifyEmail, resendVerificationEmail } from '../authClient'
 
 const server = setupServer(
   http.post('/api/v1/auth/login', async ({ request }) => {
@@ -22,6 +22,12 @@ const server = setupServer(
     if (body.email === 'locked@yanus.kr' && body.password === 'password') {
       return HttpResponse.json(
         { code: 'ACCOUNT_LOCKED', message: '로그인 5회 실패로 계정이 잠겼습니다', data: null },
+        { status: 403 },
+      )
+    }
+    if (body.email === 'pending@yanus.kr' && body.password === 'password') {
+      return HttpResponse.json(
+        { code: 'EMAIL_NOT_VERIFIED', message: '이메일 인증이 필요합니다', data: null },
         { status: 403 },
       )
     }
@@ -50,6 +56,28 @@ const server = setupServer(
   http.post('/api/v1/auth/logout', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null }),
   ),
+  http.post('/api/v1/auth/verify-email', async ({ request }) => {
+    const body = await request.json() as { token: string }
+    if (body.token === 'valid-token') {
+      return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: {} })
+    }
+
+    return HttpResponse.json(
+      { code: 'INVALID_TOKEN', message: '유효하지 않거나 만료된 인증 링크입니다', data: null },
+      { status: 400 },
+    )
+  }),
+  http.post('/api/v1/auth/verify-email/resend', async ({ request }) => {
+    const body = await request.json() as { email: string }
+    if (body.email === 'unknown@yanus.kr') {
+      return HttpResponse.json(
+        { code: 'NOT_FOUND', message: '가입된 이메일을 찾을 수 없습니다', data: null },
+        { status: 404 },
+      )
+    }
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: {} })
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -81,6 +109,12 @@ describe('authClient', () => {
     it('계정 잠금 상태면 전용 안내 문구를 반환한다', async () => {
       await expect(login('locked@yanus.kr', 'password')).rejects.toThrow(
         '로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요',
+      )
+    })
+
+    it('이메일 인증 전 계정이면 전용 안내 문구를 반환한다', async () => {
+      await expect(login('pending@yanus.kr', 'password')).rejects.toThrow(
+        '이메일 인증을 완료한 뒤 로그인해 주세요',
       )
     })
   })
@@ -119,6 +153,26 @@ describe('authClient', () => {
       await expect(logout()).resolves.not.toThrow()
       expect(localStorage.getItem('accessToken')).toBeNull()
       expect(localStorage.getItem('refreshToken')).toBeNull()
+    })
+  })
+
+  describe('verifyEmail()', () => {
+    it('유효한 토큰이면 완료된다', async () => {
+      await expect(verifyEmail('valid-token')).resolves.not.toThrow()
+    })
+
+    it('유효하지 않은 토큰이면 에러를 던진다', async () => {
+      await expect(verifyEmail('invalid-token')).rejects.toThrow('유효하지 않거나 만료된 인증 링크입니다')
+    })
+  })
+
+  describe('resendVerificationEmail()', () => {
+    it('재전송 요청이 성공한다', async () => {
+      await expect(resendVerificationEmail('new@yanus.kr')).resolves.not.toThrow()
+    })
+
+    it('존재하지 않는 이메일이면 에러를 던진다', async () => {
+      await expect(resendVerificationEmail('unknown@yanus.kr')).rejects.toThrow('가입된 이메일을 찾을 수 없습니다')
     })
   })
 })
