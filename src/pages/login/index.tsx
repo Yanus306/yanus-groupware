@@ -4,8 +4,11 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { login, getMe } from '../../features/auth/api/authClient'
 import { useApp } from '../../features/auth/model'
 import { consumeSessionExpiredMessage } from '../../shared/lib/authStorage'
+import { setPendingVerificationEmail } from '../../shared/lib/emailVerification'
 import logoSrc from '../../assets/logo.png'
 import './login.css'
+
+const EMAIL_NOT_VERIFIED_MESSAGE = '이메일 인증을 완료한 뒤 로그인해 주세요'
 
 interface FormErrors {
   email?: string
@@ -60,7 +63,16 @@ export function Login() {
       loadUser(user)
       navigate('/')
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : '로그인에 실패했습니다')
+      const message = err instanceof Error ? err.message : '로그인에 실패했습니다'
+      if (message === EMAIL_NOT_VERIFIED_MESSAGE) {
+        setPendingVerificationEmail(email)
+        navigate('/verify-email', {
+          state: { email },
+        })
+        return
+      }
+
+      setServerError(message)
     } finally {
       setLoading(false)
     }
