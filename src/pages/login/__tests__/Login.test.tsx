@@ -125,6 +125,21 @@ describe('Login 페이지', () => {
     })
   })
 
+  it('이메일 인증 관련 다른 문구여도 인증 페이지로 이동한다', async () => {
+    mockLogin.mockRejectedValue(new Error('이메일 인증되지 않은 계정입니다.'))
+    renderLogin()
+    await userEvent.type(screen.getByLabelText('이메일'), 'pending2@yanus.kr')
+    await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: '로그인' }))
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem('yanus-pending-verification-email')).toBe('pending2@yanus.kr')
+      expect(mockNavigate).toHaveBeenCalledWith('/verify-email', {
+        state: { email: 'pending2@yanus.kr' },
+      })
+    })
+  })
+
   it('로딩 중에는 버튼이 비활성화된다', async () => {
     mockLogin.mockImplementation(() => new Promise(() => {})) // 무한 대기
     renderLogin()
