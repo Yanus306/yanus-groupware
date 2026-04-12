@@ -40,6 +40,9 @@ export async function login(email: string, password: string): Promise<string> {
     if (err instanceof ApiError && err.code === 'ACCOUNT_LOCKED') {
       throw new Error('로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요')
     }
+    if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
+      throw new Error('이메일 인증을 완료한 뒤 로그인해 주세요')
+    }
     throw err
   }
 }
@@ -65,4 +68,12 @@ export async function logout(): Promise<void> {
   } finally {
     clearAuthTokens()
   }
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  await baseClient.post<Record<string, never>>('/api/v1/auth/verify-email', { token })
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  await baseClient.post<Record<string, never>>('/api/v1/auth/verify-email/resend', { email })
 }

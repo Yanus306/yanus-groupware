@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { getMe, login, register } from '../../features/auth/api/authClient'
-import { useApp } from '../../features/auth/model'
+import { register } from '../../features/auth/api/authClient'
 import { getTeams } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
 import {
@@ -13,6 +12,7 @@ import {
   getDefaultSignupTeam,
   sortTeams,
 } from '../../shared/lib/team'
+import { setPendingVerificationEmail } from '../../shared/lib/emailVerification'
 import logoSrc from '../../assets/logo.png'
 import './register.css'
 
@@ -48,7 +48,6 @@ function validate(name: string, email: string, password: string, confirmPassword
 
 export function Register() {
   const navigate = useNavigate()
-  const { loadUser } = useApp()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -102,10 +101,10 @@ export function Register() {
     setLoading(true)
     try {
       await register({ name, email, password, teamId: defaultTeam.id })
-      await login(email, password)
-      const user = await getMe()
-      loadUser(user)
-      navigate('/')
+      setPendingVerificationEmail(email)
+      navigate('/verify-email', {
+        state: { email },
+      })
     } catch (err) {
       setServerError(err instanceof Error ? err.message : '회원가입에 실패했습니다')
     } finally {

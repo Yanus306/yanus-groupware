@@ -36,6 +36,7 @@ describe('Register 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+    sessionStorage.clear()
     mockGetMe.mockResolvedValue({ id: '4', name: '새사용자', email: 'new@yanus.kr', team: '신입', role: 'MEMBER', online: true })
     mockLogin.mockImplementation(async () => {
       localStorage.setItem('accessToken', 'mock-login-token')
@@ -74,7 +75,7 @@ describe('Register 페이지', () => {
     expect(await screen.findByText('비밀번호가 일치하지 않습니다')).toBeInTheDocument()
   })
 
-  it('회원가입 성공 시 accessToken을 저장하고 홈으로 이동한다', async () => {
+  it('회원가입 성공 시 이메일 인증 안내 화면으로 이동한다', async () => {
     mockRegister.mockResolvedValue(undefined)
     renderRegister()
     await userEvent.type(screen.getByLabelText('이름'), '홍길동')
@@ -89,9 +90,12 @@ describe('Register 페이지', () => {
         password: 'password123',
         teamId: 5,
       })
-      expect(localStorage.getItem('accessToken')).toBe('mock-login-token')
-      expect(localStorage.getItem('refreshToken')).toBe('mock-refresh-token')
-      expect(mockNavigate).toHaveBeenCalledWith('/')
+      expect(mockLogin).not.toHaveBeenCalled()
+      expect(mockGetMe).not.toHaveBeenCalled()
+      expect(sessionStorage.getItem('yanus-pending-verification-email')).toBe('user@test.com')
+      expect(mockNavigate).toHaveBeenCalledWith('/verify-email', {
+        state: { email: 'user@test.com' },
+      })
     })
   })
 
