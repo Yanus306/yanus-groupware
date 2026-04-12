@@ -19,10 +19,12 @@ const INITIAL_CREDENTIALS: Record<string, { userId: string; password: string }> 
 }
 
 let validCredentials: Record<string, { userId: string; password: string }> = { ...INITIAL_CREDENTIALS }
+let verifiedEmails = new Set(Object.keys(INITIAL_CREDENTIALS))
 
 export function resetAuthMockData() {
   mockUsers = [...INITIAL_USERS]
   validCredentials = { ...INITIAL_CREDENTIALS }
+  verifiedEmails = new Set(Object.keys(INITIAL_CREDENTIALS))
 }
 
 export function getAuthMockUserByAuthorization(authorization: string | null): User {
@@ -51,6 +53,13 @@ export const authHandlers = [
     if (member?.status === 'INACTIVE') {
       return HttpResponse.json(
         { code: 'MEMBER_INACTIVE', message: '비활성화된 계정입니다', data: null },
+        { status: 403 },
+      )
+    }
+
+    if (!verifiedEmails.has(body.email)) {
+      return HttpResponse.json(
+        { code: 'EMAIL_NOT_VERIFIED', message: '이메일 인증이 필요합니다', data: null },
         { status: 403 },
       )
     }
@@ -89,6 +98,32 @@ export const authHandlers = [
     }
 
     return HttpResponse.json({ code: 'SUCCESS', message: 'created', data: null }, { status: 201 })
+  }),
+
+  http.post('/api/v1/auth/verify-email', async ({ request }) => {
+    const body = await request.json() as { token: string }
+
+    if (body.token === 'valid-token') {
+      verifiedEmails.add('new@yanus.kr')
+      return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: {} })
+    }
+
+    return HttpResponse.json(
+      { code: 'INVALID_TOKEN', message: '유효하지 않거나 만료된 인증 링크입니다', data: null },
+      { status: 400 },
+    )
+  }),
+
+  http.post('/api/v1/auth/verify-email/resend', async ({ request }) => {
+    const body = await request.json() as { email: string }
+    if (!validCredentials[body.email]) {
+      return HttpResponse.json(
+        { code: 'NOT_FOUND', message: '가입된 이메일을 찾을 수 없습니다', data: null },
+        { status: 404 },
+      )
+    }
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: {} })
   }),
 
   http.post('/api/v1/auth/refresh', async ({ request }) => {
