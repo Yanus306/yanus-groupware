@@ -110,6 +110,21 @@ describe('Login 페이지', () => {
     expect(await screen.findByText('로그인 5회 실패로 계정이 잠겼습니다. 30분 후 다시 시도해 주세요')).toBeInTheDocument()
   })
 
+  it('이메일 인증이 안 된 계정이면 인증 페이지로 이동한다', async () => {
+    mockLogin.mockRejectedValue(new Error('이메일 인증을 완료한 뒤 로그인해 주세요'))
+    renderLogin()
+    await userEvent.type(screen.getByLabelText('이메일'), 'pending@yanus.kr')
+    await userEvent.type(screen.getByLabelText('비밀번호'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: '로그인' }))
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem('yanus-pending-verification-email')).toBe('pending@yanus.kr')
+      expect(mockNavigate).toHaveBeenCalledWith('/verify-email', {
+        state: { email: 'pending@yanus.kr' },
+      })
+    })
+  })
+
   it('로딩 중에는 버튼이 비활성화된다', async () => {
     mockLogin.mockImplementation(() => new Promise(() => {})) // 무한 대기
     renderLogin()
