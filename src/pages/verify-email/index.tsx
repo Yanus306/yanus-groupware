@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, Mail, RotateCw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { AlertCircle, CheckCircle2, KeyRound, RotateCw } from 'lucide-react'
 import { resendVerificationEmail, verifyEmail } from '../../features/auth/api/authClient'
 import {
   clearPendingVerificationEmail,
@@ -18,46 +18,41 @@ interface VerifyEmailLocationState {
 
 export function VerifyEmail() {
   const location = useLocation()
-  const [searchParams] = useSearchParams()
   const state = location.state as VerifyEmailLocationState | null
-  const token = searchParams.get('token')?.trim() ?? ''
   const initialEmail = useMemo(
     () => state?.email ?? getPendingVerificationEmail(),
     [state?.email],
   )
 
   const [email, setEmail] = useState(initialEmail)
-  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>(token ? 'loading' : 'idle')
+  const [code, setCode] = useState('')
+  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle')
   const [verifyMessage, setVerifyMessage] = useState('')
   const [resendMessage, setResendMessage] = useState('')
   const [resendError, setResendError] = useState('')
   const [resending, setResending] = useState(false)
 
-  useEffect(() => {
-    if (!token) return
+  const handleVerify = async () => {
+    const trimmedCode = code.trim()
+    setVerifyMessage('')
 
-    let cancelled = false
-
-    ;(async () => {
-      setVerifyStatus('loading')
-      setVerifyMessage('')
-      try {
-        await verifyEmail(token)
-        if (cancelled) return
-        clearPendingVerificationEmail()
-        setVerifyStatus('success')
-        setVerifyMessage('이메일 인증이 완료되었습니다')
-      } catch (error) {
-        if (cancelled) return
-        setVerifyStatus('error')
-        setVerifyMessage(error instanceof Error ? error.message : '이메일 인증에 실패했습니다')
-      }
-    })()
-
-    return () => {
-      cancelled = true
+    if (!trimmedCode) {
+      setVerifyStatus('error')
+      setVerifyMessage('인증 코드를 입력해 주세요')
+      return
     }
-  }, [token])
+
+    setVerifyStatus('loading')
+    try {
+      await verifyEmail(trimmedCode)
+      clearPendingVerificationEmail()
+      setVerifyStatus('success')
+      setVerifyMessage('이메일 인증이 완료되었습니다')
+    } catch (error) {
+      setVerifyStatus('error')
+      setVerifyMessage(error instanceof Error ? error.message : '이메일 인증에 실패했습니다')
+    }
+  }
 
   const handleResend = async () => {
     const trimmedEmail = email.trim()
@@ -98,49 +93,74 @@ export function VerifyEmail() {
 
         <div className="verify-email-status-card">
           <div className={`verify-email-status-icon ${verifyStatus}`}>
-            {verifyStatus === 'success' ? <CheckCircle2 size={22} /> : <Mail size={22} />}
+            {verifyStatus === 'success' ? <CheckCircle2 size={22} /> : <KeyRound size={22} />}
           </div>
 
-          {!token && (
+          {verifyStatus !== 'success' && (
             <>
               <h1>이메일을 확인해 주세요</h1>
               <p>
                 회원가입이 거의 끝났습니다.
                 <br />
-                메일함에서 인증 링크를 눌러야 로그인할 수 있습니다.
+                메일로 받은 인증 코드를 입력해야 로그인할 수 있습니다.
               </p>
             </>
           )}
 
           {verifyStatus === 'loading' && (
             <>
-              <h1>이메일 인증을 확인하고 있어요</h1>
-              <p>잠시만 기다려 주세요. 인증 결과를 바로 안내해 드릴게요.</p>
+              <h1>인증 코드를 확인하고 있어요</h1>
+              <p>잠시만 기다려 주세요. 입력한 코드를 바로 확인해 드릴게요.</p>
             </>
           )}
 
-          {token && verifyStatus === 'success' && (
+          {verifyStatus === 'success' && (
             <>
               <h1>이메일 인증이 완료되었습니다</h1>
               <p>이제 로그인해서 서비스를 이용할 수 있습니다.</p>
             </>
           )}
 
-          {token && verifyStatus === 'error' && (
-            <>
-              <h1>인증 링크를 확인할 수 없어요</h1>
-              <p>{verifyMessage}</p>
-            </>
-          )}
-
-          {!token && email && (
+          {email && verifyStatus !== 'success' && (
             <div className="verify-email-target">
               <span>인증 메일을 보낸 주소</span>
               <strong>{email}</strong>
             </div>
           )}
 
-          {token && verifyStatus === 'success' && (
+          {verifyStatus !== 'success' && (
+            <div className="verify-email-input-group">
+              <label htmlFor="verification-code">인증 코드</label>
+              <input
+                id="verification-code"
+                type="text"
+                className={`verify-email-input ${verifyStatus === 'error' ? 'error' : ''}`}
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                placeholder="메일로 받은 인증 코드를 입력해 주세요"
+                autoComplete="one-time-code"
+              />
+              {verifyStatus === 'error' && verifyMessage && (
+                <div className="verify-email-feedback error" role="alert">
+                  <AlertCircle size={16} />
+                  {verifyMessage}
+                </div>
+              )}
+            </div>
+          )}
+
+          {verifyStatus !== 'success' && (
+            <button
+              type="button"
+              className="verify-email-primary-link verify-email-primary-btn"
+              onClick={handleVerify}
+              disabled={verifyStatus === 'loading'}
+            >
+              {verifyStatus === 'loading' ? '확인 중...' : '인증 확인'}
+            </button>
+          )}
+
+          {verifyStatus === 'success' && (
             <Link to="/login" className="verify-email-primary-link">
               로그인하러 가기
             </Link>
@@ -154,7 +174,7 @@ export function VerifyEmail() {
               <span>메일을 받지 못하셨나요?</span>
             </div>
             <p className="verify-email-resend-copy">
-              아래 이메일로 인증 메일을 다시 보낼 수 있습니다.
+              아래 이메일로 인증 코드를 다시 받을 수 있습니다.
             </p>
 
             <div className="verify-email-input-group">

@@ -143,6 +143,9 @@
   font-weight: 700;
   text-decoration: none;
   border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 
 .verify-email-primary-link,
@@ -153,6 +156,12 @@
 }
 
 .verify-email-resend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.verify-email-primary-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
