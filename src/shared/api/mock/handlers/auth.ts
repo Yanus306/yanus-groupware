@@ -59,7 +59,7 @@ export const authHandlers = [
 
     if (!verifiedEmails.has(body.email)) {
       return HttpResponse.json(
-        { code: 'EMAIL_NOT_VERIFIED', message: '이메일 인증이 필요합니다', data: null },
+        { code: 'MEMBER_PENDING', message: '이메일 인증이 완료되지 않은 계정입니다.', data: null },
         { status: 403 },
       )
     }
