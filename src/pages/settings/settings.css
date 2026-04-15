@@ -123,6 +123,53 @@
   gap: 18px;
 }
 
+.attendance-settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.attendance-settings-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attendance-settings-copy strong {
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.attendance-settings-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.attendance-settings-note {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px dashed var(--border-color);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+}
+
+.attendance-settings-note span {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.attendance-settings-note p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 .my-settlement-summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
