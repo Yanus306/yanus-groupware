@@ -91,6 +91,7 @@ const mockSettlement = {
 }
 
 const mockTemporaryPassword = 'A1b2C3d4'
+const mockAutoCheckoutTime = '23:59:59'
 
 const server = setupServer(
   http.get('/api/v1/auth/me', () =>
@@ -171,6 +172,21 @@ const server = setupServer(
       data: { temporaryPassword: mockTemporaryPassword },
     }),
   ),
+  http.get('/api/v1/settings/auto-checkout-time', () =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { autoCheckoutTime: mockAutoCheckoutTime },
+    }),
+  ),
+  http.patch('/api/v1/settings/auto-checkout-time', async ({ request }) => {
+    const body = await request.json() as { autoCheckoutTime: string }
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { autoCheckoutTime: body.autoCheckoutTime },
+    })
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -225,6 +241,34 @@ describe('Admin 페이지', () => {
     expect(screen.getByRole('button', { name: '팀 관리' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '감사 로그' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '지각비 정산' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '운영 설정' })).toBeInTheDocument()
+  })
+
+  it('운영 설정 탭에서 자동 체크아웃 시간을 확인할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+
+    await user.click(screen.getByRole('button', { name: '운영 설정' }))
+
+    expect(await screen.findByLabelText('자동 체크아웃 시간 입력')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(mockAutoCheckoutTime)).toBeInTheDocument()
+  })
+
+  it('운영 설정 탭에서 자동 체크아웃 시간을 저장할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+
+    await user.click(screen.getByRole('button', { name: '운영 설정' }))
+    await screen.findByDisplayValue(mockAutoCheckoutTime)
+
+    await user.clear(screen.getByLabelText('자동 체크아웃 시간 입력'))
+    await user.type(screen.getByLabelText('자동 체크아웃 시간 입력'), '220000')
+    await user.click(screen.getByRole('button', { name: '자동 체크아웃 시간 저장' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('자동 체크아웃 시간을 저장했습니다')).toBeInTheDocument()
+    })
+    expect(screen.getByDisplayValue('22:00:00')).toBeInTheDocument()
   })
 
   it('멤버 관리 탭 클릭 시 멤버 테이블이 표시된다', async () => {

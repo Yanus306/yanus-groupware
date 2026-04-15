@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Crown, Download, FolderPlus, History, Trash2, Users } from 'lucide-react'
+import { Clock3, Crown, Download, FolderPlus, History, Save, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate, getAttendanceByDates } from '../../shared/api/attendanceApi'
@@ -26,6 +26,7 @@ import {
 import type { AttendanceSettlementRollup } from '../../shared/lib/attendanceSettlement'
 import { createTeam, deleteTeam } from '../../shared/api/teamsApi'
 import type { TeamResponse } from '../../shared/api/teamsApi'
+import { getAutoCheckoutTime, updateAutoCheckoutTime } from '../../shared/api/settingsApi'
 import { DEFAULT_SIGNUP_TEAM_NAME, formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
 import {
   canChangeMemberTeamFor,
@@ -39,7 +40,7 @@ import { EmptyState } from '../../shared/ui/EmptyState'
 import { SectionHeader } from '../../shared/ui/SectionHeader'
 import './admin.css'
 
-type Tab = 'attendance' | 'members' | 'teams' | 'audit' | 'settlement'
+type Tab = 'attendance' | 'members' | 'teams' | 'audit' | 'settlement' | 'settings'
 type SettlementView = 'overall' | 'team' | 'member'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
@@ -80,6 +81,11 @@ function formatTime(value: string | null) {
   return value ? value.slice(11, 16) : '-'
 }
 
+function normalizeTimeValue(value: string) {
+  if (!value) return ''
+  return value.length === 5 ? `${value}:00` : value
+}
+
 interface TeamSettlementGroup {
   teamName: string
   settlements: AttendanceSettlement[]
@@ -109,6 +115,10 @@ export function Admin() {
   const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(getTodayStr().slice(0, 7))
   const [settlements, setSettlements] = useState<AttendanceSettlement[]>([])
   const [settlementAttendanceRecords, setSettlementAttendanceRecords] = useState<AttendanceRecord[]>([])
+  const [autoCheckoutLoading, setAutoCheckoutLoading] = useState(false)
+  const [autoCheckoutSaving, setAutoCheckoutSaving] = useState(false)
+  const [autoCheckoutSaved, setAutoCheckoutSaved] = useState(false)
+  const [autoCheckoutTime, setAutoCheckoutTime] = useState('')
 
   const todayStr = getTodayStr()
   const members = useMemo(() => sortUsersByTeamAndName(state.users), [state.users])
@@ -213,6 +223,22 @@ export function Admin() {
         setSettlementLoading(false)
       })
   }, [tab, selectedSettlementMonth, settlementMemberOptions])
+
+  useEffect(() => {
+    if (tab !== 'settings') return
+
+    setAutoCheckoutLoading(true)
+    getAutoCheckoutTime()
+      .then((data) => {
+        setAutoCheckoutTime(normalizeTimeValue(data.autoCheckoutTime))
+      })
+      .catch((err) => {
+        setErrorMessage(err instanceof Error ? err.message : '자동 체크아웃 시간을 불러오지 못했습니다')
+      })
+      .finally(() => {
+        setAutoCheckoutLoading(false)
+      })
+  }, [tab])
 
   const reloadMembersAndTeams = async () => {
     const [memberList] = await Promise.all([
@@ -446,6 +472,23 @@ export function Admin() {
     }
   }
 
+  const handleAutoCheckoutSave = async () => {
+    if (!autoCheckoutTime) return
+
+    setAutoCheckoutSaving(true)
+    try {
+      const result = await updateAutoCheckoutTime(normalizeTimeValue(autoCheckoutTime))
+      setAutoCheckoutTime(normalizeTimeValue(result.autoCheckoutTime))
+      setAutoCheckoutSaved(true)
+      setSuccessMessage('자동 체크아웃 시간을 저장했습니다')
+      setTimeout(() => setAutoCheckoutSaved(false), 2000)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '자동 체크아웃 시간 저장에 실패했습니다')
+    } finally {
+      setAutoCheckoutSaving(false)
+    }
+  }
+
   return (
     <div className="admin-page">
       {errorMessage && (
@@ -505,6 +548,13 @@ export function Admin() {
           onClick={() => setTab('settlement')}
         >
           지각비 정산
+        </button>
+        <button
+          type="button"
+          className={`admin-tab-btn ${tab === 'settings' ? 'active' : ''}`}
+          onClick={() => setTab('settings')}
+        >
+          운영 설정
         </button>
       </div>
 
@@ -995,6 +1045,59 @@ export function Admin() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === 'settings' && (
+        <div className="admin-tab-content glass">
+          <SectionHeader
+            title="운영 설정"
+            description="출근 운영 정책처럼 관리자만 다뤄야 하는 공통 설정을 관리합니다."
+          />
+
+          <section className="admin-ops-card">
+            <div className="admin-ops-card-head">
+              <div className="admin-ops-icon">
+                <Clock3 size={18} />
+              </div>
+              <div className="admin-ops-copy">
+                <strong>자동 체크아웃 시간</strong>
+                <p>매일 자정 스케줄러가 이 시간을 기준으로 미퇴근자를 자동 체크아웃 처리합니다.</p>
+              </div>
+            </div>
+
+            {autoCheckoutLoading ? (
+              <EmptyState
+                compact
+                title="자동 체크아웃 시간을 불러오는 중입니다."
+                description="현재 운영 중인 기준 시간을 확인하고 있습니다."
+              />
+            ) : (
+              <div className="admin-ops-form">
+                <label className="admin-settlement-field">
+                  <span>자동 체크아웃 시간</span>
+                  <input
+                    aria-label="자동 체크아웃 시간 입력"
+                    type="time"
+                    step={1}
+                    value={autoCheckoutTime}
+                    onChange={(event) => setAutoCheckoutTime(normalizeTimeValue(event.target.value))}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="admin-create-team-btn"
+                  onClick={handleAutoCheckoutSave}
+                  disabled={autoCheckoutSaving || !autoCheckoutTime}
+                  aria-label="자동 체크아웃 시간 저장"
+                >
+                  <Save size={16} />
+                  {autoCheckoutSaving ? '저장 중...' : autoCheckoutSaved ? '저장됨!' : '자동 체크아웃 시간 저장'}
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       )}
 
