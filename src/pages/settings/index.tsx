@@ -1,29 +1,23 @@
 import { useEffect, useState } from 'react'
-import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun, AlertTriangle, Wallet, Clock3 } from 'lucide-react'
+import { User, Bell, Palette, Shield, Save, Monitor, Moon, Sun, AlertTriangle, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../features/auth/model'
 import { useTheme, type ThemeMode } from '../../shared/theme'
 import { updateMyProfile, deactivateMember } from '../../shared/api/membersApi'
 import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
-import { getAutoCheckoutTime, updateAutoCheckoutTime } from '../../shared/api/settingsApi'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
-type SettingsTab = 'profile' | 'notifications' | 'attendance' | 'appearance' | 'security' | 'settlement'
+type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security' | 'settlement'
 
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
-function normalizeTimeValue(value: string) {
-  if (!value) return ''
-  return value.length === 5 ? `${value}:00` : value
-}
-
 export function Settings() {
   const navigate = useNavigate()
-  const { state, logout, isAdmin } = useApp()
+  const { state, logout } = useApp()
   const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const [notifications, setNotifications] = useState({
@@ -45,10 +39,6 @@ export function Settings() {
   const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(new Date().toISOString().slice(0, 7))
   const [settlementLoading, setSettlementLoading] = useState(false)
   const [settlement, setSettlement] = useState<AttendanceSettlement | null>(null)
-  const [autoCheckoutLoading, setAutoCheckoutLoading] = useState(false)
-  const [autoCheckoutSaving, setAutoCheckoutSaving] = useState(false)
-  const [autoCheckoutSaved, setAutoCheckoutSaved] = useState(false)
-  const [autoCheckoutTime, setAutoCheckoutTime] = useState('')
 
   useEffect(() => {
     if (activeTab !== 'settlement') return
@@ -65,22 +55,6 @@ export function Settings() {
         setSettlementLoading(false)
       })
   }, [activeTab, selectedSettlementMonth])
-
-  useEffect(() => {
-    if (activeTab !== 'attendance') return
-
-    setAutoCheckoutLoading(true)
-    getAutoCheckoutTime()
-      .then((data) => {
-        setAutoCheckoutTime(normalizeTimeValue(data.autoCheckoutTime))
-      })
-      .catch((err) => {
-        setErrorMessage(err instanceof Error ? err.message : '자동 체크아웃 시간을 불러오지 못했습니다')
-      })
-      .finally(() => {
-        setAutoCheckoutLoading(false)
-      })
-  }, [activeTab])
 
   const handleSave = async () => {
     try {
@@ -130,26 +104,9 @@ export function Settings() {
     }
   }
 
-  const handleAutoCheckoutSave = async () => {
-    if (!isAdmin || !autoCheckoutTime) return
-
-    setAutoCheckoutSaving(true)
-    try {
-      const result = await updateAutoCheckoutTime(normalizeTimeValue(autoCheckoutTime))
-      setAutoCheckoutTime(normalizeTimeValue(result.autoCheckoutTime))
-      setAutoCheckoutSaved(true)
-      setTimeout(() => setAutoCheckoutSaved(false), 2000)
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : '자동 체크아웃 시간 저장에 실패했습니다')
-    } finally {
-      setAutoCheckoutSaving(false)
-    }
-  }
-
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: 'profile', label: '프로필', icon: <User size={18} /> },
     { id: 'notifications', label: '알림', icon: <Bell size={18} /> },
-    { id: 'attendance', label: '출퇴근', icon: <Clock3 size={18} /> },
     { id: 'appearance', label: '테마', icon: <Palette size={18} /> },
     { id: 'settlement', label: '정산', icon: <Wallet size={18} /> },
     { id: 'security', label: '보안', icon: <Shield size={18} /> },
@@ -167,7 +124,7 @@ export function Settings() {
       <header className="settings-header">
         <div className="settings-header-copy">
           <p className="settings-kicker">My Page</p>
-          <p className="settings-subtitle">프로필, 알림, 출퇴근, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.</p>
+          <p className="settings-subtitle">프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.</p>
         </div>
         <div className="settings-summary-card glass">
           <div className="settings-summary-icon">
@@ -286,59 +243,6 @@ export function Settings() {
               <div className="appearance-note">
                 <h4>테마 전환 안내</h4>
                 <p>레이아웃, 카드, 입력창, 플로팅 UI까지 모두 선택한 테마에 맞춰 함께 전환됩니다.</p>
-              </div>
-            </section>
-          )}
-
-          {activeTab === 'attendance' && (
-            <section className="settings-section">
-              <h3>자동 체크아웃 시간</h3>
-              <div className="attendance-settings-card">
-                <div className="attendance-settings-copy">
-                  <strong>미퇴근자는 이 시간 기준으로 자동 체크아웃됩니다.</strong>
-                  <p>매일 자정 스케줄러가 설정된 시간을 기준으로 미퇴근자를 자동 체크아웃 처리합니다.</p>
-                </div>
-
-                {autoCheckoutLoading ? (
-                  <div className="settlement-empty-panel compact">
-                    <p className="settlement-empty-title">자동 체크아웃 시간을 불러오는 중입니다.</p>
-                    <p className="settlement-empty-description">현재 운영 중인 자동 체크아웃 시간을 확인하고 있습니다.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="setting-field">
-                      <label htmlFor="auto-checkout-time">자동 체크아웃 시간</label>
-                      <input
-                        id="auto-checkout-time"
-                        aria-label="자동 체크아웃 시간 입력"
-                        type="time"
-                        step={1}
-                        value={autoCheckoutTime}
-                        onChange={(e) => setAutoCheckoutTime(normalizeTimeValue(e.target.value))}
-                        className="setting-input"
-                        disabled={!isAdmin}
-                      />
-                    </div>
-
-                    {isAdmin ? (
-                      <button
-                        className="save-btn"
-                        type="button"
-                        onClick={handleAutoCheckoutSave}
-                        disabled={autoCheckoutSaving || !autoCheckoutTime}
-                        aria-label="자동 체크아웃 시간 저장"
-                      >
-                        <Save size={16} />
-                        {autoCheckoutSaving ? '저장 중...' : autoCheckoutSaved ? '저장됨!' : '자동 체크아웃 시간 저장'}
-                      </button>
-                    ) : (
-                      <div className="attendance-settings-note">
-                        <span>관리자만 변경할 수 있습니다.</span>
-                        <p>현재 시간은 확인할 수 있지만 수정은 관리자 계정에서만 가능합니다.</p>
-                      </div>
-                    )}
-                  </>
-                )}
               </div>
             </section>
           )}
