@@ -102,6 +102,58 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.admin-ops-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.admin-ops-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.admin-ops-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent-purple) 16%, transparent);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.admin-ops-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-ops-copy strong {
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.admin-ops-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.admin-ops-form {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .admin-settlement-actions {
   display: flex;
   align-items: center;
