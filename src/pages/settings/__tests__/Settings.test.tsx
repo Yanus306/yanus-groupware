@@ -5,21 +5,18 @@ import { Settings } from '../index'
 const mockUpdateMyProfile = vi.fn()
 const mockDeactivateMember = vi.fn()
 const mockGetMonthlyAttendanceSettlement = vi.fn()
-const mockGetAutoCheckoutTime = vi.fn()
-const mockUpdateAutoCheckoutTime = vi.fn()
 const mockSetTheme = vi.fn()
 const mockLogout = vi.fn()
 const mockNavigate = vi.fn()
-let currentUserRole: 'MEMBER' | 'ADMIN' = 'MEMBER'
 
 vi.mock('../../../features/auth/model', () => ({
   useApp: () => ({
     state: {
-      currentUser: { id: '1', name: '홍길동', role: currentUserRole, team: '1팀' },
+      currentUser: { id: '1', name: '홍길동', role: 'MEMBER', team: '1팀' },
       users: [],
       teams: [{ id: 1, name: '1팀' }],
     },
-    isAdmin: currentUserRole === 'ADMIN',
+    isAdmin: false,
     isTeamLead: false,
     logout: mockLogout,
   }),
@@ -32,11 +29,6 @@ vi.mock('../../../shared/api/membersApi', () => ({
 
 vi.mock('../../../shared/api/attendanceSettlementApi', () => ({
   getMonthlyAttendanceSettlement: (...args: unknown[]) => mockGetMonthlyAttendanceSettlement(...args),
-}))
-
-vi.mock('../../../shared/api/settingsApi', () => ({
-  getAutoCheckoutTime: (...args: unknown[]) => mockGetAutoCheckoutTime(...args),
-  updateAutoCheckoutTime: (...args: unknown[]) => mockUpdateAutoCheckoutTime(...args),
 }))
 
 vi.mock('../../../shared/theme', () => ({
@@ -58,7 +50,6 @@ vi.mock('react-router-dom', async () => {
 describe('Settings 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    currentUserRole = 'MEMBER'
     mockGetMonthlyAttendanceSettlement.mockResolvedValue({
       yearMonth: '2026-03',
       memberId: 1,
@@ -82,21 +73,17 @@ describe('Settings 페이지', () => {
         },
       ],
     })
-    mockGetAutoCheckoutTime.mockResolvedValue({
-      autoCheckoutTime: '23:59:59',
-    })
   })
 
   it('설정 페이지 설명이 렌더링된다', () => {
     render(<Settings />)
-    expect(screen.getByText('프로필, 알림, 출퇴근, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.')).toBeInTheDocument()
+    expect(screen.getByText('프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.')).toBeInTheDocument()
   })
 
   it('5개의 탭이 렌더링된다', () => {
     render(<Settings />)
     expect(screen.getByText('프로필')).toBeInTheDocument()
     expect(screen.getByText('알림')).toBeInTheDocument()
-    expect(screen.getByText('출퇴근')).toBeInTheDocument()
     expect(screen.getByText('테마')).toBeInTheDocument()
     expect(screen.getByText('정산')).toBeInTheDocument()
     expect(screen.getByText('보안')).toBeInTheDocument()
@@ -117,45 +104,6 @@ describe('Settings 페이지', () => {
     render(<Settings />)
     fireEvent.click(screen.getByText('보안'))
     expect(screen.getByText('비밀번호 변경')).toBeInTheDocument()
-  })
-
-  it('출퇴근 탭 클릭 시 자동 체크아웃 시간이 표시된다', async () => {
-    render(<Settings />)
-    fireEvent.click(screen.getByText('출퇴근'))
-
-    expect(await screen.findByText('자동 체크아웃 시간')).toBeInTheDocument()
-    expect(mockGetAutoCheckoutTime).toHaveBeenCalled()
-    expect(screen.getByDisplayValue('23:59:59')).toBeInTheDocument()
-  })
-
-  it('일반 멤버는 자동 체크아웃 시간을 읽기 전용으로 본다', async () => {
-    render(<Settings />)
-    fireEvent.click(screen.getByText('출퇴근'))
-
-    expect(await screen.findByText('관리자만 변경할 수 있습니다.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '자동 체크아웃 시간 저장' })).not.toBeInTheDocument()
-  })
-
-  it('관리자는 자동 체크아웃 시간을 변경할 수 있다', async () => {
-    currentUserRole = 'ADMIN'
-    mockUpdateAutoCheckoutTime.mockResolvedValueOnce({
-      autoCheckoutTime: '22:00:00',
-    })
-
-    render(<Settings />)
-    fireEvent.click(screen.getByText('출퇴근'))
-
-    await screen.findByDisplayValue('23:59:59')
-
-    fireEvent.change(screen.getByLabelText('자동 체크아웃 시간 입력'), {
-      target: { value: '22:00:00' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: '자동 체크아웃 시간 저장' }))
-
-    await waitFor(() => {
-      expect(mockUpdateAutoCheckoutTime).toHaveBeenCalledWith('22:00:00')
-    })
-    expect(screen.getByDisplayValue('22:00:00')).toBeInTheDocument()
   })
 
   it('정산 탭 클릭 시 개인 지각비 정산이 표시된다', async () => {
