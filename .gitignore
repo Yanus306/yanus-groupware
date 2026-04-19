@@ -29,6 +29,7 @@ dist-ssr
 CLAUDE.md
 ISSUE.md
 api.md
+.claude/
 .claude/worktrees/
 .claude/settings.local.json
 .claude/todos/
