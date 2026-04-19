@@ -237,6 +237,8 @@
   grid-column: 2 / 4;
   grid-row: 1;
   min-height: 140px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-preview {
@@ -275,6 +277,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.schedule-card .empty-state-panel,
+.chat-preview .empty-state-panel,
+.tasks-card .empty-state-panel {
+  flex: 1;
+  min-height: 132px;
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.schedule-card .empty-state-action,
+.tasks-card .empty-state-action {
+  justify-content: center;
 }
 
 .schedule-card ul,

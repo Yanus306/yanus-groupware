@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: clamp(24px, 4vw, 56px);
   position: relative;
 }
 
@@ -21,33 +21,45 @@
 
 .register-card {
   width: 100%;
-  max-width: 460px;
-  padding: 42px 38px 38px;
+  max-width: 520px;
+  padding: 50px 42px 42px;
   position: relative;
   z-index: 1;
+  overflow: hidden;
+  border-radius: 28px;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--accent-purple) 18%, transparent),
     var(--shadow-strong),
     0 4px 16px color-mix(in srgb, var(--accent-purple) 12%, transparent);
 }
 
+.register-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top center, rgba(114, 184, 232, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 32%);
+  pointer-events: none;
+}
+
 .register-logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 32px;
 }
 
 .register-logo-img {
-  height: 52px;
+  height: 58px;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.5));
 }
 
 .register-logo-title {
-  font-size: 1.6rem;
+  font-size: clamp(2rem, 3vw, 2.35rem);
   font-weight: 800;
   background: var(--gradient-purple);
   -webkit-background-clip: text;
@@ -58,16 +70,16 @@
 }
 
 .register-logo-sub {
-  font-size: 0.83rem;
-  color: var(--text-muted);
+  font-size: 0.94rem;
+  color: color-mix(in srgb, var(--text-secondary) 88%, white 12%);
   margin-top: 2px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.02em;
 }
 
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .form-select {
@@ -129,16 +141,16 @@
 .field-help {
   display: inline-block;
   margin-top: 6px;
-  color: var(--text-muted);
-  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--text-muted) 76%, white 24%);
+  font-size: 0.81rem;
   line-height: 1.5;
 }
 
 .register-footer {
-  margin-top: 20px;
+  margin-top: 24px;
   text-align: center;
-  font-size: 0.83rem;
-  color: var(--text-muted);
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--text-muted) 70%, white 30%);
 }
 
 .register-footer a {
@@ -175,6 +187,24 @@
 
 @media (max-width: 480px) {
   .register-card {
-    padding: 36px 22px 32px;
+    max-width: 100%;
+    padding: 40px 22px 34px;
+    border-radius: 24px;
+  }
+
+  .register-logo {
+    margin-bottom: 28px;
+  }
+
+  .register-logo-img {
+    height: 54px;
+  }
+
+  .register-logo-title {
+    font-size: 1.95rem;
+  }
+
+  .register-logo-sub {
+    font-size: 0.92rem;
   }
 }
