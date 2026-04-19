@@ -81,7 +81,12 @@ function formatTime(value: string | null) {
   return value ? value.slice(11, 16) : '-'
 }
 
-function normalizeTimeValue(value: string) {
+function toTimeInputValue(value: string) {
+  if (!value) return ''
+  return value.slice(0, 5)
+}
+
+function toApiTimeValue(value: string) {
   if (!value) return ''
   return value.length === 5 ? `${value}:00` : value
 }
@@ -135,6 +140,19 @@ export function Admin() {
   }, [settlementMemberOptions, teamOptions])
   const settlement = settlements.find((item) => String(item.memberId) === selectedSettlementMemberId) ?? null
   const settlementSummary = useMemo(() => rollupAttendanceSettlements(settlements), [settlements])
+  const activeMembers = useMemo(
+    () => members.filter((member) => member.status !== 'INACTIVE'),
+    [members],
+  )
+  const activeTeamCount = useMemo(
+    () => new Set(activeMembers.map((member) => member.team)).size,
+    [activeMembers],
+  )
+  const checkedOutCount = useMemo(
+    () => records.filter((record) => record.status === 'LEFT').length,
+    [records],
+  )
+  const missingAttendanceCount = Math.max(activeMembers.length - records.length, 0)
   const teamSettlementGroups = useMemo<TeamSettlementGroup[]>(
     () => settlementTeamOptions.map((teamName) => {
       const teamMemberSettlements = settlements.filter((item) => item.teamName === teamName)
@@ -230,7 +248,7 @@ export function Admin() {
     setAutoCheckoutLoading(true)
     getAutoCheckoutTime()
       .then((data) => {
-        setAutoCheckoutTime(normalizeTimeValue(data.autoCheckoutTime))
+        setAutoCheckoutTime(toTimeInputValue(data.autoCheckoutTime))
       })
       .catch((err) => {
         setErrorMessage(err instanceof Error ? err.message : '자동 체크아웃 시간을 불러오지 못했습니다')
@@ -477,8 +495,8 @@ export function Admin() {
 
     setAutoCheckoutSaving(true)
     try {
-      const result = await updateAutoCheckoutTime(normalizeTimeValue(autoCheckoutTime))
-      setAutoCheckoutTime(normalizeTimeValue(result.autoCheckoutTime))
+      const result = await updateAutoCheckoutTime(toApiTimeValue(autoCheckoutTime))
+      setAutoCheckoutTime(toTimeInputValue(result.autoCheckoutTime))
       setAutoCheckoutSaved(true)
       setSuccessMessage('자동 체크아웃 시간을 저장했습니다')
       setTimeout(() => setAutoCheckoutSaved(false), 2000)
@@ -560,6 +578,28 @@ export function Admin() {
 
       {tab === 'attendance' && (
         <div className="admin-tab-content glass">
+          <div className="admin-overview-grid">
+            <article className="admin-overview-card">
+              <span className="admin-overview-label">활성 멤버</span>
+              <strong>{activeMembers.length}명</strong>
+              <p>현재 운영 중인 전체 인원</p>
+            </article>
+            <article className="admin-overview-card">
+              <span className="admin-overview-label">활성 팀</span>
+              <strong>{activeTeamCount}개</strong>
+              <p>근무 일정을 관리 중인 팀 수</p>
+            </article>
+            <article className="admin-overview-card">
+              <span className="admin-overview-label">오늘 기록</span>
+              <strong>{records.length}건</strong>
+              <p>출근 또는 퇴근 기록이 남은 인원</p>
+            </article>
+            <article className="admin-overview-card emphasis">
+              <span className="admin-overview-label">오늘 미기록</span>
+              <strong>{missingAttendanceCount}명</strong>
+              <p>확인 필요한 인원, 퇴근 {checkedOutCount}명 완료</p>
+            </article>
+          </div>
           <TeamAttendanceStatus members={members} records={records} date={todayStr} />
         </div>
       )}
@@ -1081,7 +1121,7 @@ export function Admin() {
                     type="time"
                     step={1}
                     value={autoCheckoutTime}
-                    onChange={(event) => setAutoCheckoutTime(normalizeTimeValue(event.target.value))}
+                    onChange={(event) => setAutoCheckoutTime(event.target.value)}
                   />
                 </label>
 

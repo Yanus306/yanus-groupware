@@ -402,12 +402,15 @@
 
 @media (max-width: 720px) {
   .attendance-header {
+    flex-direction: column;
+    align-items: stretch;
     margin-bottom: 20px;
   }
 
   .header-actions {
     width: 100%;
     align-items: stretch;
+    gap: 10px;
   }
 
   .export-btn,
@@ -420,6 +423,8 @@
   .export-btn,
   .date-range {
     justify-content: center;
+    min-height: 44px;
+    border-radius: 14px;
   }
 
   .filter-tabs {
@@ -450,6 +455,7 @@
   .my-history-section,
   .leave-section-wrap {
     padding: 18px;
+    border-radius: 20px;
   }
 
   .pagination {
@@ -461,6 +467,11 @@
 @media (max-width: 560px) {
   .attendance-header-copy p {
     font-size: 0.92rem;
+  }
+
+  .filter-tabs button {
+    min-height: 42px;
+    font-size: 0.82rem;
   }
 
   .team-status-section,
@@ -489,6 +500,17 @@
     font-size: 0.72rem;
   }
 
+  .summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card .value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 420px) {
   .summary-stats {
     grid-template-columns: 1fr;
   }

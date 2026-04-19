@@ -251,7 +251,7 @@ describe('Admin 페이지', () => {
     await user.click(screen.getByRole('button', { name: '운영 설정' }))
 
     expect(await screen.findByLabelText('자동 체크아웃 시간 입력')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(mockAutoCheckoutTime)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('23:59')).toBeInTheDocument()
   })
 
   it('운영 설정 탭에서 자동 체크아웃 시간을 저장할 수 있다', async () => {
@@ -259,16 +259,16 @@ describe('Admin 페이지', () => {
     renderAdmin()
 
     await user.click(screen.getByRole('button', { name: '운영 설정' }))
-    await screen.findByDisplayValue(mockAutoCheckoutTime)
+    await screen.findByDisplayValue('23:59')
 
     await user.clear(screen.getByLabelText('자동 체크아웃 시간 입력'))
-    await user.type(screen.getByLabelText('자동 체크아웃 시간 입력'), '220000')
+    await user.type(screen.getByLabelText('자동 체크아웃 시간 입력'), '2200')
     await user.click(screen.getByRole('button', { name: '자동 체크아웃 시간 저장' }))
 
     await waitFor(() => {
       expect(screen.getByText('자동 체크아웃 시간을 저장했습니다')).toBeInTheDocument()
     })
-    expect(screen.getByDisplayValue('22:00:00')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('22:00')).toBeInTheDocument()
   })
 
   it('멤버 관리 탭 클릭 시 멤버 테이블이 표시된다', async () => {
