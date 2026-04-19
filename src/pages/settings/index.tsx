@@ -11,6 +11,42 @@ import './settings.css'
 
 type SettingsTab = 'profile' | 'notifications' | 'appearance' | 'security' | 'settlement'
 
+const SETTINGS_SECTION_META: Record<
+  SettingsTab,
+  { eyebrow: string; title: string; description: string; badge: string }
+> = {
+  profile: {
+    eyebrow: 'Profile',
+    title: '내 계정과 소속 정보를 정리합니다.',
+    description: '표시 이름, 역할, 팀 정보를 확인하고 개인 프로필을 안전하게 관리할 수 있습니다.',
+    badge: '계정 기본 정보',
+  },
+  notifications: {
+    eyebrow: 'Notifications',
+    title: '어떤 알림을 받을지 직접 고릅니다.',
+    description: '채팅, 캘린더, 이메일 알림을 역할에 맞게 조절해 방해를 줄입니다.',
+    badge: '알림 제어',
+  },
+  appearance: {
+    eyebrow: 'Appearance',
+    title: '작업 환경에 맞는 화면 분위기를 고릅니다.',
+    description: '라이트 모드와 다크 모드를 전환해 집중하기 좋은 화면을 유지합니다.',
+    badge: '테마 설정',
+  },
+  settlement: {
+    eyebrow: 'Settlement',
+    title: '내 지각비와 출근 기록을 빠르게 확인합니다.',
+    description: '월별 정산 결과와 상세 내역을 한 번에 보면서 누락이나 지각을 바로 점검할 수 있습니다.',
+    badge: '개인 정산',
+  },
+  security: {
+    eyebrow: 'Security',
+    title: '비밀번호와 계정 상태를 안전하게 관리합니다.',
+    description: '비밀번호 변경과 탈퇴 같은 민감한 작업을 한 곳에서 처리해 계정 통제를 단순하게 만듭니다.',
+    badge: '보안 관리',
+  },
+}
+
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
 }
@@ -115,6 +151,7 @@ export function Settings() {
     { id: 'light', label: '라이트 모드', description: '밝고 선명한 작업 환경', icon: <Sun size={18} /> },
     { id: 'dark', label: '다크 모드', description: '집중감을 높이는 어두운 화면', icon: <Moon size={18} /> },
   ]
+  const activeSectionMeta = SETTINGS_SECTION_META[activeTab]
 
   return (
     <div className="settings-page">
@@ -152,6 +189,15 @@ export function Settings() {
         </nav>
 
         <div className="settings-content glass">
+          <section className="settings-section-hero">
+            <div className="settings-section-hero-copy">
+              <p className="settings-section-eyebrow">{activeSectionMeta.eyebrow}</p>
+              <h3 className="settings-section-hero-title">{activeSectionMeta.title}</h3>
+              <p className="settings-section-hero-description">{activeSectionMeta.description}</p>
+            </div>
+            <span className="settings-section-badge">{activeSectionMeta.badge}</span>
+          </section>
+
           {activeTab === 'profile' && (
             <section className="settings-section">
               <h3>프로필 정보</h3>

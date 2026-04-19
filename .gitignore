@@ -39,3 +39,4 @@ test-results
 .playwright-cli/
 output/
 docs/architecture/*.svg
+.gstack/

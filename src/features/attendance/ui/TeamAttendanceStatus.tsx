@@ -72,7 +72,12 @@ export function TeamAttendanceStatus({ members, records, date }: Props) {
 
       <div className="attend-member-grid">
         {filteredMembers.length === 0 ? (
-          <p className="attend-empty">해당 상태의 팀원이 없습니다</p>
+          <div className="attend-empty-state">
+            <strong>{STATUS_LABEL[activeFilter]} 상태인 팀원이 없습니다</strong>
+            <p className="attend-empty">
+              다른 상태 탭을 누르면 오늘 기록이 있는 팀원을 바로 확인할 수 있습니다.
+            </p>
+          </div>
         ) : (
           filteredMembers.map((member) => {
             const rec = records.find((r) => String(r.memberId) === String(member.id))
