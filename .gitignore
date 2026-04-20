@@ -32,6 +32,7 @@ api.md
 .claude/worktrees/
 .claude/settings.local.json
 .claude/todos/
+.claude/
 .vercel
 .env*.local
 playwright-report
