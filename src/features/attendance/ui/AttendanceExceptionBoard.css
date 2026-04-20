@@ -1,0 +1,361 @@
+.attendance-exception-board {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid var(--border-color);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent-purple) 8%, transparent), transparent 38%),
+    color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.attendance-exception-bulk-btn,
+.attendance-exception-primary-btn,
+.attendance-exception-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.attendance-exception-bulk-btn:disabled,
+.attendance-exception-primary-btn:disabled,
+.attendance-exception-secondary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.attendance-exception-bulk-btn {
+  background: color-mix(in srgb, var(--accent-purple) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-purple) 28%, transparent);
+}
+
+.attendance-exception-primary-btn {
+  background: var(--accent-purple);
+  border-color: transparent;
+  color: #fff;
+}
+
+.attendance-exception-secondary-btn.approve {
+  background: color-mix(in srgb, #28c76f 14%, transparent);
+  color: #28c76f;
+}
+
+.attendance-exception-secondary-btn.reject {
+  background: color-mix(in srgb, #ff5d73 14%, transparent);
+  color: #ff5d73;
+}
+
+.attendance-exception-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.attendance-exception-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.attendance-exception-summary-card.emphasis {
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent-purple) 28%, transparent);
+}
+
+.attendance-exception-summary-card span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.attendance-exception-summary-card strong {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.attendance-exception-summary-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.attendance-exception-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.attendance-exception-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attendance-exception-field span {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.attendance-exception-field select {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.attendance-exception-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.attendance-exception-table-wrap {
+  margin-top: 0;
+}
+
+.attendance-exception-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.attendance-exception-table th,
+.attendance-exception-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.attendance-exception-table th {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.attendance-exception-table td {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.attendance-exception-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.attendance-exception-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.attendance-exception-table tbody tr.selected td {
+  background: color-mix(in srgb, var(--accent-purple) 12%, transparent);
+}
+
+.attendance-exception-pill,
+.attendance-exception-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.attendance-exception-pill.MISSED_CHECK_IN,
+.attendance-exception-status.REJECTED {
+  background: color-mix(in srgb, #ff5d73 14%, transparent);
+  color: #ff5d73;
+}
+
+.attendance-exception-pill.MISSED_CHECK_OUT {
+  background: color-mix(in srgb, #ff9f43 16%, transparent);
+  color: #ff9f43;
+}
+
+.attendance-exception-pill.LATE,
+.attendance-exception-status.OPEN {
+  background: color-mix(in srgb, #f4b740 16%, transparent);
+  color: #f4b740;
+}
+
+.attendance-exception-pill.NO_SCHEDULE,
+.attendance-exception-status.RESOLVED {
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  color: var(--text-primary);
+}
+
+.attendance-exception-status.APPROVED {
+  background: color-mix(in srgb, #28c76f 14%, transparent);
+  color: #28c76f;
+}
+
+.attendance-exception-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+}
+
+.attendance-exception-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.attendance-exception-detail-head h4 {
+  margin: 6px 0 8px;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.attendance-exception-detail-head p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.attendance-exception-detail-eyebrow {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.attendance-exception-detail-meta {
+  display: grid;
+  gap: 12px;
+}
+
+.attendance-exception-meta-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.attendance-exception-meta-card svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.attendance-exception-meta-card div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.attendance-exception-meta-card strong {
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+
+.attendance-exception-meta-card span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.attendance-exception-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attendance-exception-note-field > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.attendance-exception-note-field textarea {
+  min-height: 120px;
+  resize: vertical;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font: inherit;
+  line-height: 1.6;
+}
+
+.attendance-exception-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+:root[data-theme='light'] .attendance-exception-table th,
+:root[data-theme='light'] .attendance-exception-table td {
+  border-bottom-color: rgba(84, 102, 146, 0.12);
+}
+
+:root[data-theme='light'] .attendance-exception-table tbody tr:hover td {
+  background: rgba(84, 102, 146, 0.05);
+}
+
+:root[data-theme='light'] .attendance-exception-table tbody tr.selected td {
+  background: rgba(126, 91, 239, 0.08);
+}
+
+@media (max-width: 1100px) {
+  .attendance-exception-summary-grid,
+  .attendance-exception-toolbar,
+  .attendance-exception-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .attendance-exception-board {
+    padding: 18px;
+  }
+
+  .attendance-exception-detail-head {
+    flex-direction: column;
+  }
+
+  .attendance-exception-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .attendance-exception-primary-btn {
+    grid-column: span 2;
+  }
+}
