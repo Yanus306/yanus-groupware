@@ -1,4 +1,5 @@
 export { AnimatedClockRing } from './AnimatedClockRing'
+export { AttendanceExceptionBoard } from './AttendanceExceptionBoard'
 export type { WorkStatus } from './AnimatedClockRing'
 export { ClockTimePicker } from './ClockTimePicker'
 export { SetWorkDaysPersonal } from './SetWorkDaysPersonal'
