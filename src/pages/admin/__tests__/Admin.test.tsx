@@ -537,7 +537,7 @@ describe('Admin 페이지', () => {
     const user = userEvent.setup()
     renderAdmin()
 
-    await screen.findByRole('heading', { name: '출퇴근 예외 처리' })
+    await screen.findByDisplayValue('행사 정리 후 퇴근 누락')
     await user.click(screen.getByText('강민준'))
     await user.clear(screen.getByLabelText('출퇴근 예외 메모 입력'))
     await user.type(screen.getByLabelText('출퇴근 예외 메모 입력'), '교통 이슈 확인 완료')
@@ -555,7 +555,7 @@ describe('Admin 페이지', () => {
     const user = userEvent.setup()
     renderAdmin()
 
-    await screen.findByRole('heading', { name: '출퇴근 예외 처리' })
+    await screen.findByRole('button', { name: '오늘 미퇴근자 일괄 처리 (1)' })
     await user.click(screen.getByRole('button', { name: '오늘 미퇴근자 일괄 처리 (1)' }))
 
     expect(await screen.findByText('오늘 미퇴근자 1건을 일괄 처리했습니다')).toBeInTheDocument()
