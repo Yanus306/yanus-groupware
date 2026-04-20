@@ -1,6 +1,13 @@
 import { http, HttpResponse } from 'msw'
 import type { Leave } from '../../../../entities/leave/model/types'
 import type { AuditLog } from '../../../api/auditLogsApi'
+import type {
+  AttendanceException,
+  AttendanceExceptionListResponse,
+  AttendanceExceptionStatus,
+  AttendanceExceptionSummary,
+  AttendanceExceptionType,
+} from '../../../api/attendanceExceptionsApi'
 import type { AttendanceSettlement } from '../../../api/attendanceSettlementApi'
 import { getAuthMockUserByAuthorization } from './auth'
 
@@ -147,6 +154,89 @@ const mockAuditLogs: AuditLog[] = [
   },
 ]
 
+let mockAttendanceExceptions: AttendanceException[] = [
+  {
+    id: 1,
+    memberId: 2,
+    memberName: '박팀장',
+    teamName: '2팀',
+    workDate: today,
+    type: 'MISSED_CHECK_OUT',
+    status: 'OPEN',
+    note: '스터디룸 정리 후 퇴근 버튼을 누르지 못했습니다.',
+    reason: '행사 마감 후 정리하다가 퇴근 누락',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: 201,
+    scheduledStartTime: '09:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: `${today}T09:02:00`,
+    checkOutTime: null,
+  },
+  {
+    id: 2,
+    memberId: 3,
+    memberName: '이멤버',
+    teamName: '3팀',
+    workDate: today,
+    type: 'LATE',
+    status: 'OPEN',
+    note: '교통 지연 사유 확인 필요',
+    reason: '지하철 지연',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: 202,
+    scheduledStartTime: '09:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: `${today}T09:14:00`,
+    checkOutTime: `${today}T18:05:00`,
+  },
+  {
+    id: 3,
+    memberId: 4,
+    memberName: '최개발',
+    teamName: '1팀',
+    workDate: today,
+    type: 'NO_SCHEDULE',
+    status: 'APPROVED',
+    note: '행사 준비용 임시 근무로 승인',
+    reason: '신입 OT 준비 지원',
+    approvedBy: '관리자',
+    approvedAt: `${today}T11:20:00`,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: 203,
+    scheduledStartTime: null,
+    scheduledEndTime: null,
+    checkInTime: `${today}T10:01:00`,
+    checkOutTime: `${today}T16:42:00`,
+  },
+  {
+    id: 4,
+    memberId: 5,
+    memberName: '정보안',
+    teamName: '4팀',
+    workDate: today,
+    type: 'MISSED_CHECK_IN',
+    status: 'OPEN',
+    note: '',
+    reason: '출근 체크를 놓쳤다고 구두 전달',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: null,
+    scheduledStartTime: '13:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: null,
+    checkOutTime: null,
+  },
+]
+
 function getUserName(userId: number) {
   if (userId === 1) return '김리더'
   if (userId === 2) return '박팀장'
@@ -222,6 +312,76 @@ function filterTasksByRange(tasks: MockTask[], startDate: string | null, endDate
     if (endDate && task.date > endDate) return false
     return true
   })
+}
+
+function matchesAttendanceExceptionType(type: AttendanceExceptionType | null, targetType: AttendanceExceptionType) {
+  return !type || type === targetType
+}
+
+function matchesAttendanceExceptionStatus(status: AttendanceExceptionStatus | null, targetStatus: AttendanceExceptionStatus) {
+  return !status || status === targetStatus
+}
+
+function buildAttendanceExceptionSummary(items: AttendanceException[], filteredCount: number): AttendanceExceptionSummary {
+  return items.reduce<AttendanceExceptionSummary>(
+    (summary, item) => ({
+      totalCount: summary.totalCount + 1,
+      filteredCount,
+      openCount: summary.openCount + (item.status === 'OPEN' ? 1 : 0),
+      missedCheckInCount: summary.missedCheckInCount + (item.type === 'MISSED_CHECK_IN' ? 1 : 0),
+      missedCheckOutCount: summary.missedCheckOutCount + (item.type === 'MISSED_CHECK_OUT' ? 1 : 0),
+      lateCount: summary.lateCount + (item.type === 'LATE' ? 1 : 0),
+      noScheduleCount: summary.noScheduleCount + (item.type === 'NO_SCHEDULE' ? 1 : 0),
+    }),
+    {
+      totalCount: 0,
+      filteredCount,
+      openCount: 0,
+      missedCheckInCount: 0,
+      missedCheckOutCount: 0,
+      lateCount: 0,
+      noScheduleCount: 0,
+    },
+  )
+}
+
+function filterAttendanceExceptions({
+  date,
+  type,
+  status,
+  teamName,
+}: {
+  date: string
+  type: AttendanceExceptionType | null
+  status: AttendanceExceptionStatus | null
+  teamName: string | null
+}) {
+  const baseItems = mockAttendanceExceptions.filter((item) => item.workDate === date)
+
+  return {
+    baseItems,
+    filteredItems: baseItems.filter((item) => {
+      if (!matchesAttendanceExceptionType(type, item.type)) return false
+      if (!matchesAttendanceExceptionStatus(status, item.status)) return false
+      if (teamName && item.teamName !== teamName) return false
+      return true
+    }),
+  }
+}
+
+function updateAttendanceException(
+  exceptionId: number,
+  updater: (current: AttendanceException) => AttendanceException,
+) {
+  let updated: AttendanceException | null = null
+
+  mockAttendanceExceptions = mockAttendanceExceptions.map((item) => {
+    if (item.id !== exceptionId) return item
+    updated = updater(item)
+    return updated
+  })
+
+  return updated
 }
 
 export const operationsHandlers = [
@@ -370,6 +530,107 @@ export const operationsHandlers = [
       code: 'SUCCESS',
       message: 'ok',
       data: { autoCheckoutTime },
+    })
+  }),
+
+  http.get('/api/v1/attendance-exceptions', ({ request }) => {
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date') ?? today
+    const type = url.searchParams.get('type') as AttendanceExceptionType | null
+    const status = url.searchParams.get('status') as AttendanceExceptionStatus | null
+    const teamName = url.searchParams.get('teamName')
+
+    const { baseItems, filteredItems } = filterAttendanceExceptions({ date, type, status, teamName })
+    const response: AttendanceExceptionListResponse = {
+      date,
+      summary: buildAttendanceExceptionSummary(baseItems, filteredItems.length),
+      items: filteredItems,
+    }
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: response })
+  }),
+
+  http.patch('/api/v1/attendance-exceptions/:id', async ({ params, request }) => {
+    const id = Number(params.id)
+    const body = await request.json() as { note?: string; reason?: string }
+    const updated = updateAttendanceException(id, (item) => ({
+      ...item,
+      note: body.note ?? item.note,
+      reason: body.reason ?? item.reason,
+    }))
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+
+  http.post('/api/v1/attendance-exceptions/:id/approve', async ({ params, request }) => {
+    const id = Number(params.id)
+    const body = await request.json() as { note?: string }
+    const updated = updateAttendanceException(id, (item) => ({
+      ...item,
+      status: 'APPROVED',
+      note: body.note ?? item.note,
+      approvedBy: '관리자',
+      approvedAt: new Date().toISOString(),
+    }))
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+
+  http.post('/api/v1/attendance-exceptions/:id/reject', async ({ params, request }) => {
+    const id = Number(params.id)
+    const body = await request.json() as { note?: string }
+    const updated = updateAttendanceException(id, (item) => ({
+      ...item,
+      status: 'REJECTED',
+      note: body.note ?? item.note,
+    }))
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+
+  http.post('/api/v1/attendance-exceptions/:id/resolve', async ({ params, request }) => {
+    const id = Number(params.id)
+    const body = await request.json() as { note?: string }
+    const updated = updateAttendanceException(id, (item) => ({
+      ...item,
+      status: 'RESOLVED',
+      note: body.note ?? item.note,
+      resolvedBy: '관리자',
+      resolvedAt: new Date().toISOString(),
+    }))
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+
+  http.post('/api/v1/attendance-exceptions/bulk-auto-checkout', async ({ request }) => {
+    const body = await request.json() as { date: string; memberIds?: number[] }
+    const targetDate = body.date ?? today
+    const targetMemberIds = new Set(body.memberIds ?? [])
+    const shouldFilterMembers = targetMemberIds.size > 0
+    const updatedIds: number[] = []
+
+    mockAttendanceExceptions = mockAttendanceExceptions.map((item) => {
+      if (item.workDate !== targetDate || item.type !== 'MISSED_CHECK_OUT') return item
+      if (shouldFilterMembers && !targetMemberIds.has(item.memberId)) return item
+
+      updatedIds.push(item.id)
+      return {
+        ...item,
+        status: 'RESOLVED',
+        note: item.note || `자동 체크아웃 기준 ${autoCheckoutTime}로 일괄 처리`,
+        checkOutTime: `${targetDate}T${autoCheckoutTime}`,
+        resolvedBy: '관리자',
+        resolvedAt: new Date().toISOString(),
+      }
+    })
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        processedCount: updatedIds.length,
+        updatedIds,
+      },
     })
   }),
 

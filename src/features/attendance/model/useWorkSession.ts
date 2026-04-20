@@ -6,6 +6,33 @@ import { getTodayStr } from '../../../shared/lib/date'
 
 const STORAGE_KEY = 'yanus-work-session'
 
+interface StoredWorkSession {
+  status: WorkStatus
+  clockIn?: string
+  clockOut?: string
+}
+
+function readStoredSession(): StoredWorkSession | null {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (!stored) return null
+
+  try {
+    return JSON.parse(stored) as StoredWorkSession
+  } catch {
+    return null
+  }
+}
+
+function isSameWorkday(value: string | undefined, todayStr: string) {
+  return Boolean(value && value.slice(0, 10) === todayStr)
+}
+
+function canRestoreStoredSession(session: StoredWorkSession | null, todayStr: string) {
+  if (!session) return false
+
+  return isSameWorkday(session.clockIn, todayStr) || isSameWorkday(session.clockOut, todayStr)
+}
+
 export function useWorkSession() {
   const [status, setStatus] = useState<WorkStatus>('idle')
   const [clockIn, setClockIn] = useState<Date | null>(null)
@@ -45,41 +72,41 @@ export function useWorkSession() {
 
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
+    const todayStr = getTodayStr()
+
     syncTodayAttendance()
       .then((todayRecord) => {
         if (!todayRecord) {
-          const stored = localStorage.getItem(STORAGE_KEY)
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored) as { status: WorkStatus; clockIn?: string; clockOut?: string }
-              setStatus(parsed.status)
-              setClockIn(parsed.clockIn ? new Date(parsed.clockIn) : null)
-              setClockOut(parsed.clockOut ? new Date(parsed.clockOut) : null)
-            } catch {}
-          }
+          localStorage.removeItem(STORAGE_KEY)
         }
       })
       .catch(() => {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored) as { status: WorkStatus; clockIn?: string; clockOut?: string }
-            setStatus(parsed.status)
-            setClockIn(parsed.clockIn ? new Date(parsed.clockIn) : null)
-            setClockOut(parsed.clockOut ? new Date(parsed.clockOut) : null)
-          } catch {}
+        const stored = readStoredSession()
+        if (canRestoreStoredSession(stored, todayStr) && stored) {
+          setStatus(stored.status)
+          setClockIn(stored.clockIn ? new Date(stored.clockIn) : null)
+          setClockOut(stored.clockOut ? new Date(stored.clockOut) : null)
+        } else {
+          localStorage.removeItem(STORAGE_KEY)
         }
       })
       .finally(() => setIsLoading(false))
   }, [])
 
   useEffect(() => {
+    if (isLoading) return
+
+    if (status === 'idle' && !clockIn && !clockOut) {
+      localStorage.removeItem(STORAGE_KEY)
+      return
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       status,
       clockIn: clockIn?.toISOString(),
       clockOut: clockOut?.toISOString(),
     }))
-  }, [status, clockIn, clockOut])
+  }, [status, clockIn, clockOut, isLoading])
 
   const handleClockClick = async () => {
     setErrorMessage(null)

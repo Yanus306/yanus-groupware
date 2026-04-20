@@ -1,9 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Clock3, Crown, Download, FolderPlus, History, Save, Trash2, Users } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
-import { TeamAttendanceStatus } from '../../features/attendance/ui'
+import { AttendanceExceptionBoard, TeamAttendanceStatus } from '../../features/attendance/ui'
 import { getAttendanceByDate, getAttendanceByDates } from '../../shared/api/attendanceApi'
 import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import {
+  approveAttendanceException,
+  bulkAutoCheckoutAttendanceExceptions,
+  getAttendanceExceptions,
+  rejectAttendanceException,
+  resolveAttendanceException,
+  updateAttendanceException,
+} from '../../shared/api/attendanceExceptionsApi'
+import type {
+  AttendanceException,
+  AttendanceExceptionStatus,
+  AttendanceExceptionSummary,
+  AttendanceExceptionType,
+} from '../../shared/api/attendanceExceptionsApi'
 import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import { getAuditLogs } from '../../shared/api/auditLogsApi'
@@ -42,6 +56,8 @@ import './admin.css'
 
 type Tab = 'attendance' | 'members' | 'teams' | 'audit' | 'settlement' | 'settings'
 type SettlementView = 'overall' | 'team' | 'member'
+type AttendanceExceptionTypeFilter = AttendanceExceptionType | 'ALL'
+type AttendanceExceptionStatusFilter = AttendanceExceptionStatus | 'ALL'
 
 const ALL_ROLES: UserRole[] = ['MEMBER', 'TEAM_LEAD', 'ADMIN']
 const roleLabels: Record<string, string> = {
@@ -101,6 +117,14 @@ export function Admin() {
   const { state, loadMembers, refreshMembers, refreshTeams } = useApp()
   const [tab, setTab] = useState<Tab>('attendance')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [attendanceExceptions, setAttendanceExceptions] = useState<AttendanceException[]>([])
+  const [attendanceExceptionSummary, setAttendanceExceptionSummary] = useState<AttendanceExceptionSummary | null>(null)
+  const [attendanceExceptionLoading, setAttendanceExceptionLoading] = useState(false)
+  const [attendanceExceptionActionLoading, setAttendanceExceptionActionLoading] = useState(false)
+  const [bulkAutoCheckoutLoading, setBulkAutoCheckoutLoading] = useState(false)
+  const [selectedAttendanceExceptionType, setSelectedAttendanceExceptionType] = useState<AttendanceExceptionTypeFilter>('ALL')
+  const [selectedAttendanceExceptionStatus, setSelectedAttendanceExceptionStatus] = useState<AttendanceExceptionStatusFilter>('ALL')
+  const [selectedAttendanceExceptionTeamName, setSelectedAttendanceExceptionTeamName] = useState('')
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -128,10 +152,20 @@ export function Admin() {
   const todayStr = getTodayStr()
   const members = useMemo(() => sortUsersByTeamAndName(state.users), [state.users])
   const teamOptions = useMemo(() => getTeamOptions(members, state.teams), [members, state.teams])
+  const activeMembers = useMemo(
+    () => members.filter((member) => member.status !== 'INACTIVE'),
+    [members],
+  )
   const settlementMemberOptions = useMemo(
     () => members.filter((member) => member.status !== 'INACTIVE'),
     [members],
   )
+  const attendanceExceptionTeamOptions = useMemo(() => {
+    const activeTeamNames = new Set(activeMembers.map((member) => member.team))
+    return teamOptions
+      .filter((team) => activeTeamNames.has(team.name))
+      .map((team) => team.name)
+  }, [activeMembers, teamOptions])
   const settlementTeamOptions = useMemo(() => {
     const activeTeamNames = new Set(settlementMemberOptions.map((member) => member.team))
     return teamOptions
@@ -140,10 +174,6 @@ export function Admin() {
   }, [settlementMemberOptions, teamOptions])
   const settlement = settlements.find((item) => String(item.memberId) === selectedSettlementMemberId) ?? null
   const settlementSummary = useMemo(() => rollupAttendanceSettlements(settlements), [settlements])
-  const activeMembers = useMemo(
-    () => members.filter((member) => member.status !== 'INACTIVE'),
-    [members],
-  )
   const activeTeamCount = useMemo(
     () => new Set(activeMembers.map((member) => member.team)).size,
     [activeMembers],
@@ -170,6 +200,12 @@ export function Admin() {
   ).length ?? 0
 
   useEffect(() => {
+    if (!selectedAttendanceExceptionTeamName) return
+    if (attendanceExceptionTeamOptions.includes(selectedAttendanceExceptionTeamName)) return
+    setSelectedAttendanceExceptionTeamName('')
+  }, [attendanceExceptionTeamOptions, selectedAttendanceExceptionTeamName])
+
+  useEffect(() => {
     if (!selectedSettlementMemberId) return
     if (settlementMemberOptions.some((member) => member.id === selectedSettlementMemberId)) return
     setSelectedSettlementMemberId('')
@@ -193,13 +229,46 @@ export function Admin() {
     }
   }
 
-  useEffect(() => {
-    getAttendanceByDate(todayStr)
-      .then((attendanceList) => {
-        setRecords(attendanceList)
-      })
-      .catch((err) => setErrorMessage(err instanceof Error ? err.message : '관리 데이터를 불러오지 못했습니다'))
+  const loadTodayAttendanceRecords = useCallback(async () => {
+    try {
+      const attendanceList = await getAttendanceByDate(todayStr)
+      setRecords(attendanceList)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '관리 데이터를 불러오지 못했습니다')
+    }
   }, [todayStr])
+
+  const loadAttendanceExceptionList = useCallback(async () => {
+    setAttendanceExceptionLoading(true)
+    try {
+      const response = await getAttendanceExceptions({
+        date: todayStr,
+        type: selectedAttendanceExceptionType,
+        status: selectedAttendanceExceptionStatus,
+        teamName: selectedAttendanceExceptionTeamName || undefined,
+      })
+      setAttendanceExceptions(response.items)
+      setAttendanceExceptionSummary(response.summary)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '출퇴근 예외 목록을 불러오지 못했습니다')
+    } finally {
+      setAttendanceExceptionLoading(false)
+    }
+  }, [
+    selectedAttendanceExceptionStatus,
+    selectedAttendanceExceptionTeamName,
+    selectedAttendanceExceptionType,
+    todayStr,
+  ])
+
+  useEffect(() => {
+    void loadTodayAttendanceRecords()
+  }, [loadTodayAttendanceRecords])
+
+  useEffect(() => {
+    if (tab !== 'attendance') return
+    void loadAttendanceExceptionList()
+  }, [loadAttendanceExceptionList, tab])
 
   useEffect(() => {
     if (tab !== 'audit') return
@@ -490,6 +559,74 @@ export function Admin() {
     }
   }
 
+  const handleSaveAttendanceExceptionNote = async (exceptionId: number, note: string) => {
+    setAttendanceExceptionActionLoading(true)
+    try {
+      await updateAttendanceException(exceptionId, { note })
+      await loadAttendanceExceptionList()
+      setSuccessMessage('출퇴근 예외 메모를 저장했습니다')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '출퇴근 예외 메모 저장에 실패했습니다')
+    } finally {
+      setAttendanceExceptionActionLoading(false)
+    }
+  }
+
+  const handleApproveAttendanceException = async (exceptionId: number, note: string) => {
+    setAttendanceExceptionActionLoading(true)
+    try {
+      await approveAttendanceException(exceptionId, { note })
+      await loadAttendanceExceptionList()
+      setSuccessMessage('출퇴근 예외를 승인했습니다')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '출퇴근 예외 승인에 실패했습니다')
+    } finally {
+      setAttendanceExceptionActionLoading(false)
+    }
+  }
+
+  const handleRejectAttendanceException = async (exceptionId: number, note: string) => {
+    setAttendanceExceptionActionLoading(true)
+    try {
+      await rejectAttendanceException(exceptionId, { note })
+      await loadAttendanceExceptionList()
+      setSuccessMessage('출퇴근 예외를 반려했습니다')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '출퇴근 예외 반려에 실패했습니다')
+    } finally {
+      setAttendanceExceptionActionLoading(false)
+    }
+  }
+
+  const handleResolveAttendanceException = async (exceptionId: number, note: string) => {
+    setAttendanceExceptionActionLoading(true)
+    try {
+      await resolveAttendanceException(exceptionId, { note })
+      await loadAttendanceExceptionList()
+      setSuccessMessage('출퇴근 예외를 처리 완료로 변경했습니다')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '출퇴근 예외 처리 완료에 실패했습니다')
+    } finally {
+      setAttendanceExceptionActionLoading(false)
+    }
+  }
+
+  const handleBulkAutoCheckout = async () => {
+    setBulkAutoCheckoutLoading(true)
+    try {
+      const result = await bulkAutoCheckoutAttendanceExceptions({ date: todayStr })
+      await Promise.all([
+        loadAttendanceExceptionList(),
+        loadTodayAttendanceRecords(),
+      ])
+      setSuccessMessage(`오늘 미퇴근자 ${result.processedCount}건을 일괄 처리했습니다`)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '일괄 자동 체크아웃 처리에 실패했습니다')
+    } finally {
+      setBulkAutoCheckoutLoading(false)
+    }
+  }
+
   const handleAutoCheckoutSave = async () => {
     if (!autoCheckoutTime) return
 
@@ -601,6 +738,26 @@ export function Admin() {
             </article>
           </div>
           <TeamAttendanceStatus members={members} records={records} date={todayStr} />
+          <AttendanceExceptionBoard
+            date={todayStr}
+            summary={attendanceExceptionSummary}
+            items={attendanceExceptions}
+            loading={attendanceExceptionLoading}
+            teamOptions={attendanceExceptionTeamOptions}
+            selectedType={selectedAttendanceExceptionType}
+            selectedStatus={selectedAttendanceExceptionStatus}
+            selectedTeamName={selectedAttendanceExceptionTeamName}
+            actionLoading={attendanceExceptionActionLoading}
+            bulkLoading={bulkAutoCheckoutLoading}
+            onTypeChange={setSelectedAttendanceExceptionType}
+            onStatusChange={setSelectedAttendanceExceptionStatus}
+            onTeamChange={setSelectedAttendanceExceptionTeamName}
+            onSaveNote={(exceptionId, note) => void handleSaveAttendanceExceptionNote(exceptionId, note)}
+            onApprove={(exceptionId, note) => void handleApproveAttendanceException(exceptionId, note)}
+            onReject={(exceptionId, note) => void handleRejectAttendanceException(exceptionId, note)}
+            onResolve={(exceptionId, note) => void handleResolveAttendanceException(exceptionId, note)}
+            onBulkAutoCheckout={() => void handleBulkAutoCheckout()}
+          />
         </div>
       )}
 
