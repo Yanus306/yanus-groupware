@@ -7,6 +7,7 @@ import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { AppProvider, useApp } from '../../../features/auth/model'
 import type { User } from '../../../entities/user/model/types'
+import type { AttendanceException } from '../../../shared/api/attendanceExceptionsApi'
 import { getTodayStr } from '../../../shared/lib/date'
 import { Admin } from '../index'
 
@@ -92,6 +93,93 @@ const mockSettlement = {
 
 const mockTemporaryPassword = 'A1b2C3d4'
 const mockAutoCheckoutTime = '23:59:59'
+const initialAttendanceExceptions: AttendanceException[] = [
+  {
+    id: 1,
+    memberId: 1,
+    memberName: '이서연',
+    teamName: '2팀',
+    workDate: TODAY_STR,
+    type: 'MISSED_CHECK_OUT',
+    status: 'OPEN',
+    note: '행사 정리 후 퇴근 누락',
+    reason: '회의 마감 후 정리',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: 1,
+    scheduledStartTime: '09:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: `${TODAY_STR}T09:00:00`,
+    checkOutTime: null,
+  },
+  {
+    id: 2,
+    memberId: 2,
+    memberName: '강민준',
+    teamName: '1팀',
+    workDate: TODAY_STR,
+    type: 'LATE',
+    status: 'OPEN',
+    note: '교통 지연',
+    reason: '지하철 지연',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: 2,
+    scheduledStartTime: '09:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: `${TODAY_STR}T09:11:00`,
+    checkOutTime: `${TODAY_STR}T18:03:00`,
+  },
+  {
+    id: 3,
+    memberId: 3,
+    memberName: '김민준',
+    teamName: '1팀',
+    workDate: TODAY_STR,
+    type: 'MISSED_CHECK_IN',
+    status: 'REJECTED',
+    note: '출근 누락 사유 불충분',
+    reason: '개인 전달만 있음',
+    approvedBy: null,
+    approvedAt: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    attendanceRecordId: null,
+    scheduledStartTime: '13:00:00',
+    scheduledEndTime: '18:00:00',
+    checkInTime: null,
+    checkOutTime: null,
+  },
+]
+
+let mockAttendanceExceptions = initialAttendanceExceptions.map((item) => ({ ...item }))
+
+function buildAttendanceExceptionSummary(items: typeof mockAttendanceExceptions, filteredCount: number) {
+  return items.reduce(
+    (summary, item) => ({
+      totalCount: summary.totalCount + 1,
+      filteredCount,
+      openCount: summary.openCount + (item.status === 'OPEN' ? 1 : 0),
+      missedCheckInCount: summary.missedCheckInCount + (item.type === 'MISSED_CHECK_IN' ? 1 : 0),
+      missedCheckOutCount: summary.missedCheckOutCount + (item.type === 'MISSED_CHECK_OUT' ? 1 : 0),
+      lateCount: summary.lateCount + (item.type === 'LATE' ? 1 : 0),
+      noScheduleCount: summary.noScheduleCount + (item.type === 'NO_SCHEDULE' ? 1 : 0),
+    }),
+    {
+      totalCount: 0,
+      filteredCount,
+      openCount: 0,
+      missedCheckInCount: 0,
+      missedCheckOutCount: 0,
+      lateCount: 0,
+      noScheduleCount: 0,
+    },
+  )
+}
 
 const server = setupServer(
   http.get('/api/v1/auth/me', () =>
@@ -187,10 +275,92 @@ const server = setupServer(
       data: { autoCheckoutTime: body.autoCheckoutTime },
     })
   }),
+  http.get('/api/v1/attendance-exceptions', ({ request }) => {
+    const url = new URL(request.url)
+    const type = url.searchParams.get('type')
+    const status = url.searchParams.get('status')
+    const teamName = url.searchParams.get('teamName')
+    const filtered = mockAttendanceExceptions.filter((item) => {
+      if (type && item.type !== type) return false
+      if (status && item.status !== status) return false
+      if (teamName && item.teamName !== teamName) return false
+      return true
+    })
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        date: TODAY_STR,
+        summary: buildAttendanceExceptionSummary(mockAttendanceExceptions, filtered.length),
+        items: filtered,
+      },
+    })
+  }),
+  http.patch('/api/v1/attendance-exceptions/:id', async ({ params, request }) => {
+    const body = await request.json() as { note?: string }
+    const targetId = Number(params.id)
+    const updated = mockAttendanceExceptions.find((item) => item.id === targetId)
+    if (updated) {
+      updated.note = body.note ?? updated.note
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+  http.post('/api/v1/attendance-exceptions/:id/approve', async ({ params, request }) => {
+    const body = await request.json() as { note?: string }
+    const targetId = Number(params.id)
+    const updated = mockAttendanceExceptions.find((item) => item.id === targetId)
+    if (updated) {
+      updated.status = 'APPROVED'
+      updated.note = body.note ?? updated.note
+      updated.approvedBy = '관리자'
+      updated.approvedAt = `${TODAY_STR}T10:00:00`
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+  http.post('/api/v1/attendance-exceptions/:id/reject', async ({ params, request }) => {
+    const body = await request.json() as { note?: string }
+    const targetId = Number(params.id)
+    const updated = mockAttendanceExceptions.find((item) => item.id === targetId)
+    if (updated) {
+      updated.status = 'REJECTED'
+      updated.note = body.note ?? updated.note
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+  http.post('/api/v1/attendance-exceptions/:id/resolve', async ({ params, request }) => {
+    const body = await request.json() as { note?: string }
+    const targetId = Number(params.id)
+    const updated = mockAttendanceExceptions.find((item) => item.id === targetId)
+    if (updated) {
+      updated.status = 'RESOLVED'
+      updated.note = body.note ?? updated.note
+      updated.resolvedBy = '관리자'
+      updated.resolvedAt = `${TODAY_STR}T10:05:00`
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
+  }),
+  http.post('/api/v1/attendance-exceptions/bulk-auto-checkout', () => {
+    const targets = mockAttendanceExceptions.filter((item) => item.type === 'MISSED_CHECK_OUT' && item.status === 'OPEN')
+    for (const target of targets) {
+      target.status = 'RESOLVED'
+      target.checkOutTime = `${TODAY_STR}T${mockAutoCheckoutTime}`
+      target.resolvedBy = '관리자'
+      target.resolvedAt = `${TODAY_STR}T11:00:00`
+    }
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: { processedCount: targets.length, updatedIds: targets.map((item) => item.id) },
+    })
+  }),
 )
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  mockAttendanceExceptions = initialAttendanceExceptions.map((item) => ({ ...item }))
+})
 afterAll(() => server.close())
 
 function AdminBootstrap({ children }: { children: ReactNode }) {
@@ -335,18 +505,61 @@ describe('Admin 페이지', () => {
   it('출근 현황 탭에 요약 카운트가 표시된다', async () => {
     renderAdmin()
     await waitFor(() => {
-      expect(screen.getByText('근무 중')).toBeInTheDocument()
-      expect(screen.getByText('퇴근')).toBeInTheDocument()
-      expect(screen.getByText('미출근')).toBeInTheDocument()
+      expect(screen.getAllByText('근무 중').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('퇴근').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('미출근').length).toBeGreaterThan(0)
     })
   })
 
   it('출근 현황 탭 기본 필터(근무 중)에 근무 중인 팀원만 표시된다', async () => {
     renderAdmin()
     await waitFor(() => {
-      expect(screen.getByText('이서연')).toBeInTheDocument()
+      expect(screen.getAllByText('이서연').length).toBeGreaterThan(0)
     })
-    expect(screen.queryByText('김민준')).not.toBeInTheDocument()
+    const attendanceSection = screen.getByRole('heading', { name: '팀원 출근 현황' }).closest('.team-attendance-status')
+    expect(attendanceSection).not.toBeNull()
+    expect(within(attendanceSection as HTMLElement).queryByText('김민준')).not.toBeInTheDocument()
+  })
+
+  it('출근 예외 처리 보드에서 오늘 예외 요약과 목록을 확인할 수 있다', async () => {
+    renderAdmin()
+
+    expect(await screen.findByRole('heading', { name: '출퇴근 예외 처리' })).toBeInTheDocument()
+    expect(screen.getAllByText('처리 대기').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('미퇴근').length).toBeGreaterThan(0)
+    expect(screen.getByText('지각 / 무일정')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('행사 정리 후 퇴근 누락')).toBeInTheDocument()
+    })
+  })
+
+  it('출근 예외 처리 보드에서 메모 저장과 승인 액션을 수행할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+
+    await screen.findByRole('heading', { name: '출퇴근 예외 처리' })
+    await user.click(screen.getByText('강민준'))
+    await user.clear(screen.getByLabelText('출퇴근 예외 메모 입력'))
+    await user.type(screen.getByLabelText('출퇴근 예외 메모 입력'), '교통 이슈 확인 완료')
+    await user.click(screen.getByRole('button', { name: '메모 저장' }))
+
+    expect(await screen.findByText('출퇴근 예외 메모를 저장했습니다')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '승인' }))
+
+    expect(await screen.findByText('출퇴근 예외를 승인했습니다')).toBeInTheDocument()
+    expect(screen.getAllByText('승인 완료').length).toBeGreaterThan(0)
+  })
+
+  it('출근 예외 처리 보드에서 오늘 미퇴근자를 일괄 처리할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+
+    await screen.findByRole('heading', { name: '출퇴근 예외 처리' })
+    await user.click(screen.getByRole('button', { name: '오늘 미퇴근자 일괄 처리 (1)' }))
+
+    expect(await screen.findByText('오늘 미퇴근자 1건을 일괄 처리했습니다')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '오늘 미퇴근자 일괄 처리' })).toBeDisabled()
   })
 
   it('감사 로그 탭 클릭 시 로그 테이블이 표시된다', async () => {

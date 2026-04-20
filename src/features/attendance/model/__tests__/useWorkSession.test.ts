@@ -157,6 +157,53 @@ describe('useWorkSession', () => {
       expect(stored).not.toBeNull()
       expect(JSON.parse(stored!).status).toBe('working')
     })
+
+    it('서버에 오늘 기록이 없으면 이전 localStorage working 상태를 복구하지 않는다', async () => {
+      localStorage.setItem('yanus-work-session', JSON.stringify({
+        status: 'working',
+        clockIn: `${getTodayStr()}T09:00:00.000Z`,
+      }))
+
+      const { result } = await mountHook()
+
+      expect(result.current.status).toBe('idle')
+      expect(result.current.clockIn).toBeNull()
+      expect(localStorage.getItem('yanus-work-session')).toBeNull()
+    })
+
+    it('요청 실패 시에도 이전 날짜 localStorage 상태는 복구하지 않는다', async () => {
+      server.use(
+        http.get('/api/v1/attendances/me', () =>
+          HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
+        ),
+      )
+      localStorage.setItem('yanus-work-session', JSON.stringify({
+        status: 'working',
+        clockIn: '2026-03-21T09:00:00.000Z',
+      }))
+
+      const { result } = await mountHook()
+
+      expect(result.current.status).toBe('idle')
+      expect(result.current.clockIn).toBeNull()
+    })
+
+    it('요청 실패 시 오늘 localStorage 상태만 복구한다', async () => {
+      server.use(
+        http.get('/api/v1/attendances/me', () =>
+          HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
+        ),
+      )
+      localStorage.setItem('yanus-work-session', JSON.stringify({
+        status: 'working',
+        clockIn: `${getTodayStr()}T09:10:00.000Z`,
+      }))
+
+      const { result } = await mountHook()
+
+      expect(result.current.status).toBe('working')
+      expect(result.current.clockIn).not.toBeNull()
+    })
   })
 
   describe('에러 처리', () => {
