@@ -6,6 +6,7 @@ import type {
   AttendanceExceptionSummary,
   AttendanceExceptionType,
 } from '../../../shared/api/attendanceExceptionsApi'
+import { formatDateTimeClock, formatScheduleRangeLabel } from '../../../shared/lib/attendanceSchedule'
 import { formatTeamName } from '../../../shared/lib/team'
 import { DataTableScroll } from '../../../shared/ui/DataTableSection'
 import { EmptyState } from '../../../shared/ui/EmptyState'
@@ -65,14 +66,6 @@ const statusOptions: { value: AttendanceExceptionStatusFilter; label: string }[]
   { value: 'REJECTED', label: statusLabels.REJECTED },
   { value: 'RESOLVED', label: statusLabels.RESOLVED },
 ]
-
-function formatTime(value: string | null) {
-  return value ? value.slice(11, 16) : '-'
-}
-
-function formatScheduleTime(value: string | null) {
-  return value ? value.slice(0, 5) : '-'
-}
 
 function describeException(exception: AttendanceException) {
   if (exception.type === 'MISSED_CHECK_OUT') {
@@ -256,10 +249,16 @@ export function AttendanceExceptionBoard({
                     <td>{exception.memberName}</td>
                     <td>{formatTeamName(exception.teamName)}</td>
                     <td>
-                      {formatScheduleTime(exception.scheduledStartTime)} - {formatScheduleTime(exception.scheduledEndTime)}
+                      {formatScheduleRangeLabel({
+                        startTime: exception.scheduledStartTime,
+                        endTime: exception.scheduledEndTime,
+                        endsNextDay: exception.endsNextDay,
+                        scheduledStartAt: exception.scheduledStartAt,
+                        scheduledEndAt: exception.scheduledEndAt,
+                      })}
                     </td>
                     <td>
-                      {formatTime(exception.checkInTime)} - {formatTime(exception.checkOutTime)}
+                      {formatDateTimeClock(exception.checkInTime)} - {formatDateTimeClock(exception.checkOutTime)}
                     </td>
                     <td>
                       <span className={`attendance-exception-status ${exception.status}`}>
@@ -291,8 +290,18 @@ export function AttendanceExceptionBoard({
                   <div>
                     <strong>기록 정보</strong>
                     <span>{selectedException.workDate} · {formatTeamName(selectedException.teamName)}</span>
-                    <span>예정 {formatScheduleTime(selectedException.scheduledStartTime)} - {formatScheduleTime(selectedException.scheduledEndTime)}</span>
-                    <span>실제 {formatTime(selectedException.checkInTime)} - {formatTime(selectedException.checkOutTime)}</span>
+                    <span>
+                      예정 {
+                        formatScheduleRangeLabel({
+                          startTime: selectedException.scheduledStartTime,
+                          endTime: selectedException.scheduledEndTime,
+                          endsNextDay: selectedException.endsNextDay,
+                          scheduledStartAt: selectedException.scheduledStartAt,
+                          scheduledEndAt: selectedException.scheduledEndAt,
+                        })
+                      }
+                    </span>
+                    <span>실제 {formatDateTimeClock(selectedException.checkInTime)} - {formatDateTimeClock(selectedException.checkOutTime)}</span>
                   </div>
                 </div>
                 <div className="attendance-exception-meta-card">

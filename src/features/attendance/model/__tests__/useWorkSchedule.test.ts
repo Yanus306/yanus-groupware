@@ -5,11 +5,11 @@ import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 
 const DEFAULT_SCHEDULES = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND', endsNextDay: false },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
 ]
 
 const server = setupServer(
@@ -54,6 +54,7 @@ describe('useWorkSchedule', () => {
       const { result } = await mountHook()
       expect(result.current.daySchedules[0].checkInTime).toBe('09:00')
       expect(result.current.daySchedules[0].checkOutTime).toBe('18:00')
+      expect(result.current.daySchedules[4].endsNextDay).toBe(true)
     })
 
     it('저장된 주차 패턴이 없으면 모든 요일이 매주 패턴이다', async () => {
@@ -156,6 +157,22 @@ describe('useWorkSchedule', () => {
       expect(JSON.parse(stored!)[0]).toBe('THIRD')
     })
 
+    it('저장 시 localStorage에 endsNextDay 상태가 저장된다', async () => {
+      const { result } = await mountHook()
+
+      act(() => {
+        result.current.setDayEndsNextDay(0, true)
+      })
+
+      await act(async () => {
+        await result.current.saveSchedule()
+      })
+
+      const stored = localStorage.getItem('yanus-work-ends-next-day')
+      expect(stored).not.toBeNull()
+      expect(JSON.parse(stored!)[0]).toBe(true)
+    })
+
     it('서버에 저장된 근무 일정이 있으면 localStorage보다 API 응답을 우선한다', async () => {
       localStorage.setItem('yanus-work-days', JSON.stringify(
         [false, true, true, true, true, false, false],
@@ -198,6 +215,27 @@ describe('useWorkSchedule', () => {
 
       const { result } = await mountHook()
       expect(result.current.weekPatterns[0]).toBe('LAST')
+    })
+
+    it('localStorage에 저장된 endsNextDay를 마운트 시 복원한다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+        ),
+      )
+
+      localStorage.setItem('yanus-work-ends-next-day', JSON.stringify([
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ]))
+
+      const { result } = await mountHook()
+      expect(result.current.daySchedules[0].endsNextDay).toBe(true)
     })
 
     it('기존에 저장된 요일을 비활성화하면 삭제 API를 호출한다', async () => {

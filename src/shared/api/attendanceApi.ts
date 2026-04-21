@@ -40,6 +40,7 @@ export interface WorkScheduleItem {
   startTime: string  // HH:mm:ss
   endTime: string    // HH:mm:ss
   weekPattern?: WeekPattern
+  endsNextDay?: boolean
 }
 
 export interface WorkSchedulePayload {
@@ -47,6 +48,7 @@ export interface WorkSchedulePayload {
   startTime: string  // HH:mm:ss
   endTime: string    // HH:mm:ss
   weekPattern?: WeekPattern
+  endsNextDay?: boolean
 }
 
 export interface MemberWorkScheduleItem {
@@ -61,6 +63,7 @@ export interface WorkScheduleEventItem {
   date: string
   startTime: string
   endTime: string
+  endsNextDay?: boolean
   memberId: number
   memberName: string
   teamName: string
@@ -70,6 +73,7 @@ export interface WorkScheduleEventPayload {
   date: string
   startTime: string
   endTime: string
+  endsNextDay?: boolean
 }
 
 interface RawMemberWorkScheduleItem {

@@ -6,6 +6,7 @@ import { ApiError } from '../../../shared/api/baseClient'
 export interface DaySchedule {
   checkInTime: string   // "HH:mm"
   checkOutTime: string  // "HH:mm"
+  endsNextDay: boolean
 }
 
 export type { WeekPattern } from '../../../shared/api/attendanceApi'
@@ -17,13 +18,14 @@ const INDEX_TO_DOW: DayOfWeek[] = [
 
 const WORK_DAYS_STORAGE_KEY = 'yanus-work-days'
 const WORK_WEEK_PATTERNS_STORAGE_KEY = 'yanus-work-week-patterns'
+const WORK_ENDS_NEXT_DAY_STORAGE_KEY = 'yanus-work-ends-next-day'
 const DEFAULT_CHECK_IN = '09:00'
 const DEFAULT_CHECK_OUT = '18:00'
 const DEFAULT_WORK_DAYS = [false, false, false, false, false, false, false]
 const DEFAULT_WEEK_PATTERNS: WeekPattern[] = Array.from({ length: 7 }, () => 'EVERY')
 
 function makeDefaultDaySchedules(checkIn: string, checkOut: string): DaySchedule[] {
-  return Array.from({ length: 7 }, () => ({ checkInTime: checkIn, checkOutTime: checkOut }))
+  return Array.from({ length: 7 }, () => ({ checkInTime: checkIn, checkOutTime: checkOut, endsNextDay: false }))
 }
 
 export function useWorkSchedule() {
@@ -58,6 +60,18 @@ export function useWorkSchedule() {
       } catch {}
     }
 
+    const storedEndsNextDay = localStorage.getItem(WORK_ENDS_NEXT_DAY_STORAGE_KEY)
+    if (storedEndsNextDay) {
+      try {
+        const parsed = JSON.parse(storedEndsNextDay) as boolean[]
+        if (Array.isArray(parsed) && parsed.length === 7) {
+          setDaySchedules((prev) =>
+            prev.map((schedule, index) => ({ ...schedule, endsNextDay: parsed[index] ?? false })),
+          )
+        }
+      } catch {}
+    }
+
     // API에서 요일별 근무 시간 불러오기
     getMyWorkSchedule()
       .then((items) => {
@@ -77,6 +91,7 @@ export function useWorkSchedule() {
               next[idx] = {
                 checkInTime: item.startTime.slice(0, 5),
                 checkOutTime: item.endTime.slice(0, 5),
+                endsNextDay: Boolean(item.endsNextDay),
               }
             }
           }
@@ -114,6 +129,10 @@ export function useWorkSchedule() {
     setWeekPatterns((prev) => prev.map((pattern, i) => (i === index ? value : pattern)))
   }
 
+  const setDayEndsNextDay = (index: number, value: boolean) => {
+    setDaySchedules((prev) => prev.map((schedule, i) => (i === index ? { ...schedule, endsNextDay: value } : schedule)))
+  }
+
   const saveSchedule = async () => {
     setIsSaving(true)
     setError(null)
@@ -127,6 +146,7 @@ export function useWorkSchedule() {
             startTime: daySchedules[i].checkInTime + ':00',
             endTime: daySchedules[i].checkOutTime + ':00',
             weekPattern: weekPatterns[i],
+            endsNextDay: daySchedules[i].endsNextDay,
           })
         })
         .filter(Boolean)
@@ -142,6 +162,10 @@ export function useWorkSchedule() {
       setSavedWorkDays([...workDays])
       localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
       localStorage.setItem(WORK_WEEK_PATTERNS_STORAGE_KEY, JSON.stringify(weekPatterns))
+      localStorage.setItem(
+        WORK_ENDS_NEXT_DAY_STORAGE_KEY,
+        JSON.stringify(daySchedules.map((schedule) => schedule.endsNextDay)),
+      )
       saved = true
     } catch (err) {
       if (err instanceof ApiError) {
@@ -165,6 +189,7 @@ export function useWorkSchedule() {
     error,
     toggleDay,
     setDayTime,
+    setDayEndsNextDay,
     setWeekPattern,
     saveSchedule,
   }

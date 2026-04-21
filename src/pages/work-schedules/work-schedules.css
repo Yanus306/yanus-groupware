@@ -455,6 +455,41 @@
   font-size: 0.96rem;
 }
 
+.work-schedules-modal-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.work-schedules-modal-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.work-schedules-modal-toggle strong {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.work-schedules-modal-toggle small {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.work-schedules-modal-toggle input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-purple);
+  flex-shrink: 0;
+}
+
 .work-schedules-modal-actions {
   display: flex;
   align-items: center;

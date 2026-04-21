@@ -6,6 +6,7 @@ import { useTheme, type ThemeMode } from '../../shared/theme'
 import { updateMyProfile, deactivateMember } from '../../shared/api/membersApi'
 import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
 import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
+import { formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
@@ -347,7 +348,7 @@ export function Settings() {
                         <thead>
                           <tr>
                             <th>날짜</th>
-                            <th>예정 출근</th>
+                            <th>예정 근무</th>
                             <th>실제 출근</th>
                             <th>지각 분</th>
                             <th>지각비</th>
@@ -358,7 +359,15 @@ export function Settings() {
                           {settlement.items.map((item) => (
                             <tr key={`${item.date}-${item.scheduledStartTime}`}>
                               <td>{item.date}</td>
-                              <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
+                              <td>
+                                {formatScheduleRangeLabel({
+                                  startTime: item.scheduledStartTime,
+                                  endTime: item.scheduledEndTime,
+                                  endsNextDay: item.endsNextDay,
+                                  scheduledStartAt: item.scheduledStartAt,
+                                  scheduledEndAt: item.scheduledEndAt,
+                                })}
+                              </td>
                               <td>{item.checkInTime ? item.checkInTime.slice(11, 16) : '-'}</td>
                               <td>{item.lateMinutes}분</td>
                               <td>{formatCurrency(item.fee)}</td>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import { useWorkSchedule } from '../model/useWorkSchedule'
 import type { WeekPattern } from '../model/useWorkSchedule'
+import { formatScheduleRangeLabel } from '../../../shared/lib/attendanceSchedule'
 import './SetWorkDaysPersonal.css'
 
 const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일']
@@ -31,6 +32,7 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
     error,
     toggleDay,
     setDayTime,
+    setDayEndsNextDay,
     setWeekPattern,
     saveSchedule,
   } =
@@ -44,6 +46,12 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
   }
 
   const selectedDayName = DAY_NAMES[selectedDayIndex]
+  const selectedSchedule = daySchedules[selectedDayIndex]
+  const selectedRangeLabel = formatScheduleRangeLabel({
+    startTime: selectedSchedule?.checkInTime ?? null,
+    endTime: selectedSchedule?.checkOutTime ?? null,
+    endsNextDay: selectedSchedule?.endsNextDay,
+  })
 
   return (
     <div className="set-work-days-personal">
@@ -120,6 +128,19 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
                     />
                   </div>
                 </div>
+
+                <label className="overnight-toggle-row">
+                  <span className="overnight-toggle-copy">
+                    <strong>다음날 종료</strong>
+                    <small>{selectedRangeLabel} 일정으로 저장됩니다.</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={daySchedules[selectedDayIndex].endsNextDay}
+                    onChange={(event) => setDayEndsNextDay(selectedDayIndex, event.target.checked)}
+                    aria-label={`${selectedDayName} 다음날 종료`}
+                  />
+                </label>
 
                 <div className="week-pattern-group">
                   <span className="week-pattern-label">반복 주차</span>

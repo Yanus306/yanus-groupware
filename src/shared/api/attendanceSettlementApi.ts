@@ -6,6 +6,9 @@ export interface AttendanceSettlementItem {
   date: string
   scheduledStartTime: string
   scheduledEndTime: string
+  endsNextDay?: boolean
+  scheduledStartAt?: string | null
+  scheduledEndAt?: string | null
   checkInTime: string | null
   checkOutTime: string | null
   lateMinutes: number
