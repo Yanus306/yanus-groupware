@@ -19,11 +19,11 @@ import {
 } from '../attendanceApi'
 
 const WORK_SCHEDULES = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
+  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND', endsNextDay: false },
+  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
+  { id: 5, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
 ]
 
 const WORK_SCHEDULE_EVENTS = [
@@ -32,6 +32,7 @@ const WORK_SCHEDULE_EVENTS = [
     date: '2026-03-31',
     startTime: '13:00:00',
     endTime: '18:00:00',
+    endsNextDay: false,
     memberId: 1,
     memberName: '김리더',
     teamName: '1팀',
@@ -50,7 +51,7 @@ const MEMBER_WORK_SCHEDULES = [
     memberName: '박팀장',
     teamName: '2팀',
     schedules: [
-      { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00' },
+      { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00', endsNextDay: false },
     ],
   },
 ]
@@ -180,6 +181,7 @@ describe('workScheduleApi', () => {
     expect(Array.isArray(schedules)).toBe(true)
     expect(schedules).toHaveLength(5)
     expect(schedules[0]).toMatchObject({ dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' })
+    expect(schedules[4]).toMatchObject({ endsNextDay: true, endTime: '06:00:00' })
   })
 
   it('upsertWorkScheduleDay() 특정 요일 근무 일정을 저장하고 반환한다', async () => {
@@ -188,6 +190,7 @@ describe('workScheduleApi', () => {
       startTime: '08:00:00',
       endTime: '17:00:00',
       weekPattern: 'FIRST',
+      endsNextDay: false,
     })
     expect(result.dayOfWeek).toBe('MONDAY')
     expect(result.startTime).toBe('08:00:00')
@@ -223,6 +226,7 @@ describe('workScheduleApi', () => {
       date: '2026-03-30',
       startTime: '09:00:00',
       endTime: '18:00:00',
+      endsNextDay: false,
     })
 
     expect(result).toMatchObject({ id: 999, date: '2026-03-30', memberName: '김리더' })
@@ -233,6 +237,7 @@ describe('workScheduleApi', () => {
       date: '2026-03-31',
       startTime: '10:00:00',
       endTime: '19:00:00',
+      endsNextDay: false,
     })
 
     expect(result).toMatchObject({ id: 101, startTime: '10:00:00', endTime: '19:00:00' })

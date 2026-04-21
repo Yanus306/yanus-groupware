@@ -29,6 +29,9 @@ export interface AttendanceException {
   attendanceRecordId: number | null
   scheduledStartTime: string | null
   scheduledEndTime: string | null
+  endsNextDay?: boolean | null
+  scheduledStartAt?: string | null
+  scheduledEndAt?: string | null
   checkInTime: string | null
   checkOutTime: string | null
 }

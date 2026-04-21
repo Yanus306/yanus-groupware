@@ -32,6 +32,7 @@ import {
 import type { User, UserRole } from '../../entities/user/model/types'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { Toast } from '../../shared/ui/Toast'
+import { formatDateTimeClock, formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
 import { getDateStringsBetween, getMonthRange, getTodayStr } from '../../shared/lib/date'
 import {
   applyNoScheduleAttendanceFee,
@@ -91,10 +92,6 @@ function formatAuditDateTime(value: string) {
 
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
-}
-
-function formatTime(value: string | null) {
-  return value ? value.slice(11, 16) : '-'
 }
 
 function toTimeInputValue(value: string) {
@@ -1206,8 +1203,7 @@ export function Admin() {
                             <thead>
                               <tr>
                                 <th>날짜</th>
-                                <th>예정 출근</th>
-                                <th>예정 퇴근</th>
+                                <th>예정 근무</th>
                                 <th>실제 출근</th>
                                 <th>실제 퇴근</th>
                                 <th>지각 분</th>
@@ -1219,10 +1215,17 @@ export function Admin() {
                               {settlement.items.map((item) => (
                                 <tr key={`${item.date}-${item.scheduledStartTime}`}>
                                   <td>{item.date}</td>
-                                  <td>{item.scheduledStartTime ? item.scheduledStartTime.slice(0, 5) : '-'}</td>
-                                  <td>{item.scheduledEndTime ? item.scheduledEndTime.slice(0, 5) : '-'}</td>
-                                  <td>{formatTime(item.checkInTime)}</td>
-                                  <td>{formatTime(item.checkOutTime)}</td>
+                                  <td>
+                                    {formatScheduleRangeLabel({
+                                      startTime: item.scheduledStartTime,
+                                      endTime: item.scheduledEndTime,
+                                      endsNextDay: item.endsNextDay,
+                                      scheduledStartAt: item.scheduledStartAt,
+                                      scheduledEndAt: item.scheduledEndAt,
+                                    })}
+                                  </td>
+                                  <td>{formatDateTimeClock(item.checkInTime)}</td>
+                                  <td>{formatDateTimeClock(item.checkOutTime)}</td>
                                   <td>{item.lateMinutes}분</td>
                                   <td>{formatCurrency(item.fee)}</td>
                                   <td>

@@ -1,4 +1,5 @@
 import type { MemberWorkScheduleItem } from '../../../shared/api/attendanceApi'
+import { formatScheduleRangeLabel } from '../../../shared/lib/attendanceSchedule'
 import './TeamWorkSchedulePanel.css'
 
 interface Props {
@@ -20,10 +21,6 @@ const DAY_LABEL: Record<string, string> = {
 }
 
 const DAY_ORDER = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-
-function formatTimeRange(startTime: string, endTime: string) {
-  return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`
-}
 
 export function TeamWorkSchedulePanel({
   schedules,
@@ -69,7 +66,13 @@ export function TeamWorkSchedulePanel({
                     >
                       <span className="team-work-day">{DAY_LABEL[dayOfWeek] ?? dayOfWeek}</span>
                       <span className="team-work-time">
-                        {schedule ? formatTimeRange(schedule.startTime, schedule.endTime) : '휴무'}
+                        {schedule
+                          ? formatScheduleRangeLabel({
+                              startTime: schedule.startTime,
+                              endTime: schedule.endTime,
+                              endsNextDay: schedule.endsNextDay,
+                            })
+                          : '휴무'}
                       </span>
                     </div>
                   )

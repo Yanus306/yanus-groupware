@@ -16,7 +16,7 @@ const server = setupServer(
         { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00' },
         { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00' },
         { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00' },
-        { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00' },
+        { id: 5, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', endsNextDay: true },
       ],
     }),
   ),
@@ -65,6 +65,20 @@ describe('SetWorkDaysPersonal', () => {
       expect(screen.getByText(/특정 날짜 예외 일정은 우측 캘린더/)).toBeInTheDocument()
       expect(screen.getByText('출근')).toBeInTheDocument()
       expect(screen.getByText('퇴근')).toBeInTheDocument()
+      expect(screen.getByText('다음날 종료')).toBeInTheDocument()
+    })
+  })
+
+  it('야간 근무 일정은 다음날 종료 토글 상태를 복원한다', async () => {
+    render(<SetWorkDaysPersonal />, { wrapper })
+
+    await waitFor(() => expect(screen.getByRole('tab', { name: '금' })).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('tab', { name: '금' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: '금 다음날 종료' })).toBeChecked()
+      expect(screen.getByText('22:00 - 다음날 06:00 일정으로 저장됩니다.')).toBeInTheDocument()
     })
   })
 

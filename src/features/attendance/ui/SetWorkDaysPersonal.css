@@ -202,6 +202,41 @@
   gap: 12px;
 }
 
+.overnight-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+}
+
+.overnight-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overnight-toggle-copy strong {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.overnight-toggle-copy small {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.overnight-toggle-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-purple);
+  flex-shrink: 0;
+}
+
 .time-field {
   display: flex;
   flex-direction: column;
@@ -339,6 +374,10 @@
 
   .day-times {
     grid-template-columns: 1fr;
+  }
+
+  .overnight-toggle-row {
+    align-items: flex-start;
   }
 
   .schedule-day-editor {

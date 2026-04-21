@@ -10,7 +10,7 @@ const schedules: MemberWorkScheduleItem[] = [
     teamName: '1팀',
     workSchedules: [
       { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00' },
-      { id: 2, dayOfWeek: 'FRIDAY', startTime: '09:30:00', endTime: '18:30:00' },
+      { id: 2, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', endsNextDay: true },
     ],
   },
 ]
@@ -26,6 +26,7 @@ describe('TeamWorkSchedulePanel', () => {
     render(<TeamWorkSchedulePanel schedules={schedules} />)
     expect(screen.getByText('월')).toBeInTheDocument()
     expect(screen.getByText('09:00 - 18:00')).toBeInTheDocument()
+    expect(screen.getByText('22:00 - 다음날 06:00')).toBeInTheDocument()
   })
 
   it('데이터가 없으면 빈 상태 메시지를 보여준다', () => {
