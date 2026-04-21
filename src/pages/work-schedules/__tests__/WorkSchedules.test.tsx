@@ -166,8 +166,38 @@ describe('WorkSchedules 페이지', () => {
 
     await waitFor(() => {
       expect(screen.getByText('날짜별 근무 일정 추가')).toBeInTheDocument()
-      expect(document.querySelector('input[type="date"]')).not.toBeNull()
+      expect(screen.getByLabelText('시작 날짜')).toBeInTheDocument()
+      expect(screen.getByLabelText('종료 날짜')).toBeInTheDocument()
       expect(screen.getByRole('checkbox')).toBeInTheDocument()
     })
+  })
+
+  it('다음날 종료를 켜면 종료 날짜가 다음날로 바뀌고 끄면 같은 날로 돌아온다', async () => {
+    render(<WorkSchedules />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '날짜별 일정 추가' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '날짜별 일정 추가' }))
+
+    const startDateInput = await screen.findByLabelText('시작 날짜')
+    const endDateInput = screen.getByLabelText('종료 날짜')
+    const overnightCheckbox = screen.getByRole('checkbox')
+
+    expect(startDateInput).toHaveValue('2026-04-21')
+    expect(endDateInput).toHaveValue('2026-04-21')
+
+    fireEvent.click(overnightCheckbox)
+    expect(endDateInput).toHaveValue('2026-04-22')
+
+    fireEvent.click(overnightCheckbox)
+    expect(endDateInput).toHaveValue('2026-04-21')
+
+    fireEvent.change(startDateInput, { target: { value: '2026-05-03' } })
+    expect(endDateInput).toHaveValue('2026-05-03')
+
+    fireEvent.click(overnightCheckbox)
+    expect(endDateInput).toHaveValue('2026-05-04')
   })
 })

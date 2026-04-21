@@ -129,6 +129,19 @@ function formatTimeLabel(time: string) {
   return time.slice(0, 5)
 }
 
+function getEndDate(date: string, endsNextDay: boolean) {
+  if (!endsNextDay) return date
+  return toIsoDate(addDays(new Date(`${date}T12:00:00`), 1))
+}
+
+function formatDateLabel(date: string) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(`${date}T12:00:00`))
+}
+
 function getEventColors(kind: 'recurring' | 'date-event', isMine: boolean) {
   if (kind === 'date-event') {
     return isMine
@@ -490,6 +503,18 @@ export function WorkSchedules() {
     return '근무 일정 상세'
   }, [modalState])
 
+  const modalEndDate = useMemo(
+    () => (modalState ? getEndDate(modalState.date, modalState.endsNextDay) : ''),
+    [modalState],
+  )
+
+  const modalDateRangeLabel = useMemo(() => {
+    if (!modalState) return ''
+    const startDateLabel = formatDateLabel(modalState.date)
+    if (!modalState.endsNextDay) return `${startDateLabel} 하루 일정`
+    return `${startDateLabel} ~ ${formatDateLabel(modalEndDate)}`
+  }, [modalEndDate, modalState])
+
   return (
     <div className="work-schedules-page">
       {errorMessage && (
@@ -659,7 +684,7 @@ export function WorkSchedules() {
             <div className="work-schedules-modal-header">
               <div>
                 <h3>{modalTitle}</h3>
-                <p>{modalState.date}</p>
+                <p>{modalDateRangeLabel}</p>
               </div>
               <button type="button" className="work-schedules-modal-close" onClick={() => setModalState(null)}>
                 닫기
@@ -719,16 +744,22 @@ export function WorkSchedules() {
             {modalState.mode !== 'detail' && (
               <>
                 <div className="work-schedules-modal-form">
-                  <label className="work-schedules-modal-field">
-                    <span>날짜</span>
-                    <input
-                      type="date"
-                      value={modalState.date}
-                      onChange={(event) =>
-                        setModalState((prev) => (prev ? { ...prev, date: event.target.value } : prev))
-                      }
-                    />
-                  </label>
+                  <div className="work-schedules-modal-date-range">
+                    <label className="work-schedules-modal-field">
+                      <span>시작 날짜</span>
+                      <input
+                        type="date"
+                        value={modalState.date}
+                        onChange={(event) =>
+                          setModalState((prev) => (prev ? { ...prev, date: event.target.value } : prev))
+                        }
+                      />
+                    </label>
+                    <label className="work-schedules-modal-field">
+                      <span>종료 날짜</span>
+                      <input type="date" value={modalEndDate} readOnly />
+                    </label>
+                  </div>
                   <label className="work-schedules-modal-field">
                     <span>출근 시간</span>
                     <TimeInput
@@ -751,7 +782,7 @@ export function WorkSchedules() {
                     <span>
                       <strong>다음날 종료</strong>
                       <small>
-                        야간 근무처럼 자정을 넘기는 일정이면 켜 주세요.
+                        야간 근무처럼 자정을 넘기는 일정이면 종료 날짜가 다음날로 자동 설정됩니다.
                       </small>
                     </span>
                     <input
