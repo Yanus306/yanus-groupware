@@ -445,6 +445,12 @@
   gap: 8px;
 }
 
+.work-schedules-modal-date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .work-schedules-detail-item strong,
 .work-schedules-modal-field span {
   font-size: 0.82rem;
@@ -490,6 +496,11 @@
   flex-shrink: 0;
 }
 
+.work-schedules-modal-field input[readonly] {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
 .work-schedules-modal-actions {
   display: flex;
   align-items: center;
@@ -516,6 +527,10 @@
   .work-schedules-toolbar,
   .work-schedules-calendar-meta {
     gap: 12px;
+  }
+
+  .work-schedules-modal-date-range {
+    grid-template-columns: 1fr;
   }
 
   .work-schedules-select {
