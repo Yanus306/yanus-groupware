@@ -21,6 +21,7 @@ import {
   type WeekPattern,
   type WorkScheduleEventItem,
 } from '../../shared/api/attendanceApi'
+import { formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { canViewAllWorkSchedules, canViewTeamWorkSchedules } from '../../shared/lib/permissions'
 import { DataTableSection } from '../../shared/ui/DataTableSection'
@@ -44,6 +45,7 @@ interface CalendarRecurringEventMeta {
   date: string
   startTime: string
   endTime: string
+  endsNextDay: boolean
   weekPattern: WeekPattern
 }
 
@@ -60,6 +62,7 @@ interface ScheduleModalState {
   date: string
   startTime: string
   endTime: string
+  endsNextDay: boolean
   item: WorkScheduleCalendarMeta | null
 }
 
@@ -179,12 +182,14 @@ function expandRecurringSchedules(
       const colors = getEventColors('recurring', isMine)
       const startTime = formatTimeLabel(schedule.startTime)
       const endTime = formatTimeLabel(schedule.endTime)
+      const endsNextDay = Boolean(schedule.endsNextDay)
+      const endDate = endsNextDay ? toIsoDate(addDays(cursor, 1)) : isoDate
 
       events.push({
         id: `recurring-${member.memberId}-${schedule.dayOfWeek}-${schedule.weekPattern ?? 'EVERY'}-${isoDate}`,
         title: member.memberName,
         start: `${isoDate}T${schedule.startTime}`,
-        end: `${isoDate}T${schedule.endTime}`,
+        end: `${endDate}T${schedule.endTime}`,
         allDay: false,
         editable: false,
         ...colors,
@@ -196,6 +201,7 @@ function expandRecurringSchedules(
           date: isoDate,
           startTime,
           endTime,
+          endsNextDay,
           weekPattern: schedule.weekPattern ?? 'EVERY',
         } satisfies CalendarRecurringEventMeta,
       })
@@ -209,11 +215,12 @@ function toDateEvents(items: WorkScheduleEventItem[], currentUserId: string): Ev
   return items.map((item) => {
     const isMine = String(item.memberId) === currentUserId
     const colors = getEventColors('date-event', isMine)
+    const endDate = item.endsNextDay ? toIsoDate(addDays(new Date(`${item.date}T12:00:00`), 1)) : item.date
     return {
       id: `date-event-${item.id}`,
       title: item.memberName,
       start: `${item.date}T${item.startTime}`,
-      end: `${item.date}T${item.endTime}`,
+      end: `${endDate}T${item.endTime}`,
       allDay: false,
       editable: false,
       ...colors,
@@ -399,6 +406,7 @@ export function WorkSchedules() {
       date,
       startTime: DEFAULT_START_TIME,
       endTime: DEFAULT_END_TIME,
+      endsNextDay: false,
       item: null,
     })
   }, [])
@@ -417,6 +425,7 @@ export function WorkSchedules() {
         date: meta.item.date,
         startTime: formatTimeLabel(meta.item.startTime),
         endTime: formatTimeLabel(meta.item.endTime),
+        endsNextDay: Boolean(meta.item.endsNextDay),
         item: meta,
       })
       return
@@ -427,6 +436,7 @@ export function WorkSchedules() {
       date: meta.date,
       startTime: meta.startTime,
       endTime: meta.endTime,
+      endsNextDay: meta.endsNextDay,
       item: meta,
     })
   }, [])
@@ -440,6 +450,7 @@ export function WorkSchedules() {
         date: modalState.date,
         startTime: `${modalState.startTime}:00`,
         endTime: `${modalState.endTime}:00`,
+        endsNextDay: modalState.endsNextDay,
       }
 
       if (modalState.mode === 'create') {
@@ -667,7 +678,13 @@ export function WorkSchedules() {
                 </div>
                 <div className="work-schedules-detail-item">
                   <strong>시간</strong>
-                  <span>{modalState.startTime} - {modalState.endTime}</span>
+                  <span>
+                    {formatScheduleRangeLabel({
+                      startTime: modalState.startTime,
+                      endTime: modalState.endTime,
+                      endsNextDay: modalState.endsNextDay,
+                    })}
+                  </span>
                 </div>
                 <div className="work-schedules-detail-item">
                   <strong>반복 주차</strong>
@@ -688,7 +705,13 @@ export function WorkSchedules() {
                 </div>
                 <div className="work-schedules-detail-item">
                   <strong>시간</strong>
-                  <span>{modalState.startTime} - {modalState.endTime}</span>
+                  <span>
+                    {formatScheduleRangeLabel({
+                      startTime: modalState.startTime,
+                      endTime: modalState.endTime,
+                      endsNextDay: modalState.endsNextDay,
+                    })}
+                  </span>
                 </div>
               </div>
             )}
@@ -721,6 +744,21 @@ export function WorkSchedules() {
                       value={modalState.endTime}
                       onChange={(value) =>
                         setModalState((prev) => (prev ? { ...prev, endTime: value } : prev))
+                      }
+                    />
+                  </label>
+                  <label className="work-schedules-modal-toggle">
+                    <span>
+                      <strong>다음날 종료</strong>
+                      <small>
+                        야간 근무처럼 자정을 넘기는 일정이면 켜 주세요.
+                      </small>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={modalState.endsNextDay}
+                      onChange={(event) =>
+                        setModalState((prev) => (prev ? { ...prev, endsNextDay: event.target.checked } : prev))
                       }
                     />
                   </label>

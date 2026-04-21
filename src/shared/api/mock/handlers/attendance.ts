@@ -52,7 +52,7 @@ let memberWorkSchedules: MemberWorkScheduleItem[] = [
     memberName: '최개발',
     teamName: '1팀',
       workSchedules: [
-      { id: 6, dayOfWeek: 'FRIDAY', startTime: '09:30:00', endTime: '18:30:00', weekPattern: 'LAST' },
+      { id: 6, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
     ],
   },
 ]
@@ -81,8 +81,9 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
   {
     id: 102,
     date: '2026-04-02',
-    startTime: '11:00:00',
-    endTime: '16:00:00',
+    startTime: '22:00:00',
+    endTime: '06:00:00',
+    endsNextDay: true,
     memberId: 4,
     memberName: '최개발',
     teamName: '1팀',
@@ -197,12 +198,13 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
-    const body = await request.json() as { date: string; startTime: string; endTime: string }
+    const body = await request.json() as { date: string; startTime: string; endTime: string; endsNextDay?: boolean }
     const created: WorkScheduleEventItem = {
       id: Date.now(),
       date: body.date,
       startTime: body.startTime,
       endTime: body.endTime,
+      endsNextDay: Boolean(body.endsNextDay),
       memberId: 1,
       memberName: '김리더',
       teamName: '1팀',
@@ -214,7 +216,7 @@ export const attendanceHandlers = [
 
   http.put('/api/v1/work-schedule-events/:eventId', async ({ params, request }) => {
     const eventId = Number(params.eventId)
-    const body = await request.json() as { date: string; startTime: string; endTime: string }
+    const body = await request.json() as { date: string; startTime: string; endTime: string; endsNextDay?: boolean }
     const existing = workScheduleEvents.find((item) => item.id === eventId)
 
     if (!existing) {
@@ -229,6 +231,7 @@ export const attendanceHandlers = [
       date: body.date,
       startTime: body.startTime,
       endTime: body.endTime,
+      endsNextDay: Boolean(body.endsNextDay),
     }
 
     workScheduleEvents = workScheduleEvents.map((item) => (item.id === eventId ? updated : item))
@@ -247,6 +250,7 @@ export const attendanceHandlers = [
       startTime: string
       endTime: string
       weekPattern?: WeekPattern
+      endsNextDay?: boolean
     }
     const existing = workSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
     let updated: WorkScheduleItem
@@ -256,6 +260,7 @@ export const attendanceHandlers = [
         startTime: body.startTime,
         endTime: body.endTime,
         weekPattern: body.weekPattern ?? existing.weekPattern ?? 'EVERY',
+        endsNextDay: Boolean(body.endsNextDay),
       }
       workSchedules = workSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
     } else {
@@ -265,6 +270,7 @@ export const attendanceHandlers = [
         startTime: body.startTime,
         endTime: body.endTime,
         weekPattern: body.weekPattern ?? 'EVERY',
+        endsNextDay: Boolean(body.endsNextDay),
       }
       workSchedules = [...workSchedules, updated]
     }
