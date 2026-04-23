@@ -37,6 +37,7 @@ export function useWorkSession() {
   const [status, setStatus] = useState<WorkStatus>('idle')
   const [clockIn, setClockIn] = useState<Date | null>(null)
   const [clockOut, setClockOut] = useState<Date | null>(null)
+  const [attendanceDate, setAttendanceDate] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [toastType, setToastType] = useState<'error' | 'info'>('error')
   const [isLoading, setIsLoading] = useState(true)
@@ -50,6 +51,7 @@ export function useWorkSession() {
       setStatus('idle')
       setClockIn(null)
       setClockOut(null)
+      setAttendanceDate(null)
       return null
     }
 
@@ -57,12 +59,14 @@ export function useWorkSession() {
       setStatus('done')
       setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
       setClockOut(todayRecord.checkOutTime ? new Date(todayRecord.checkOutTime) : null)
+      setAttendanceDate(todayRecord.workDate)
       return todayRecord
     }
 
     setStatus('working')
     setClockIn(todayRecord.checkInTime ? new Date(todayRecord.checkInTime) : null)
     setClockOut(null)
+    setAttendanceDate(todayRecord.workDate)
     return todayRecord
   }
 
@@ -117,6 +121,7 @@ export function useWorkSession() {
         const record = await apiClockIn()
         setClockIn(record.checkInTime ? new Date(record.checkInTime) : new Date())
         setClockOut(null)
+        setAttendanceDate(record.workDate)
         setStatus('working')
       } catch (err) {
         if (err instanceof ApiError) {
@@ -144,6 +149,7 @@ export function useWorkSession() {
       try {
         const record = await apiClockOut()
         setClockOut(record.checkOutTime ? new Date(record.checkOutTime) : new Date())
+        setAttendanceDate(record.workDate)
         setStatus('done')
       } catch (err) {
         if (err instanceof ApiError) {
@@ -156,6 +162,7 @@ export function useWorkSession() {
             setStatus('idle')
             setClockIn(null)
             setClockOut(null)
+            setAttendanceDate(null)
             setToastType('error')
             setErrorMessage(err.message)
           } else {
@@ -172,11 +179,12 @@ export function useWorkSession() {
     } else if (status === 'done') {
       setIsLoading(true)
       try {
-        await resetMyAttendance(getTodayStr())
+        await resetMyAttendance(attendanceDate ?? getTodayStr())
         setToastType('info')
         setErrorMessage('오늘 출근 기록을 초기화했습니다')
         setClockIn(null)
         setClockOut(null)
+        setAttendanceDate(null)
         setStatus('idle')
       } catch (err) {
         if (err instanceof ApiError) {
@@ -185,6 +193,7 @@ export function useWorkSession() {
             setErrorMessage('초기화할 출근 기록이 없습니다')
             setClockIn(null)
             setClockOut(null)
+            setAttendanceDate(null)
             setStatus('idle')
           } else {
             setToastType('error')
