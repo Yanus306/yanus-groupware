@@ -174,6 +174,27 @@ describe('useWorkSession', () => {
       expect(requestedDate).toBe('2026-03-21')
       expect(result.current.status).toBe('idle')
     })
+
+    it('초기화 시 ATTENDANCE_NOT_FOUND도 기록 없음으로 처리한다', async () => {
+      server.use(
+        http.delete('/api/v1/attendances/me', () =>
+          HttpResponse.json(
+            { code: 'ATTENDANCE_NOT_FOUND', message: '출근 기록을 찾을 수 없습니다.', data: null },
+            { status: 404 },
+          ),
+        ),
+      )
+
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() })
+      await act(async () => { await result.current.handleClockClick() })
+      await act(async () => { await result.current.handleClockClick() })
+
+      expect(result.current.status).toBe('idle')
+      expect(result.current.clockIn).toBeNull()
+      expect(result.current.clockOut).toBeNull()
+      expect(result.current.errorMessage).toBe('초기화할 출근 기록이 없습니다')
+    })
   })
 
   describe('localStorage', () => {
