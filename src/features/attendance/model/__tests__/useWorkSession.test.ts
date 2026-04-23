@@ -13,6 +13,10 @@ const CLOCK_OUT_RECORD = {
   id: 1, memberId: 1, memberName: '테스터',
   workDate: '2026-03-22', checkInTime: '2026-03-22T09:00:00', checkOutTime: '2026-03-22T18:00:00', status: 'LEFT',
 }
+const OVERNIGHT_CLOCK_OUT_RECORD = {
+  id: 2, memberId: 1, memberName: '테스터',
+  workDate: '2026-03-21', checkInTime: '2026-03-21T23:00:00', checkOutTime: '2026-03-22T01:00:00', status: 'LEFT',
+}
 
 const server = setupServer(
   http.get('/api/v1/attendances/me', () =>
@@ -146,6 +150,29 @@ describe('useWorkSession', () => {
       expect(result.current.clockIn).toBeNull()
       expect(result.current.clockOut).toBeNull()
       expect(result.current.errorMessage).toBe('오늘 출근 기록을 초기화했습니다')
+    })
+
+    it('자정 넘겨 퇴근한 기록은 실제 workDate로 초기화 요청을 보낸다', async () => {
+      let requestedDate: string | null = null
+
+      server.use(
+        http.post('/api/v1/attendances/check-out', () =>
+          HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: OVERNIGHT_CLOCK_OUT_RECORD }),
+        ),
+        http.delete('/api/v1/attendances/me', ({ request }) => {
+          const url = new URL(request.url)
+          requestedDate = url.searchParams.get('date')
+          return new HttpResponse(null, { status: 200 })
+        }),
+      )
+
+      const { result } = await mountHook()
+      await act(async () => { await result.current.handleClockClick() })
+      await act(async () => { await result.current.handleClockClick() })
+      await act(async () => { await result.current.handleClockClick() })
+
+      expect(requestedDate).toBe('2026-03-21')
+      expect(result.current.status).toBe('idle')
     })
   })
 

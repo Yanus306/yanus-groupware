@@ -58,6 +58,15 @@ vi.mock('../../../shared/api/attendanceApi', () => ({
 
 import { WorkSchedules } from '../index'
 
+function addDays(date: string, days: number) {
+  const next = new Date(`${date}T12:00:00`)
+  next.setDate(next.getDate() + days)
+  const year = next.getFullYear()
+  const month = String(next.getMonth() + 1).padStart(2, '0')
+  const day = String(next.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 describe('WorkSchedules 페이지', () => {
   beforeEach(() => {
     mockState = {
@@ -184,15 +193,16 @@ describe('WorkSchedules 페이지', () => {
     const startDateInput = await screen.findByLabelText('시작 날짜')
     const endDateInput = screen.getByLabelText('종료 날짜')
     const overnightCheckbox = screen.getByRole('checkbox')
+    const initialDate = (startDateInput as HTMLInputElement).value
 
-    expect(startDateInput).toHaveValue('2026-04-21')
-    expect(endDateInput).toHaveValue('2026-04-21')
-
-    fireEvent.click(overnightCheckbox)
-    expect(endDateInput).toHaveValue('2026-04-22')
+    expect(startDateInput).toHaveValue(initialDate)
+    expect(endDateInput).toHaveValue(initialDate)
 
     fireEvent.click(overnightCheckbox)
-    expect(endDateInput).toHaveValue('2026-04-21')
+    expect(endDateInput).toHaveValue(addDays(initialDate, 1))
+
+    fireEvent.click(overnightCheckbox)
+    expect(endDateInput).toHaveValue(initialDate)
 
     fireEvent.change(startDateInput, { target: { value: '2026-05-03' } })
     expect(endDateInput).toHaveValue('2026-05-03')
