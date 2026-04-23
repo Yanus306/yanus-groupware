@@ -188,7 +188,7 @@ export function useWorkSession() {
         setStatus('idle')
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.code === 'NOT_CHECKED_IN') {
+          if (err.code === 'NOT_CHECKED_IN' || err.code === 'ATTENDANCE_NOT_FOUND') {
             setToastType('info')
             setErrorMessage('초기화할 출근 기록이 없습니다')
             setClockIn(null)
