@@ -399,6 +399,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .work-schedules-modal {
@@ -408,6 +409,9 @@
   gap: 20px;
   padding: 24px;
   border-radius: 24px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .work-schedules-modal-header {
