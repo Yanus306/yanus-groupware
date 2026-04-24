@@ -175,6 +175,8 @@ describe('WorkSchedules 페이지', () => {
 
     await waitFor(() => {
       expect(screen.getByText('날짜별 근무 일정 추가')).toBeInTheDocument()
+      expect(screen.getByText('일정 범위')).toBeInTheDocument()
+      expect(screen.getByText('당일 근무')).toBeInTheDocument()
       expect(screen.getByLabelText('시작 날짜')).toBeInTheDocument()
       expect(screen.getByLabelText('종료 날짜')).toBeInTheDocument()
       expect(screen.getByRole('checkbox')).toBeInTheDocument()
@@ -200,6 +202,8 @@ describe('WorkSchedules 페이지', () => {
 
     fireEvent.click(overnightCheckbox)
     expect(endDateInput).toHaveValue(addDays(initialDate, 1))
+    expect(screen.getByText('다음날까지 이어지는 근무')).toBeInTheDocument()
+    expect(screen.getByText('18:00 · 다음날')).toBeInTheDocument()
 
     fireEvent.click(overnightCheckbox)
     expect(endDateInput).toHaveValue(initialDate)
