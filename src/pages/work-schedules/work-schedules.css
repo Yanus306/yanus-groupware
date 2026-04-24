@@ -402,7 +402,7 @@
 }
 
 .work-schedules-modal {
-  width: min(560px, 100%);
+  width: min(620px, 100%);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -445,6 +445,86 @@
   gap: 8px;
 }
 
+.work-schedules-modal-range-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, var(--accent-purple));
+  background:
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent-purple) 18%, transparent), transparent 36%),
+    color-mix(in srgb, var(--surface-muted) 78%, transparent);
+}
+
+.work-schedules-modal-range-preview.overnight {
+  border-color: color-mix(in srgb, var(--accent-purple) 62%, var(--border-color));
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent-purple) 28%, transparent), transparent 38%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-purple) 16%, var(--surface-muted)), var(--surface-muted));
+}
+
+.work-schedules-modal-range-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.work-schedules-modal-range-heading span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.work-schedules-modal-range-heading strong {
+  color: var(--text-primary);
+  font-size: 0.86rem;
+}
+
+.work-schedules-modal-range-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.work-schedules-modal-range-node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card) 76%, transparent);
+}
+
+.work-schedules-modal-range-node span {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.work-schedules-modal-range-node strong {
+  color: var(--text-primary);
+  font-size: 0.96rem;
+  white-space: nowrap;
+}
+
+.work-schedules-modal-range-node small {
+  color: var(--accent-purple);
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.work-schedules-modal-range-icon {
+  align-self: center;
+  color: var(--text-secondary);
+}
+
 .work-schedules-modal-date-range {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -470,6 +550,13 @@
   border-radius: 16px;
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.work-schedules-modal-toggle.active {
+  border-color: color-mix(in srgb, var(--accent-purple) 68%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-purple) 14%, var(--surface-muted));
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--accent-purple) 14%, transparent);
 }
 
 .work-schedules-modal-toggle span {
@@ -531,6 +618,20 @@
 
   .work-schedules-modal-date-range {
     grid-template-columns: 1fr;
+  }
+
+  .work-schedules-modal-range-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .work-schedules-modal-range-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .work-schedules-modal-range-icon {
+    justify-self: center;
+    transform: rotate(90deg);
   }
 
   .work-schedules-select {

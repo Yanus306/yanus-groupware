@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react'
+import { ArrowRight, CalendarDays, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -744,6 +744,32 @@ export function WorkSchedules() {
             {modalState.mode !== 'detail' && (
               <>
                 <div className="work-schedules-modal-form">
+                  <div
+                    className={`work-schedules-modal-range-preview${
+                      modalState.endsNextDay ? ' overnight' : ''
+                    }`}
+                  >
+                    <div className="work-schedules-modal-range-heading">
+                      <span>일정 범위</span>
+                      <strong>{modalState.endsNextDay ? '다음날까지 이어지는 근무' : '당일 근무'}</strong>
+                    </div>
+                    <div className="work-schedules-modal-range-flow">
+                      <div className="work-schedules-modal-range-node">
+                        <span>시작</span>
+                        <strong>{formatDateLabel(modalState.date)}</strong>
+                        <small>{modalState.startTime}</small>
+                      </div>
+                      <ArrowRight className="work-schedules-modal-range-icon" size={18} aria-hidden="true" />
+                      <div className="work-schedules-modal-range-node">
+                        <span>종료</span>
+                        <strong>{formatDateLabel(modalEndDate)}</strong>
+                        <small>
+                          {modalState.endTime}
+                          {modalState.endsNextDay ? ' · 다음날' : ''}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
                   <div className="work-schedules-modal-date-range">
                     <label className="work-schedules-modal-field">
                       <span>시작 날짜</span>
@@ -778,7 +804,7 @@ export function WorkSchedules() {
                       }
                     />
                   </label>
-                  <label className="work-schedules-modal-toggle">
+                  <label className={`work-schedules-modal-toggle${modalState.endsNextDay ? ' active' : ''}`}>
                     <span>
                       <strong>다음날 종료</strong>
                       <small>
