@@ -58,17 +58,33 @@ describe('Settings 페이지', () => {
       scheduledDays: 10,
       attendedDays: 9,
       lateDays: 2,
-      totalLateMinutes: 12,
-      lateFee: 1200,
+      totalLateMinutes: 15,
+      lateFee: 1500,
       items: [
         {
           date: '2026-03-04',
           scheduledStartTime: '09:00:00',
           scheduledEndTime: '18:00:00',
+          endsNextDay: false,
+          scheduledStartAt: '2026-03-04T09:00:00',
+          scheduledEndAt: '2026-03-04T18:00:00',
           checkInTime: '2026-03-04T09:07:00',
           checkOutTime: '2026-03-04T18:02:00',
           lateMinutes: 7,
           fee: 700,
+          status: 'LATE',
+        },
+        {
+          date: '2026-03-07',
+          scheduledStartTime: '22:00:00',
+          scheduledEndTime: '06:00:00',
+          endsNextDay: true,
+          scheduledStartAt: '2026-03-07T22:00:00',
+          scheduledEndAt: '2026-03-08T06:00:00',
+          checkInTime: '2026-03-07T22:08:00',
+          checkOutTime: '2026-03-08T06:01:00',
+          lateMinutes: 8,
+          fee: 800,
           status: 'LATE',
         },
       ],
@@ -111,8 +127,13 @@ describe('Settings 페이지', () => {
     fireEvent.click(screen.getByText('정산'))
 
     expect(await screen.findByText('개인 지각비 정산')).toBeInTheDocument()
-    expect(screen.getByText('1,200원')).toBeInTheDocument()
+    expect(screen.getByText('1,500원')).toBeInTheDocument()
     expect(screen.getByText('2026-03-04')).toBeInTheDocument()
+    expect(screen.getByText('2026-03-07')).toBeInTheDocument()
+    expect(screen.getByText('22:00 - 다음날 06:00')).toBeInTheDocument()
+    expect(screen.getByText('22:08')).toBeInTheDocument()
+    expect(screen.getByText('8분')).toBeInTheDocument()
+    expect(screen.getByText('800원')).toBeInTheDocument()
   })
 
   it('테마 카드 클릭 시 setTheme가 호출된다', () => {
