@@ -10,9 +10,9 @@ const settlementResponse = {
   teamName: '1팀',
   scheduledDays: 12,
   attendedDays: 11,
-  lateDays: 3,
-  totalLateMinutes: 27,
-  lateFee: 2700,
+  lateDays: 2,
+  totalLateMinutes: 15,
+  lateFee: 1500,
   items: [
     {
       date: '2026-03-04',
@@ -25,6 +25,19 @@ const settlementResponse = {
       checkOutTime: '2026-03-04T18:02:01',
       lateMinutes: 7,
       fee: 700,
+      status: 'LATE',
+    },
+    {
+      date: '2026-03-07',
+      scheduledStartTime: '22:00:00',
+      scheduledEndTime: '06:00:00',
+      endsNextDay: true,
+      scheduledStartAt: '2026-03-07T22:00:00',
+      scheduledEndAt: '2026-03-08T06:00:00',
+      checkInTime: '2026-03-07T22:08:00',
+      checkOutTime: '2026-03-08T06:01:00',
+      lateMinutes: 8,
+      fee: 800,
       status: 'LATE',
     },
   ],
@@ -59,12 +72,22 @@ describe('attendanceSettlementApi', () => {
     expect(result).toMatchObject({
       yearMonth: '2026-03',
       memberName: '강민준',
-      lateFee: 2700,
+      lateFee: 1500,
     })
     expect(result.items[0]).toMatchObject({
       date: '2026-03-04',
       status: 'LATE',
       fee: 700,
+    })
+    expect(result.items[1]).toMatchObject({
+      date: '2026-03-07',
+      endsNextDay: true,
+      scheduledStartAt: '2026-03-07T22:00:00',
+      scheduledEndAt: '2026-03-08T06:00:00',
+      checkInTime: '2026-03-07T22:08:00',
+      checkOutTime: '2026-03-08T06:01:00',
+      lateMinutes: 8,
+      fee: 800,
     })
   })
 
