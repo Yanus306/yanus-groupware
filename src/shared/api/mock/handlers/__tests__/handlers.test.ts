@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from '../index'
 import { resetDriveMockData } from '../drive'
+import { getTodayStr } from '../../../../lib/date'
 
 // auth, members, attendance, calendar — 실제 백엔드 사용 (mock 핸들러 테스트 제외)
 // chat, drive mock 핸들러만 테스트
@@ -82,5 +83,41 @@ describe('MSW 핸들러 — 드라이브', () => {
     expect(body.code).toBe('SUCCESS')
     expect(body.data.uploadedById).toBe(3)
     expect(body.data.uploadedByName).toBe('이멤버')
+  })
+})
+
+describe('MSW 핸들러 — 출퇴근 예외 처리', () => {
+  it('야간 미퇴근 일괄 자동 퇴근은 scheduledEndAt 기준으로 다음날 퇴근 시간을 반영한다', async () => {
+    const today = getTodayStr()
+    const beforeRes = await fetch(`/api/v1/attendance-exceptions?date=${today}&type=MISSED_CHECK_OUT`, {
+      headers: { Authorization: 'Bearer mock-token' },
+    })
+    const beforeBody = await beforeRes.json() as {
+      data: { items: Array<{ id: number; scheduledEndAt: string | null; checkOutTime: string | null }> }
+    }
+    const overnightException = beforeBody.data.items.find((item) => item.scheduledEndAt?.includes('T06:00:00'))
+
+    expect(overnightException).toBeDefined()
+    expect(overnightException?.checkOutTime).toBeNull()
+
+    const bulkRes = await fetch('/api/v1/attendance-exceptions/bulk-auto-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mock-token' },
+      body: JSON.stringify({ date: today, memberIds: [2] }),
+    })
+    const bulkBody = await bulkRes.json() as { data: { processedCount: number; updatedIds: number[] } }
+
+    expect(bulkRes.status).toBe(200)
+    expect(bulkBody.data).toEqual({ processedCount: 1, updatedIds: [overnightException?.id] })
+
+    const afterRes = await fetch(`/api/v1/attendance-exceptions?date=${today}&status=RESOLVED`, {
+      headers: { Authorization: 'Bearer mock-token' },
+    })
+    const afterBody = await afterRes.json() as {
+      data: { items: Array<{ id: number; scheduledEndAt: string | null; checkOutTime: string | null }> }
+    }
+    const resolved = afterBody.data.items.find((item) => item.id === overnightException?.id)
+
+    expect(resolved?.checkOutTime).toBe(overnightException?.scheduledEndAt)
   })
 })
