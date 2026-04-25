@@ -15,3 +15,4 @@
 | [테스트 트러블슈팅](./testing/troubleshooting.md) | 최근 테스트 실패 사례와 해결 방법 |
 | [API 개요](./api/overview.md) | 백엔드 API 엔드포인트 목록 |
 | [트러블슈팅](./troubleshooting/README.md) | 자주 발생하는 문제와 해결법 |
+| [출퇴근 예외 처리 트러블슈팅](./troubleshooting/attendance-exceptions.md) | 초기화 500, 야간 근무, 예외 보드 QA 기록 |

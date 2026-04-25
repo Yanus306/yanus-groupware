@@ -40,12 +40,12 @@
 | **대시보드** | 오늘의 일정·채팅·출퇴근 현황을 한눈에 확인 |
 | **업무 채팅** | 실시간 채널 및 다이렉트 메시지 |
 | **캘린더** | FullCalendar 기반 일정·할일 관리 (내 할일/팀 할일 분리) |
-| **출퇴근** | 출근·퇴근 기록, 근무 시간 시각화, 요일별 출퇴근 시간 개별 설정, 근무 일정 캘린더 반영 |
+| **출퇴근** | 출근·퇴근 기록, 근무 시간 시각화, 요일별/날짜별 근무 일정, 다음날 종료 야간 근무, 출퇴근 예외 처리 |
 | **파일 드라이브** | 팀 파일·폴더 공유 |
 | **AI 챗봇** | 파일 드라이브 기반 질의응답 (Ollama 호환 API) |
 | **Sticky 위젯** | 모든 화면 우측 하단에서 채팅·챗봇 바로 접근 |
 | **멤버 관리** | 팀별·역할별 필터링, 역할 변경, 활성/비활성 관리 |
-| **관리자 대시보드** | 팀원 전체 출근 현황 (근무 중/퇴근/미출근 필터), 멤버 역할 관리 |
+| **관리자 대시보드** | 팀원 전체 출근 현황, 출퇴근 예외 처리, 미퇴근 일괄 자동 퇴근, 지각비 정산, 멤버 역할 관리 |
 | **설정** | 프로필 편집, 알림 설정, 비밀번호 변경, 테마 설정 |
 
 ---
@@ -183,7 +183,7 @@ npm run preview
 프로젝트 루트에 `.env.local` 파일을 생성하고 필요한 변수를 설정합니다.
 
 ```env
-# true 설정 시 MSW Mock 핸들러 활성화 (chat, calendar, drive)
+# true 설정 시 MSW Mock 핸들러 활성화
 VITE_USE_MOCK=true
 
 # AI 챗봇 API 서버 주소 (Ollama 호환 서버)
@@ -198,8 +198,8 @@ VITE_AI_API_MODEL=llama3.1
 > `VITE_API_BASE_URL`은 Vercel 프로덕션 배포 환경에서만 주입합니다.
 
 > **Mock 전략**  
-> `auth`, `attendance`, `members` API는 실제 백엔드와 통신합니다.  
-> `chat`, `calendar`, `drive`는 `VITE_USE_MOCK=true` 시 MSW로 모킹됩니다.
+> `VITE_USE_MOCK=true`에서는 `auth`, `members`, `attendance`, `calendar`, `operations`, `chat`, `drive` 핸들러를 함께 등록합니다.
+> 이메일 인증이나 실서비스 백엔드에 묶이지 않고 관리자 출퇴근 예외 처리, 지각비 정산, 야간 근무 표시까지 로컬에서 점검할 수 있습니다.
 
 ---
 
@@ -242,6 +242,20 @@ app/                          — Provider 조합
 
 - 비동기 API 테스트는 반드시 **MSW `setupServer`** 를 사용합니다.
 - `vi.mock`으로 API 모듈을 직접 mock하는 것은 금지입니다.
+
+### 출퇴근 예외 처리 QA
+
+관리자 화면의 `출퇴근 예외 처리` 보드는 총무/팀장이 매일 쓰는 운영 플로우를 기준으로 검증합니다.
+
+```bash
+# 예외 처리 보드 + mock handler 회귀 테스트
+npm run test:run -- src/pages/admin/__tests__/Admin.test.tsx src/shared/api/mock/handlers/__tests__/handlers.test.ts
+```
+
+- 조회: 미출근, 미퇴근, 지각, 근무 일정 없음 요약과 목록을 확인합니다.
+- 처리: 메모 저장, 승인, 반려, 처리 완료, 오늘 미퇴근자 일괄 자동 퇴근을 확인합니다.
+- 야간 근무: `endsNextDay`, `scheduledStartAt`, `scheduledEndAt` 기준으로 `22:00 - 다음날 06:00` 표시와 다음날 퇴근 시간이 유지되는지 확인합니다.
+- 문제 기록: [출퇴근 예외 처리 트러블슈팅](./docs/troubleshooting/attendance-exceptions.md)에 운영 중 발견한 증상과 해결책을 남깁니다.
 
 ---
 
