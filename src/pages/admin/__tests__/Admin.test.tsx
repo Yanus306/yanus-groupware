@@ -17,6 +17,8 @@ tomorrowDate.setDate(tomorrowDate.getDate() + 1)
 const TOMORROW_STR = toDateString(tomorrowDate)
 const CURRENT_YEAR_MONTH = TODAY_STR.slice(0, 7)
 const CURRENT_LATE_DATE = `${CURRENT_YEAR_MONTH}-04`
+const CURRENT_OVERNIGHT_DATE = `${CURRENT_YEAR_MONTH}-07`
+const CURRENT_OVERNIGHT_END_DATE = `${CURRENT_YEAR_MONTH}-08`
 const CURRENT_NO_SCHEDULE_DATE = `${CURRENT_YEAR_MONTH}-18`
 
 const mockMembers = [
@@ -77,18 +79,34 @@ const mockSettlement = {
   teamName: '1팀',
   scheduledDays: 12,
   attendedDays: 11,
-  lateDays: 3,
-  totalLateMinutes: 27,
-  lateFee: 2700,
+  lateDays: 2,
+  totalLateMinutes: 15,
+  lateFee: 1500,
   items: [
     {
       date: CURRENT_LATE_DATE,
       scheduledStartTime: '09:00:00',
       scheduledEndTime: '18:00:00',
+      endsNextDay: false,
+      scheduledStartAt: `${CURRENT_LATE_DATE}T09:00:00`,
+      scheduledEndAt: `${CURRENT_LATE_DATE}T18:00:00`,
       checkInTime: `${CURRENT_LATE_DATE}T09:07:10`,
       checkOutTime: `${CURRENT_LATE_DATE}T18:02:01`,
       lateMinutes: 7,
       fee: 700,
+      status: 'LATE',
+    },
+    {
+      date: CURRENT_OVERNIGHT_DATE,
+      scheduledStartTime: '22:00:00',
+      scheduledEndTime: '06:00:00',
+      endsNextDay: true,
+      scheduledStartAt: `${CURRENT_OVERNIGHT_DATE}T22:00:00`,
+      scheduledEndAt: `${CURRENT_OVERNIGHT_END_DATE}T06:00:00`,
+      checkInTime: `${CURRENT_OVERNIGHT_DATE}T22:08:00`,
+      checkOutTime: `${CURRENT_OVERNIGHT_END_DATE}T06:01:00`,
+      lateMinutes: 8,
+      fee: 800,
       status: 'LATE',
     },
   ],
@@ -624,11 +642,14 @@ describe('Admin 페이지', () => {
     expect(screen.getByRole('tab', { name: '전체' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('heading', { name: '전체 정산 요약' })).toBeInTheDocument()
     expect(screen.getByText('월별 전체 지각비')).toBeInTheDocument()
-    expect(screen.getByText('6,700원')).toBeInTheDocument()
+    expect(screen.getByText('7,500원')).toBeInTheDocument()
     expect(screen.getByText('미기재 출근')).toBeInTheDocument()
-    expect(screen.getByText('2건')).toBeInTheDocument()
+    expect(screen.getAllByText('2건').length).toBeGreaterThan(0)
     expect(screen.getAllByText('김민준').length).toBeGreaterThan(0)
     expect(screen.getAllByText('3,000원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('강민준').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1,500원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('15분').length).toBeGreaterThan(0)
   })
 
   it('지각비 정산 탭의 팀 섹션에서 팀별 정산을 볼 수 있다', async () => {
@@ -642,7 +663,9 @@ describe('Admin 페이지', () => {
 
     expect(await screen.findByRole('heading', { name: '1팀 정산 요약' })).toBeInTheDocument()
     expect(screen.getByText('팀 전체 지각비')).toBeInTheDocument()
+    expect(screen.getByText('4,500원')).toBeInTheDocument()
     expect(screen.getAllByText('강민준').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1,500원').length).toBeGreaterThan(0)
   })
 
   it('지각비 정산 탭의 개인 섹션에서 멤버별 상세 정산을 볼 수 있다', async () => {
@@ -656,7 +679,14 @@ describe('Admin 페이지', () => {
 
     expect(await screen.findByRole('heading', { name: '강민준 상세 정산' })).toBeInTheDocument()
     expect(screen.getByText(CURRENT_LATE_DATE)).toBeInTheDocument()
+    expect(screen.getByText(CURRENT_OVERNIGHT_DATE)).toBeInTheDocument()
+    expect(screen.getByText('22:00 - 다음날 06:00')).toBeInTheDocument()
+    expect(screen.getByText('22:08')).toBeInTheDocument()
+    expect(screen.getByText('06:01')).toBeInTheDocument()
+    expect(screen.getByText('8분')).toBeInTheDocument()
     expect(screen.getAllByText('700원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('800원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1,500원').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '개인 출근 내역 CSV' })).toBeInTheDocument()
   })
 
