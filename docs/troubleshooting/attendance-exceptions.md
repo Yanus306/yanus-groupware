@@ -64,6 +64,26 @@
 
 ---
 
+## 야간 근무가 지각 정산 합산에서 빠지는지 확인
+
+### 증상
+
+- 개인 정산 화면에서 `22:00 ~ 다음날 06:00` 근무가 단일 날짜 근무처럼 보인다.
+- 관리자 전체/팀 정산의 지각 분, 지각비 합산이 야간 지각 항목을 포함하는지 확신하기 어렵다.
+
+### 원인
+
+- 정산 응답은 `scheduledStartTime`, `scheduledEndTime`만으로는 종료일을 표현할 수 없다.
+- 화면이나 mock이 `scheduledStartAt`, `scheduledEndAt`을 무시하면 `06:00`이 당일 종료처럼 보인다.
+
+### 해결
+
+- 정산 항목도 예외 처리와 동일하게 `endsNextDay`, `scheduledStartAt`, `scheduledEndAt`을 유지한다.
+- 개인 설정 정산, 관리자 전체/팀/개인 정산 모두 `formatScheduleRangeLabel`로 `22:00 - 다음날 06:00`을 표시한다.
+- 회귀 테스트: `src/pages/settings/__tests__/Settings.test.tsx`, `src/pages/admin/__tests__/Admin.test.tsx`, `src/shared/lib/__tests__/attendanceSettlement.test.ts`에서 야간 지각 8분/800원 항목을 확인한다.
+
+---
+
 ## 로컬 mock QA 체크리스트
 
 - `.env.local`에 `VITE_USE_MOCK=true`를 설정한다.
@@ -71,4 +91,4 @@
 - `22:00 - 다음날 06:00` 미퇴근 항목이 보이는지 확인한다.
 - 메모 저장, 승인, 반려, 처리 완료를 각각 실행한다.
 - `오늘 미퇴근자 일괄 처리` 후 실제 시간이 `22:02 - 06:00`처럼 다음날 종료 시각으로 표시되는지 확인한다.
-
+- 지각비 정산에서 야간 지각 항목이 개인/팀/전체 합산에 포함되는지 확인한다.
