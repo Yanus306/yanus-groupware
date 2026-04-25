@@ -8,10 +8,13 @@ import { http, HttpResponse } from 'msw'
 import { AppProvider, useApp } from '../../../features/auth/model'
 import type { User } from '../../../entities/user/model/types'
 import type { AttendanceException } from '../../../shared/api/attendanceExceptionsApi'
-import { getTodayStr } from '../../../shared/lib/date'
+import { getTodayStr, parseDateString, toDateString } from '../../../shared/lib/date'
 import { Admin } from '../index'
 
 const TODAY_STR = getTodayStr()
+const tomorrowDate = parseDateString(TODAY_STR)
+tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+const TOMORROW_STR = toDateString(tomorrowDate)
 const CURRENT_YEAR_MONTH = TODAY_STR.slice(0, 7)
 const CURRENT_LATE_DATE = `${CURRENT_YEAR_MONTH}-04`
 const CURRENT_NO_SCHEDULE_DATE = `${CURRENT_YEAR_MONTH}-18`
@@ -109,9 +112,12 @@ const initialAttendanceExceptions: AttendanceException[] = [
     resolvedBy: null,
     resolvedAt: null,
     attendanceRecordId: 1,
-    scheduledStartTime: '09:00:00',
-    scheduledEndTime: '18:00:00',
-    checkInTime: `${TODAY_STR}T09:00:00`,
+    scheduledStartTime: '22:00:00',
+    scheduledEndTime: '06:00:00',
+    endsNextDay: true,
+    scheduledStartAt: `${TODAY_STR}T22:00:00`,
+    scheduledEndAt: `${TOMORROW_STR}T06:00:00`,
+    checkInTime: `${TODAY_STR}T22:02:00`,
     checkOutTime: null,
   },
   {
@@ -344,7 +350,7 @@ const server = setupServer(
     const targets = mockAttendanceExceptions.filter((item) => item.type === 'MISSED_CHECK_OUT' && item.status === 'OPEN')
     for (const target of targets) {
       target.status = 'RESOLVED'
-      target.checkOutTime = `${TODAY_STR}T${mockAutoCheckoutTime}`
+      target.checkOutTime = target.scheduledEndAt ?? `${TODAY_STR}T${mockAutoCheckoutTime}`
       target.resolvedBy = '관리자'
       target.resolvedAt = `${TODAY_STR}T11:00:00`
     }
@@ -531,6 +537,8 @@ describe('Admin 페이지', () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue('행사 정리 후 퇴근 누락')).toBeInTheDocument()
     })
+    expect(screen.getAllByText('22:00 - 다음날 06:00').length).toBeGreaterThan(0)
+    expect(screen.getByText('실제 22:02 - -')).toBeInTheDocument()
   })
 
   it('출근 예외 처리 보드에서 메모 저장과 승인 액션을 수행할 수 있다', async () => {
@@ -560,6 +568,40 @@ describe('Admin 페이지', () => {
 
     expect(await screen.findByText('오늘 미퇴근자 1건을 일괄 처리했습니다')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '오늘 미퇴근자 일괄 처리' })).toBeDisabled()
+    expect(screen.getAllByText('22:02 - 06:00').length).toBeGreaterThan(0)
+    expect(screen.getByText('실제 22:02 - 06:00')).toBeInTheDocument()
+  })
+
+  it('출근 예외 처리 보드에서 반려, 처리 완료, 상태 필터를 한 흐름으로 수행할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+
+    await screen.findByDisplayValue('행사 정리 후 퇴근 누락')
+    await user.click(screen.getByText('강민준'))
+    await user.clear(screen.getByLabelText('출퇴근 예외 메모 입력'))
+    await user.type(screen.getByLabelText('출퇴근 예외 메모 입력'), '증빙 부족으로 반려')
+    await user.click(screen.getByRole('button', { name: '반려' }))
+
+    expect(await screen.findByText('출퇴근 예외를 반려했습니다')).toBeInTheDocument()
+    expect(screen.getAllByText('반려됨').length).toBeGreaterThan(0)
+
+    const exceptionRows = screen.getAllByRole('row')
+    const missedCheckoutRow = exceptionRows.find((row) => within(row).queryByText('이서연') && within(row).queryByText('미퇴근'))
+    expect(missedCheckoutRow).toBeDefined()
+    await user.click(missedCheckoutRow as HTMLElement)
+    await user.click(screen.getByRole('button', { name: '처리 완료' }))
+
+    expect(await screen.findByText('출퇴근 예외를 처리 완료로 변경했습니다')).toBeInTheDocument()
+    expect(screen.getAllByText('처리 완료').length).toBeGreaterThan(0)
+
+    await user.selectOptions(screen.getByLabelText('상태 필터'), 'REJECTED')
+
+    await waitFor(() => {
+      expect(screen.getByText('강민준')).toBeInTheDocument()
+    })
+    const exceptionBoard = screen.getByRole('heading', { name: '출퇴근 예외 처리' }).closest('section')
+    expect(exceptionBoard).not.toBeNull()
+    expect(within(exceptionBoard as HTMLElement).queryByText('이서연')).not.toBeInTheDocument()
   })
 
   it('감사 로그 탭 클릭 시 로그 테이블이 표시된다', async () => {

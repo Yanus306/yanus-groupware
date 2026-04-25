@@ -631,7 +631,7 @@ export const operationsHandlers = [
     const updatedIds: number[] = []
 
     mockAttendanceExceptions = mockAttendanceExceptions.map((item) => {
-      if (item.workDate !== targetDate || item.type !== 'MISSED_CHECK_OUT') return item
+      if (item.workDate !== targetDate || item.type !== 'MISSED_CHECK_OUT' || item.status !== 'OPEN') return item
       if (shouldFilterMembers && !targetMemberIds.has(item.memberId)) return item
 
       updatedIds.push(item.id)
@@ -639,7 +639,7 @@ export const operationsHandlers = [
         ...item,
         status: 'RESOLVED',
         note: item.note || `자동 체크아웃 기준 ${autoCheckoutTime}로 일괄 처리`,
-        checkOutTime: `${targetDate}T${autoCheckoutTime}`,
+        checkOutTime: item.scheduledEndAt ?? `${targetDate}T${autoCheckoutTime}`,
         resolvedBy: '관리자',
         resolvedAt: new Date().toISOString(),
       }
