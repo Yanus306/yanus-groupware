@@ -13,6 +13,13 @@ const baseSettlement: AttendanceSettlement = {
   lateDays: 2,
   totalLateMinutes: 15,
   lateFee: 1500,
+  paymentStatus: 'UNPAID',
+  paidAmount: 0,
+  unpaidAmount: 1500,
+  waivedAmount: 0,
+  carriedOverAmount: 0,
+  paymentProcessedAt: null,
+  paymentProcessedBy: null,
   items: [
     {
       date: '2026-03-04',
@@ -60,6 +67,8 @@ describe('attendanceSettlement', () => {
     const result = applyNoScheduleAttendanceFee(baseSettlement, records)
 
     expect(result.lateFee).toBe(1500 + NO_SCHEDULE_ATTENDANCE_FEE)
+    expect(result.paymentStatus).toBe('UNPAID')
+    expect(result.unpaidAmount).toBe(1500 + NO_SCHEDULE_ATTENDANCE_FEE)
     expect(result.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -73,13 +82,17 @@ describe('attendanceSettlement', () => {
 
   it('전체 정산 요약은 멤버별 정산을 합산한다', () => {
     const settlements = [
-      baseSettlement,
+      {
+        ...baseSettlement,
+        paymentStatus: 'PAID' as const,
+      },
       {
         ...baseSettlement,
         memberId: 3,
         memberName: '김민준',
         lateFee: 3000,
         lateDays: 1,
+        paymentStatus: 'WAIVED' as const,
         items: [
           {
             date: '2026-03-18',
@@ -96,13 +109,35 @@ describe('attendanceSettlement', () => {
           },
         ],
       },
+      {
+        ...baseSettlement,
+        memberId: 4,
+        memberName: '박팀장',
+        lateFee: 800,
+        lateDays: 1,
+        paymentStatus: 'CARRIED_OVER' as const,
+        items: [],
+      },
+      {
+        ...baseSettlement,
+        memberId: 5,
+        memberName: '최개발',
+        lateFee: 500,
+        lateDays: 1,
+        paymentStatus: 'UNPAID' as const,
+        items: [],
+      },
     ]
 
     const summary = rollupAttendanceSettlements(settlements)
 
-    expect(summary.memberCount).toBe(2)
-    expect(summary.totalLateFee).toBe(4500)
+    expect(summary.memberCount).toBe(4)
+    expect(summary.totalLateFee).toBe(5800)
     expect(summary.noScheduleAttendanceCount).toBe(1)
+    expect(summary.paidAmount).toBe(1500)
+    expect(summary.waivedAmount).toBe(3000)
+    expect(summary.carriedOverAmount).toBe(800)
+    expect(summary.unpaidAmount).toBe(500)
   })
 
   it('야간 근무 지각 정산 항목은 다음날 종료 계약을 유지한 채 합산한다', () => {

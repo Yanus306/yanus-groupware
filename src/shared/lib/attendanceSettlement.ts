@@ -1,5 +1,9 @@
 import type { AttendanceRecord } from '../api/attendanceApi'
-import type { AttendanceSettlement, AttendanceSettlementItem } from '../api/attendanceSettlementApi'
+import type {
+  AttendanceSettlement,
+  AttendanceSettlementItem,
+  AttendanceSettlementPaymentStatus,
+} from '../api/attendanceSettlementApi'
 
 export const NO_SCHEDULE_ATTENDANCE_FEE = 3000
 
@@ -11,6 +15,28 @@ export interface AttendanceSettlementRollup {
   totalLateMinutes: number
   totalLateFee: number
   noScheduleAttendanceCount: number
+  paidAmount: number
+  unpaidAmount: number
+  waivedAmount: number
+  carriedOverAmount: number
+}
+
+export function getSettlementPaymentStatus(settlement: Pick<AttendanceSettlement, 'paymentStatus'>): AttendanceSettlementPaymentStatus {
+  return settlement.paymentStatus ?? 'UNPAID'
+}
+
+export function getSettlementPaymentAmounts(
+  settlement: Pick<AttendanceSettlement, 'lateFee' | 'paymentStatus'>,
+) {
+  const paymentStatus = getSettlementPaymentStatus(settlement)
+  const amount = settlement.lateFee
+
+  return {
+    paidAmount: paymentStatus === 'PAID' ? amount : 0,
+    unpaidAmount: paymentStatus === 'UNPAID' ? amount : 0,
+    waivedAmount: paymentStatus === 'WAIVED' ? amount : 0,
+    carriedOverAmount: paymentStatus === 'CARRIED_OVER' ? amount : 0,
+  }
 }
 
 function sortItemsByDate(left: AttendanceSettlementItem, right: AttendanceSettlementItem) {
@@ -59,7 +85,7 @@ export function applyNoScheduleAttendanceFee(
   const lateDays = allItems.filter((item) => item.fee > 0).length
   const lateFee = allItems.reduce((sum, item) => sum + item.fee, 0)
 
-  return {
+  const nextSettlement = {
     ...settlement,
     attendedDays: Math.max(
       settlement.attendedDays,
@@ -69,6 +95,11 @@ export function applyNoScheduleAttendanceFee(
     lateFee,
     items: allItems,
   }
+
+  return {
+    ...nextSettlement,
+    ...getSettlementPaymentAmounts(nextSettlement),
+  }
 }
 
 export function rollupAttendanceSettlements(settlements: AttendanceSettlement[]): AttendanceSettlementRollup {
@@ -77,6 +108,7 @@ export function rollupAttendanceSettlements(settlements: AttendanceSettlement[])
       const noScheduleAttendanceCount = settlement.items.filter(
         (item) => item.status === 'NO_SCHEDULE' && item.fee === NO_SCHEDULE_ATTENDANCE_FEE,
       ).length
+      const paymentAmounts = getSettlementPaymentAmounts(settlement)
 
       return {
         memberCount: summary.memberCount + 1,
@@ -86,6 +118,10 @@ export function rollupAttendanceSettlements(settlements: AttendanceSettlement[])
         totalLateMinutes: summary.totalLateMinutes + settlement.totalLateMinutes,
         totalLateFee: summary.totalLateFee + settlement.lateFee,
         noScheduleAttendanceCount: summary.noScheduleAttendanceCount + noScheduleAttendanceCount,
+        paidAmount: summary.paidAmount + paymentAmounts.paidAmount,
+        unpaidAmount: summary.unpaidAmount + paymentAmounts.unpaidAmount,
+        waivedAmount: summary.waivedAmount + paymentAmounts.waivedAmount,
+        carriedOverAmount: summary.carriedOverAmount + paymentAmounts.carriedOverAmount,
       }
     },
     {
@@ -96,6 +132,10 @@ export function rollupAttendanceSettlements(settlements: AttendanceSettlement[])
       totalLateMinutes: 0,
       totalLateFee: 0,
       noScheduleAttendanceCount: 0,
+      paidAmount: 0,
+      unpaidAmount: 0,
+      waivedAmount: 0,
+      carriedOverAmount: 0,
     },
   )
 }

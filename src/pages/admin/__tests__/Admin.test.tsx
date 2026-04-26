@@ -8,6 +8,7 @@ import { http, HttpResponse } from 'msw'
 import { AppProvider, useApp } from '../../../features/auth/model'
 import type { User } from '../../../entities/user/model/types'
 import type { AttendanceException } from '../../../shared/api/attendanceExceptionsApi'
+import type { AttendanceSettlementPaymentStatus } from '../../../shared/api/attendanceSettlementApi'
 import { getTodayStr, parseDateString, toDateString } from '../../../shared/lib/date'
 import { Admin } from '../index'
 
@@ -110,6 +111,31 @@ const mockSettlement = {
       status: 'LATE',
     },
   ],
+}
+
+let mockSettlementPayments = new Map<number, {
+  paymentStatus: AttendanceSettlementPaymentStatus
+  paymentProcessedAt: string | null
+  paymentProcessedBy: string | null
+}>()
+
+function withPaymentStatus<T extends typeof mockSettlement>(settlement: T): T {
+  const payment = mockSettlementPayments.get(settlement.memberId) ?? {
+    paymentStatus: 'UNPAID' as const,
+    paymentProcessedAt: null,
+    paymentProcessedBy: null,
+  }
+
+  return {
+    ...settlement,
+    paymentStatus: payment.paymentStatus,
+    paidAmount: payment.paymentStatus === 'PAID' ? settlement.lateFee : 0,
+    unpaidAmount: payment.paymentStatus === 'UNPAID' ? settlement.lateFee : 0,
+    waivedAmount: payment.paymentStatus === 'WAIVED' ? settlement.lateFee : 0,
+    carriedOverAmount: payment.paymentStatus === 'CARRIED_OVER' ? settlement.lateFee : 0,
+    paymentProcessedAt: payment.paymentProcessedAt,
+    paymentProcessedBy: payment.paymentProcessedBy,
+  }
 }
 
 const mockTemporaryPassword = 'A1b2C3d4'
@@ -261,7 +287,7 @@ const server = setupServer(
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
-      data: {
+      data: withPaymentStatus({
         ...(settlementByMemberId[targetMemberId] ?? {
           ...mockSettlement,
           scheduledDays: 0,
@@ -274,7 +300,32 @@ const server = setupServer(
         memberId: Number(targetMember.id),
         memberName: targetMember.name,
         teamName: targetMember.team,
-      },
+      }),
+    })
+  }),
+  http.patch('/api/v1/attendance-settlements/monthly/payment-status', async ({ request }) => {
+    const body = await request.json() as {
+      yearMonth: string
+      targetMemberId: number
+      paymentStatus: AttendanceSettlementPaymentStatus
+    }
+    const targetMember = mockMembers.find((member) => Number(member.id) === body.targetMemberId) ?? mockMembers[2]
+    mockSettlementPayments.set(body.targetMemberId, {
+      paymentStatus: body.paymentStatus,
+      paymentProcessedAt: `${TODAY_STR}T12:00:00`,
+      paymentProcessedBy: '관리자',
+    })
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: withPaymentStatus({
+        ...mockSettlement,
+        yearMonth: body.yearMonth,
+        memberId: Number(targetMember.id),
+        memberName: targetMember.name,
+        teamName: targetMember.team,
+      }),
     })
   }),
   http.post('/api/v1/members/:memberId/reset-password', () =>
@@ -384,6 +435,7 @@ beforeAll(() => server.listen())
 afterEach(() => {
   server.resetHandlers()
   mockAttendanceExceptions = initialAttendanceExceptions.map((item) => ({ ...item }))
+  mockSettlementPayments = new Map()
 })
 afterAll(() => server.close())
 
@@ -642,7 +694,9 @@ describe('Admin 페이지', () => {
     expect(screen.getByRole('tab', { name: '전체' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('heading', { name: '전체 정산 요약' })).toBeInTheDocument()
     expect(screen.getByText('월별 전체 지각비')).toBeInTheDocument()
-    expect(screen.getByText('7,500원')).toBeInTheDocument()
+    expect(screen.getAllByText('7,500원').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('납부 완료').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('미납').length).toBeGreaterThan(0)
     expect(screen.getByText('미기재 출근')).toBeInTheDocument()
     expect(screen.getAllByText('2건').length).toBeGreaterThan(0)
     expect(screen.getAllByText('김민준').length).toBeGreaterThan(0)
@@ -650,6 +704,22 @@ describe('Admin 페이지', () => {
     expect(screen.getAllByText('강민준').length).toBeGreaterThan(0)
     expect(screen.getAllByText('1,500원').length).toBeGreaterThan(0)
     expect(screen.getAllByText('15분').length).toBeGreaterThan(0)
+    expect(screen.getByRole('combobox', { name: '강민준 납부 상태' })).toHaveValue('UNPAID')
+  })
+
+  it('지각비 정산 탭에서 멤버 납부 상태를 변경할 수 있다', async () => {
+    const user = userEvent.setup()
+    renderAdmin()
+    await user.click(screen.getByRole('button', { name: '지각비 정산' }))
+
+    const paymentSelect = await screen.findByRole('combobox', { name: '강민준 납부 상태' })
+    await user.selectOptions(paymentSelect, 'PAID')
+
+    expect(await screen.findByText('강민준의 납부 상태를 납부 완료로 변경했습니다')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: '강민준 납부 상태' })).toHaveValue('PAID')
+    })
+    expect(screen.getAllByText('납부 완료').length).toBeGreaterThan(0)
   })
 
   it('지각비 정산 탭의 팀 섹션에서 팀별 정산을 볼 수 있다', async () => {
@@ -663,7 +733,7 @@ describe('Admin 페이지', () => {
 
     expect(await screen.findByRole('heading', { name: '1팀 정산 요약' })).toBeInTheDocument()
     expect(screen.getByText('팀 전체 지각비')).toBeInTheDocument()
-    expect(screen.getByText('4,500원')).toBeInTheDocument()
+    expect(screen.getAllByText('4,500원').length).toBeGreaterThan(0)
     expect(screen.getAllByText('강민준').length).toBeGreaterThan(0)
     expect(screen.getAllByText('1,500원').length).toBeGreaterThan(0)
   })

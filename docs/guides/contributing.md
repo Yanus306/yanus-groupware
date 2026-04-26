@@ -22,6 +22,7 @@ main          ← 프로덕션 (Vercel 자동 배포)
 - `main` 머지는 배포 성격이므로 저장소 관리자만 진행합니다.
 - 즉, `main` 대상 PR은 `develop` 브랜치에서만 올립니다.
 - `main` 머지 후에는 GitHub Release가 자동 생성되므로, 배포 PR 제목은 반드시 `release: v0.1.10` 같은 버전 형식을 사용합니다.
+- patch 숫자가 `10`이 되는 배포는 patch를 0으로 되돌리고 minor를 올립니다. 예: `v1.0.9 → v1.1.0`.
 
 ### 브랜치 생성 규칙
 
@@ -106,8 +107,8 @@ feat(auth): add login, logout, signup pages
 
 | 브랜치 | 머지 대상 | 조건 |
 |--------|-----------|------|
-| `feature/*` | `develop` | CI 통과 필수 |
-| `fix/*` | `develop` | CI 통과 필수 |
+| `feature/*` | `develop` | 로컬 검증 후 머지, GitHub CI 대기 불필요 |
+| `fix/*` | `develop` | 로컬 검증 후 머지, GitHub CI 대기 불필요 |
 | `develop` | `main` | CI 통과 + 브라우저 렌더링 확인 |
 | `hotfix/*` | `main` + `develop` | CI 통과 필수 |
 
@@ -119,6 +120,13 @@ feat(auth): add login, logout, signup pages
 4. `develop` 머지 후 필요할 때 `develop`에서 `main` 대상으로 배포 PR을 생성합니다.
 5. `main` 대상 배포 PR 제목은 `release: v0.1.10` 형식으로 작성합니다.
 6. `main` 머지 후 GitHub Actions가 같은 버전 태그와 GitHub Release를 자동 생성합니다.
+
+### 배포 버전 증가 규칙
+
+- 배포 PR 제목은 `release: v<major>.<minor>.<patch>` 형식으로 작성합니다.
+- patch는 `9`까지만 사용하고, 다음 배포는 minor를 올려 `x.(minor+1).0`으로 작성합니다.
+- 예시: `v1.0.8 → v1.0.9 → v1.1.0 → v1.1.1`
+- PR 본문 첫 줄의 배포 버전도 제목과 반드시 동일하게 맞춥니다.
 
 ### 금지 사항
 
@@ -138,6 +146,12 @@ feat(auth): 로그인 페이지 구현
 
 ```
 release: v0.1.10
+```
+
+patch rollover가 필요한 경우에는 아래처럼 작성합니다.
+
+```text
+release: v1.1.0
 ```
 
 ### PR 머지 전 체크리스트

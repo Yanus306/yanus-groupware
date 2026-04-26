@@ -18,8 +18,11 @@ import type {
   AttendanceExceptionSummary,
   AttendanceExceptionType,
 } from '../../shared/api/attendanceExceptionsApi'
-import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
-import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
+import {
+  getMonthlyAttendanceSettlement,
+  updateAttendanceSettlementPaymentStatus,
+} from '../../shared/api/attendanceSettlementApi'
+import type { AttendanceSettlement, AttendanceSettlementPaymentStatus } from '../../shared/api/attendanceSettlementApi'
 import { getAuditLogs } from '../../shared/api/auditLogsApi'
 import type { AuditLog } from '../../shared/api/auditLogsApi'
 import {
@@ -36,6 +39,7 @@ import { formatDateTimeClock, formatScheduleRangeLabel } from '../../shared/lib/
 import { getDateStringsBetween, getMonthRange, getTodayStr } from '../../shared/lib/date'
 import {
   applyNoScheduleAttendanceFee,
+  getSettlementPaymentStatus,
   rollupAttendanceSettlements,
 } from '../../shared/lib/attendanceSettlement'
 import type { AttendanceSettlementRollup } from '../../shared/lib/attendanceSettlement'
@@ -81,6 +85,13 @@ const settlementStatusLabels: Record<string, string> = {
   NO_SCHEDULE: '근무 일정 없음',
 }
 
+const settlementPaymentStatusLabels: Record<AttendanceSettlementPaymentStatus, string> = {
+  UNPAID: '미납',
+  PAID: '납부 완료',
+  WAIVED: '면제',
+  CARRIED_OVER: '이월',
+}
+
 function formatAuditDateTime(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: '2-digit',
@@ -92,6 +103,16 @@ function formatAuditDateTime(value: string) {
 
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
+}
+
+function formatOptionalDateTime(value?: string | null) {
+  if (!value) return '-'
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
 }
 
 function toTimeInputValue(value: string) {
@@ -141,6 +162,7 @@ export function Admin() {
   const [selectedSettlementMonth, setSelectedSettlementMonth] = useState(getTodayStr().slice(0, 7))
   const [settlements, setSettlements] = useState<AttendanceSettlement[]>([])
   const [settlementAttendanceRecords, setSettlementAttendanceRecords] = useState<AttendanceRecord[]>([])
+  const [settlementPaymentSavingMemberId, setSettlementPaymentSavingMemberId] = useState<number | null>(null)
   const [autoCheckoutLoading, setAutoCheckoutLoading] = useState(false)
   const [autoCheckoutSaving, setAutoCheckoutSaving] = useState(false)
   const [autoCheckoutSaved, setAutoCheckoutSaved] = useState(false)
@@ -523,6 +545,13 @@ export function Admin() {
 
     const selectedMember = members.find((member) => member.id === selectedSettlementMemberId)
     if (!selectedMember) return
+    const selectedSettlement = settlements.find((item) => String(item.memberId) === selectedSettlementMemberId)
+    const paymentStatusLabel = selectedSettlement
+      ? settlementPaymentStatusLabels[getSettlementPaymentStatus(selectedSettlement)]
+      : ''
+    const paymentProcessedAt = selectedSettlement
+      ? formatOptionalDateTime(selectedSettlement.paymentProcessedAt)
+      : ''
 
     setExportingSettlementAttendance(true)
     try {
@@ -545,6 +574,9 @@ export function Admin() {
           clockIn: record.checkInTime?.slice(11, 16) ?? '',
           clockOut: record.checkOutTime?.slice(11, 16) ?? '',
           status: record.status === 'LEFT' ? 'done' : 'working',
+          lateFee: selectedSettlement ? formatCurrency(selectedSettlement.lateFee) : '',
+          paymentStatus: paymentStatusLabel,
+          paymentProcessedAt,
         })),
         `${selectedSettlementMonth}_${selectedMember.name}`,
       )
@@ -553,6 +585,33 @@ export function Admin() {
       setErrorMessage(err instanceof Error ? err.message : '개인 출근 내역을 내보내지 못했습니다')
     } finally {
       setExportingSettlementAttendance(false)
+    }
+  }
+
+  const handleUpdateSettlementPaymentStatus = async (
+    memberSettlement: AttendanceSettlement,
+    paymentStatus: AttendanceSettlementPaymentStatus,
+  ) => {
+    setSettlementPaymentSavingMemberId(memberSettlement.memberId)
+    try {
+      const updated = await updateAttendanceSettlementPaymentStatus({
+        yearMonth: selectedSettlementMonth,
+        targetMemberId: memberSettlement.memberId,
+        paymentStatus,
+      })
+      const updatedSettlement = applyNoScheduleAttendanceFee(
+        updated,
+        settlementAttendanceRecords.filter((record) => String(record.memberId) === String(updated.memberId)),
+      )
+
+      setSettlements((prev) => prev.map((item) =>
+        item.memberId === updated.memberId ? updatedSettlement : item,
+      ))
+      setSuccessMessage(`${memberSettlement.memberName}의 납부 상태를 ${settlementPaymentStatusLabels[paymentStatus]}로 변경했습니다`)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '납부 상태 변경에 실패했습니다')
+    } finally {
+      setSettlementPaymentSavingMemberId(null)
     }
   }
 
@@ -639,6 +698,43 @@ export function Admin() {
     } finally {
       setAutoCheckoutSaving(false)
     }
+  }
+
+  const renderSettlementPaymentStatus = (memberSettlement: AttendanceSettlement) => {
+    const paymentStatus = getSettlementPaymentStatus(memberSettlement)
+
+    return (
+      <span className={`admin-settlement-payment-badge ${paymentStatus}`}>
+        {settlementPaymentStatusLabels[paymentStatus]}
+      </span>
+    )
+  }
+
+  const renderSettlementPaymentControl = (memberSettlement: AttendanceSettlement) => {
+    const paymentStatus = getSettlementPaymentStatus(memberSettlement)
+
+    return (
+      <select
+        className="admin-settlement-payment-select"
+        aria-label={`${memberSettlement.memberName} 납부 상태`}
+        value={paymentStatus}
+        disabled={settlementPaymentSavingMemberId === memberSettlement.memberId}
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => {
+          event.stopPropagation()
+          void handleUpdateSettlementPaymentStatus(
+            memberSettlement,
+            event.target.value as AttendanceSettlementPaymentStatus,
+          )
+        }}
+      >
+        {Object.entries(settlementPaymentStatusLabels).map(([status, label]) => (
+          <option key={status} value={status}>
+            {label}
+          </option>
+        ))}
+      </select>
+    )
   }
 
   return (
@@ -1005,6 +1101,26 @@ export function Admin() {
                       <strong>{settlementSummary.noScheduleAttendanceCount}건</strong>
                       <p>건당 {formatCurrency(3000)} 정산</p>
                     </article>
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">납부 완료</span>
+                      <strong>{formatCurrency(settlementSummary.paidAmount)}</strong>
+                      <p>입금 확인된 지각비</p>
+                    </article>
+                    <article className="admin-settlement-card emphasis">
+                      <span className="admin-settlement-label">미납</span>
+                      <strong>{formatCurrency(settlementSummary.unpaidAmount)}</strong>
+                      <p>총무 확인이 필요한 금액</p>
+                    </article>
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">면제</span>
+                      <strong>{formatCurrency(settlementSummary.waivedAmount)}</strong>
+                      <p>사유 승인으로 면제 처리</p>
+                    </article>
+                    <article className="admin-settlement-card">
+                      <span className="admin-settlement-label">이월</span>
+                      <strong>{formatCurrency(settlementSummary.carriedOverAmount)}</strong>
+                      <p>다음 정산월로 넘긴 금액</p>
+                    </article>
                   </div>
 
                   <SectionHeader
@@ -1023,6 +1139,9 @@ export function Admin() {
                           <th>지각 건수</th>
                           <th>지각 분</th>
                           <th>정산 금액</th>
+                          <th>납부 상태</th>
+                          <th>처리일</th>
+                          <th>납부 관리</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1041,6 +1160,9 @@ export function Admin() {
                             <td>{memberSettlement.lateDays}건</td>
                             <td>{memberSettlement.totalLateMinutes}분</td>
                             <td>{formatCurrency(memberSettlement.lateFee)}</td>
+                            <td>{renderSettlementPaymentStatus(memberSettlement)}</td>
+                            <td>{formatOptionalDateTime(memberSettlement.paymentProcessedAt)}</td>
+                            <td>{renderSettlementPaymentControl(memberSettlement)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1097,6 +1219,16 @@ export function Admin() {
                           <strong>{selectedTeamSettlement.summary.noScheduleAttendanceCount}건</strong>
                           <p>건당 {formatCurrency(3000)} 정산</p>
                         </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">납부 완료</span>
+                          <strong>{formatCurrency(selectedTeamSettlement.summary.paidAmount)}</strong>
+                          <p>입금 확인된 팀 지각비</p>
+                        </article>
+                        <article className="admin-settlement-card emphasis">
+                          <span className="admin-settlement-label">미납</span>
+                          <strong>{formatCurrency(selectedTeamSettlement.summary.unpaidAmount)}</strong>
+                          <p>팀장 확인이 필요한 금액</p>
+                        </article>
                       </div>
 
                       <SectionHeader
@@ -1114,6 +1246,8 @@ export function Admin() {
                               <th>지각 건수</th>
                               <th>지각 분</th>
                               <th>정산 금액</th>
+                              <th>납부 상태</th>
+                              <th>납부 관리</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1131,6 +1265,8 @@ export function Admin() {
                                 <td>{memberSettlement.lateDays}건</td>
                                 <td>{memberSettlement.totalLateMinutes}분</td>
                                 <td>{formatCurrency(memberSettlement.lateFee)}</td>
+                                <td>{renderSettlementPaymentStatus(memberSettlement)}</td>
+                                <td>{renderSettlementPaymentControl(memberSettlement)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1188,6 +1324,16 @@ export function Admin() {
                           <span className="admin-settlement-label">미기재 출근</span>
                           <strong>{selectedMemberNoScheduleCount}건</strong>
                           <p>건당 {formatCurrency(3000)} 정산</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">납부 상태</span>
+                          <strong>{settlementPaymentStatusLabels[getSettlementPaymentStatus(settlement)]}</strong>
+                          <p>처리일 {formatOptionalDateTime(settlement.paymentProcessedAt)}</p>
+                        </article>
+                        <article className="admin-settlement-card">
+                          <span className="admin-settlement-label">납부 관리</span>
+                          {renderSettlementPaymentControl(settlement)}
+                          <p>{settlement.paymentProcessedBy ? `${settlement.paymentProcessedBy} 처리` : '아직 처리 이력이 없습니다.'}</p>
                         </article>
                       </div>
 

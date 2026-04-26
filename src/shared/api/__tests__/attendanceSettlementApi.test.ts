@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { getMonthlyAttendanceSettlement } from '../attendanceSettlementApi'
+import { getMonthlyAttendanceSettlement, updateAttendanceSettlementPaymentStatus } from '../attendanceSettlementApi'
 
 const settlementResponse = {
   yearMonth: '2026-03',
@@ -13,6 +13,13 @@ const settlementResponse = {
   lateDays: 2,
   totalLateMinutes: 15,
   lateFee: 1500,
+  paymentStatus: 'UNPAID',
+  paidAmount: 0,
+  unpaidAmount: 1500,
+  waivedAmount: 0,
+  carriedOverAmount: 0,
+  paymentProcessedAt: null,
+  paymentProcessedBy: null,
   items: [
     {
       date: '2026-03-04',
@@ -59,6 +66,30 @@ const server = setupServer(
       },
     })
   }),
+  http.patch('/api/v1/attendance-settlements/monthly/payment-status', async ({ request }) => {
+    const body = await request.json() as {
+      yearMonth: string
+      targetMemberId: number
+      paymentStatus: typeof settlementResponse.paymentStatus
+    }
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: {
+        ...settlementResponse,
+        yearMonth: body.yearMonth,
+        memberId: body.targetMemberId,
+        paymentStatus: body.paymentStatus,
+        paidAmount: body.paymentStatus === 'PAID' ? settlementResponse.lateFee : 0,
+        unpaidAmount: body.paymentStatus === 'UNPAID' ? settlementResponse.lateFee : 0,
+        waivedAmount: body.paymentStatus === 'WAIVED' ? settlementResponse.lateFee : 0,
+        carriedOverAmount: body.paymentStatus === 'CARRIED_OVER' ? settlementResponse.lateFee : 0,
+        paymentProcessedAt: '2026-03-31T18:00:00',
+        paymentProcessedBy: '관리자',
+      },
+    })
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -73,6 +104,8 @@ describe('attendanceSettlementApi', () => {
       yearMonth: '2026-03',
       memberName: '강민준',
       lateFee: 1500,
+      paymentStatus: 'UNPAID',
+      unpaidAmount: 1500,
     })
     expect(result.items[0]).toMatchObject({
       date: '2026-03-04',
@@ -96,5 +129,22 @@ describe('attendanceSettlementApi', () => {
 
     expect(result.memberId).toBe(99)
     expect(result.yearMonth).toBe('2026-03')
+  })
+
+  it('관리자는 월별 정산 납부 상태를 변경할 수 있다', async () => {
+    const result = await updateAttendanceSettlementPaymentStatus({
+      yearMonth: '2026-03',
+      targetMemberId: 2,
+      paymentStatus: 'PAID',
+    })
+
+    expect(result).toMatchObject({
+      yearMonth: '2026-03',
+      memberId: 2,
+      paymentStatus: 'PAID',
+      paidAmount: 1500,
+      unpaidAmount: 0,
+      paymentProcessedBy: '관리자',
+    })
   })
 })

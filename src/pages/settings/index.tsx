@@ -5,8 +5,9 @@ import { useApp } from '../../features/auth/model'
 import { useTheme, type ThemeMode } from '../../shared/theme'
 import { updateMyProfile, deactivateMember } from '../../shared/api/membersApi'
 import { getMonthlyAttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
-import type { AttendanceSettlement } from '../../shared/api/attendanceSettlementApi'
+import type { AttendanceSettlement, AttendanceSettlementPaymentStatus } from '../../shared/api/attendanceSettlementApi'
 import { formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
+import { getSettlementPaymentStatus } from '../../shared/lib/attendanceSettlement'
 import { Toast } from '../../shared/ui/Toast'
 import './settings.css'
 
@@ -50,6 +51,23 @@ const SETTINGS_SECTION_META: Record<
 
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
+}
+
+const settlementPaymentStatusLabels: Record<AttendanceSettlementPaymentStatus, string> = {
+  UNPAID: '미납',
+  PAID: '납부 완료',
+  WAIVED: '면제',
+  CARRIED_OVER: '이월',
+}
+
+function formatOptionalDateTime(value?: string | null) {
+  if (!value) return '-'
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
 }
 
 export function Settings() {
@@ -335,6 +353,11 @@ export function Settings() {
                       <strong>{settlement.memberName}</strong>
                       <p>{settlement.teamName}</p>
                     </article>
+                    <article className="my-settlement-card">
+                      <span className="my-settlement-label">납부 상태</span>
+                      <strong>{settlementPaymentStatusLabels[getSettlementPaymentStatus(settlement)]}</strong>
+                      <p>처리일 {formatOptionalDateTime(settlement.paymentProcessedAt)}</p>
+                    </article>
                   </div>
 
                   {settlement.items.length === 0 ? (
@@ -353,6 +376,7 @@ export function Settings() {
                             <th>지각 분</th>
                             <th>지각비</th>
                             <th>상태</th>
+                            <th>납부 상태</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -374,6 +398,11 @@ export function Settings() {
                               <td>
                                 <span className={`my-settlement-status ${item.status}`}>
                                   {item.status === 'ON_TIME' ? '정상 출근' : item.status === 'LATE' ? '지각' : item.status === 'ABSENT' ? '미출근' : '근무 일정 없음'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`my-settlement-payment-status ${getSettlementPaymentStatus(settlement)}`}>
+                                  {settlementPaymentStatusLabels[getSettlementPaymentStatus(settlement)]}
                                 </span>
                               </td>
                             </tr>
