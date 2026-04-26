@@ -8,7 +8,10 @@ import type {
   AttendanceExceptionSummary,
   AttendanceExceptionType,
 } from '../../../api/attendanceExceptionsApi'
-import type { AttendanceSettlement } from '../../../api/attendanceSettlementApi'
+import type {
+  AttendanceSettlement,
+  AttendanceSettlementPaymentStatus,
+} from '../../../api/attendanceSettlementApi'
 import { getAuthMockUserByAuthorization } from './auth'
 
 type MockTaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
@@ -33,6 +36,11 @@ const tomorrow = new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().slic
 let nextTaskId = 5
 let nextLeaveId = 4
 let autoCheckoutTime = '23:59:59'
+const mockSettlementPayments = new Map<string, {
+  paymentStatus: AttendanceSettlementPaymentStatus
+  paymentProcessedAt: string | null
+  paymentProcessedBy: string | null
+}>()
 
 let mockTasks: MockTask[] = [
   {
@@ -268,6 +276,12 @@ function createSettlement(yearMonth: string, memberId: number): AttendanceSettle
   const memberName = getUserName(memberId)
   const teamName = getTeamName(memberId)
   const baseDay = String((memberId % 4) + 1).padStart(2, '0')
+  const payment = mockSettlementPayments.get(`${yearMonth}:${memberId}`) ?? {
+    paymentStatus: 'UNPAID' as const,
+    paymentProcessedAt: null,
+    paymentProcessedBy: null,
+  }
+  const lateFee = 1300
 
   return {
     yearMonth,
@@ -278,7 +292,14 @@ function createSettlement(yearMonth: string, memberId: number): AttendanceSettle
     attendedDays: 11,
     lateDays: 2,
     totalLateMinutes: 13,
-    lateFee: 1300,
+    lateFee,
+    paymentStatus: payment.paymentStatus,
+    paidAmount: payment.paymentStatus === 'PAID' ? lateFee : 0,
+    unpaidAmount: payment.paymentStatus === 'UNPAID' ? lateFee : 0,
+    waivedAmount: payment.paymentStatus === 'WAIVED' ? lateFee : 0,
+    carriedOverAmount: payment.paymentStatus === 'CARRIED_OVER' ? lateFee : 0,
+    paymentProcessedAt: payment.paymentProcessedAt,
+    paymentProcessedBy: payment.paymentProcessedBy,
     items: [
       {
         date: `${yearMonth}-${baseDay}`,
@@ -667,6 +688,27 @@ export const operationsHandlers = [
       code: 'SUCCESS',
       message: 'ok',
       data: createSettlement(yearMonth, memberId),
+    })
+  }),
+
+  http.patch('/api/v1/attendance-settlements/monthly/payment-status', async ({ request }) => {
+    const body = await request.json() as {
+      yearMonth: string
+      targetMemberId: number
+      paymentStatus: AttendanceSettlementPaymentStatus
+    }
+    const currentUser = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+
+    mockSettlementPayments.set(`${body.yearMonth}:${body.targetMemberId}`, {
+      paymentStatus: body.paymentStatus,
+      paymentProcessedAt: new Date().toISOString(),
+      paymentProcessedBy: currentUser.name,
+    })
+
+    return HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: createSettlement(body.yearMonth, body.targetMemberId),
     })
   }),
 

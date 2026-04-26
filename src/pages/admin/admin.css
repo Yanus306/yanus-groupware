@@ -262,6 +262,13 @@
   gap: 6px;
 }
 
+.admin-settlement-card.emphasis {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #ff9f43 18%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface-muted) 80%, transparent);
+  border-color: color-mix(in srgb, #ff9f43 28%, var(--border-color));
+}
+
 .admin-settlement-card strong {
   font-size: 1.45rem;
   color: var(--text-primary);
@@ -350,6 +357,55 @@
 .admin-settlement-status.NO_SCHEDULE {
   background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
   color: var(--text-primary);
+}
+
+.admin-settlement-payment-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-settlement-payment-badge.UNPAID {
+  background: color-mix(in srgb, #ff9f43 18%, transparent);
+  color: #ffb86c;
+}
+
+.admin-settlement-payment-badge.PAID {
+  background: color-mix(in srgb, #28c76f 18%, transparent);
+  color: #4ade80;
+}
+
+.admin-settlement-payment-badge.WAIVED {
+  background: color-mix(in srgb, #60a5fa 18%, transparent);
+  color: #93c5fd;
+}
+
+.admin-settlement-payment-badge.CARRIED_OVER {
+  background: color-mix(in srgb, var(--accent-purple) 18%, transparent);
+  color: var(--text-primary);
+}
+
+.admin-settlement-payment-select {
+  min-width: 124px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-muted) 84%, transparent);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+}
+
+.admin-settlement-payment-select:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 :root[data-theme='light'] .admin-settlement-table th,

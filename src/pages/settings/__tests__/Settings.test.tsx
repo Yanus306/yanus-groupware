@@ -60,6 +60,13 @@ describe('Settings 페이지', () => {
       lateDays: 2,
       totalLateMinutes: 15,
       lateFee: 1500,
+      paymentStatus: 'PAID',
+      paidAmount: 1500,
+      unpaidAmount: 0,
+      waivedAmount: 0,
+      carriedOverAmount: 0,
+      paymentProcessedAt: '2026-03-31T18:00:00',
+      paymentProcessedBy: '관리자',
       items: [
         {
           date: '2026-03-04',
@@ -134,6 +141,7 @@ describe('Settings 페이지', () => {
     expect(screen.getByText('22:08')).toBeInTheDocument()
     expect(screen.getByText('8분')).toBeInTheDocument()
     expect(screen.getByText('800원')).toBeInTheDocument()
+    expect(screen.getAllByText('납부 완료').length).toBeGreaterThan(0)
   })
 
   it('테마 카드 클릭 시 setTheme가 호출된다', () => {
