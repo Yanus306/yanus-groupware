@@ -8,6 +8,7 @@
 |------|------|
 | [아키텍처 — FSD](./architecture/fsd.md) | Feature-Sliced Design 구조 설명 |
 | [아키텍처 — 결정 기록](./architecture/decisions.md) | 주요 기술 결정 이유 (ADR) |
+| [출퇴근 운영 고도화 TODO](./roadmap/attendance-operations.md) | 납부 관리, 예외 사유 제출, 알림, 월별 마감, 감사 로그 로드맵 |
 | [기여 가이드](./guides/contributing.md) | 브랜치 전략, 머지 역할, 커밋 컨벤션, PR 규칙 |
 | [Git / GitHub 협업 컨벤션](./guides/git-conventions.md) | 브랜치, 커밋, PR, 이슈, 코드 리뷰 규칙 |
 | [테스트 가이드](./guides/testing.md) | TDD 흐름, 테스트 작성 방법 |
