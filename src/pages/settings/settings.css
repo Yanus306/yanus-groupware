@@ -272,6 +272,37 @@
   color: var(--text-primary);
 }
 
+.my-settlement-payment-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.my-settlement-payment-status.UNPAID {
+  background: color-mix(in srgb, #ff9f43 18%, transparent);
+  color: #ffb86c;
+}
+
+.my-settlement-payment-status.PAID {
+  background: color-mix(in srgb, #28c76f 18%, transparent);
+  color: #4ade80;
+}
+
+.my-settlement-payment-status.WAIVED {
+  background: color-mix(in srgb, #60a5fa 18%, transparent);
+  color: #93c5fd;
+}
+
+.my-settlement-payment-status.CARRIED_OVER {
+  background: color-mix(in srgb, var(--accent-purple) 18%, transparent);
+  color: var(--text-primary);
+}
+
 .settlement-empty-panel {
   padding: 18px;
   border-radius: 18px;
