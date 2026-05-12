@@ -87,6 +87,7 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
   {
     id: 101,
     date: '2026-03-31',
+    eventType: 'WORKING',
     startTime: '13:00:00',
     endTime: '18:00:00',
     memberId: 1,
@@ -96,6 +97,7 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
   {
     id: 102,
     date: '2026-04-02',
+    eventType: 'WORKING',
     startTime: '22:00:00',
     endTime: '06:00:00',
     endsNextDay: true,
@@ -232,13 +234,23 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
-    const body = await request.json() as { date: string; startTime: string; endTime: string; endsNextDay?: boolean }
+    const body = await request.json() as {
+      date: string
+      eventType?: 'WORKING' | 'DAY_OFF'
+      startTime: string | null
+      endTime: string | null
+      endsNextDay?: boolean
+      reason?: string | null
+    }
+    const eventType = body.eventType ?? 'WORKING'
     const created: WorkScheduleEventItem = {
       id: Date.now(),
       date: body.date,
-      startTime: body.startTime,
-      endTime: body.endTime,
-      endsNextDay: Boolean(body.endsNextDay),
+      eventType,
+      startTime: eventType === 'DAY_OFF' ? null : body.startTime,
+      endTime: eventType === 'DAY_OFF' ? null : body.endTime,
+      endsNextDay: eventType === 'DAY_OFF' ? false : Boolean(body.endsNextDay),
+      reason: body.reason ?? null,
       memberId: 1,
       memberName: '김리더',
       teamName: '1팀',
@@ -250,7 +262,14 @@ export const attendanceHandlers = [
 
   http.put('/api/v1/work-schedule-events/:eventId', async ({ params, request }) => {
     const eventId = Number(params.eventId)
-    const body = await request.json() as { date: string; startTime: string; endTime: string; endsNextDay?: boolean }
+    const body = await request.json() as {
+      date: string
+      eventType?: 'WORKING' | 'DAY_OFF'
+      startTime: string | null
+      endTime: string | null
+      endsNextDay?: boolean
+      reason?: string | null
+    }
     const existing = workScheduleEvents.find((item) => item.id === eventId)
 
     if (!existing) {
@@ -260,12 +279,15 @@ export const attendanceHandlers = [
       )
     }
 
+    const eventType = body.eventType ?? 'WORKING'
     const updated: WorkScheduleEventItem = {
       ...existing,
       date: body.date,
-      startTime: body.startTime,
-      endTime: body.endTime,
-      endsNextDay: Boolean(body.endsNextDay),
+      eventType,
+      startTime: eventType === 'DAY_OFF' ? null : body.startTime,
+      endTime: eventType === 'DAY_OFF' ? null : body.endTime,
+      endsNextDay: eventType === 'DAY_OFF' ? false : Boolean(body.endsNextDay),
+      reason: body.reason ?? null,
     }
 
     workScheduleEvents = workScheduleEvents.map((item) => (item.id === eventId ? updated : item))
