@@ -32,6 +32,7 @@ const WORK_SCHEDULE_EVENTS = [
   {
     id: 101,
     date: '2026-03-31',
+    eventType: 'WORKING',
     startTime: '13:00:00',
     endTime: '18:00:00',
     endsNextDay: false,
@@ -42,12 +43,24 @@ const WORK_SCHEDULE_EVENTS = [
   {
     id: 102,
     date: '2026-03-28',
+    eventType: 'WORKING',
     startTime: '22:00:00',
     endTime: '06:00:00',
     endsNextDay: true,
     memberId: 2,
     memberName: '박팀장',
     teamName: '2팀',
+  },
+  {
+    id: 103,
+    date: '2026-03-29',
+    eventType: 'DAY_OFF',
+    startTime: null,
+    endTime: null,
+    endsNextDay: false,
+    memberId: 1,
+    memberName: '김리더',
+    teamName: '1팀',
   },
 ]
 
@@ -107,7 +120,7 @@ const server = setupServer(
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULE_EVENTS }),
   ),
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
-    const body = await request.json() as Record<string, string>
+    const body = await request.json() as Record<string, string | boolean | null>
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
@@ -115,7 +128,7 @@ const server = setupServer(
     })
   }),
   http.put('/api/v1/work-schedule-events/:eventId', async ({ request, params }) => {
-    const body = await request.json() as Record<string, string>
+    const body = await request.json() as Record<string, string | boolean | null>
     return HttpResponse.json({
       code: 'SUCCESS',
       message: 'ok',
@@ -243,8 +256,9 @@ describe('workScheduleApi', () => {
 
   it('getWorkScheduleEvents() 날짜 범위의 근무 일정 이벤트를 반환한다', async () => {
     const events = await getWorkScheduleEvents('2026-03-01', '2026-03-31')
-    expect(events).toHaveLength(1)
+    expect(events).toHaveLength(2)
     expect(events[0]).toMatchObject({ memberName: '김리더', date: '2026-03-31' })
+    expect(events[1]).toMatchObject({ eventType: 'DAY_OFF', startTime: null, endTime: null })
   })
 
   it('getTeamWorkScheduleEvents() 팀 날짜별 근무 일정 이벤트를 반환한다', async () => {
@@ -255,24 +269,45 @@ describe('workScheduleApi', () => {
 
   it('getAllWorkScheduleEvents() 전체 날짜별 근무 일정 이벤트를 반환한다', async () => {
     const events = await getAllWorkScheduleEvents('2026-03-01', '2026-03-31')
-    expect(events).toHaveLength(2)
-    expect(events.map((item) => item.memberName)).toEqual(['김리더', '박팀장'])
+    expect(events).toHaveLength(3)
+    expect(events.map((item) => item.memberName)).toEqual(['김리더', '박팀장', '김리더'])
   })
 
   it('createWorkScheduleEvent() 날짜별 근무 일정을 생성한다', async () => {
     const result = await createWorkScheduleEvent({
       date: '2026-03-30',
+      eventType: 'WORKING',
       startTime: '09:00:00',
       endTime: '18:00:00',
       endsNextDay: false,
     })
 
-    expect(result).toMatchObject({ id: 999, date: '2026-03-30', memberName: '김리더' })
+    expect(result).toMatchObject({ id: 999, date: '2026-03-30', eventType: 'WORKING', memberName: '김리더' })
+  })
+
+  it('createWorkScheduleEvent() 반복 일정 특정 날짜 휴무를 생성한다', async () => {
+    const result = await createWorkScheduleEvent({
+      date: '2026-03-29',
+      eventType: 'DAY_OFF',
+      startTime: null,
+      endTime: null,
+      endsNextDay: false,
+      reason: '반복 근무 일정 취소',
+    })
+
+    expect(result).toMatchObject({
+      id: 999,
+      date: '2026-03-29',
+      eventType: 'DAY_OFF',
+      startTime: null,
+      endTime: null,
+    })
   })
 
   it('updateWorkScheduleEvent() 날짜별 근무 일정을 수정한다', async () => {
     const result = await updateWorkScheduleEvent(101, {
       date: '2026-03-31',
+      eventType: 'WORKING',
       startTime: '10:00:00',
       endTime: '19:00:00',
       endsNextDay: false,

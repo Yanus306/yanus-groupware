@@ -22,6 +22,7 @@ import {
   type MemberWorkScheduleItem,
   type WeekPattern,
   type WorkScheduleEventItem,
+  type WorkScheduleEventType,
 } from '../../shared/api/attendanceApi'
 import { formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
@@ -65,11 +66,14 @@ interface ScheduleModalState {
   startTime: string
   endTime: string
   endsNextDay: boolean
+  eventType: WorkScheduleEventType
+  reason: string
   item: WorkScheduleCalendarMeta | null
 }
 
 const DEFAULT_START_TIME = '09:00'
 const DEFAULT_END_TIME = '18:00'
+const DAY_OFF_REASON = '반복 근무 일정 취소'
 const WEEK_PATTERN_LABELS: Record<WeekPattern, string> = {
   EVERY: '매주',
   FIRST: '1주차',
@@ -131,6 +135,18 @@ function formatTimeLabel(time: string) {
   return time.slice(0, 5)
 }
 
+function getWorkScheduleEventType(item: WorkScheduleEventItem): WorkScheduleEventType {
+  return item.eventType ?? 'WORKING'
+}
+
+function isDayOffEvent(item: WorkScheduleEventItem) {
+  return getWorkScheduleEventType(item) === 'DAY_OFF'
+}
+
+function getOverrideKey(memberId: number, date: string) {
+  return `${memberId}:${date}`
+}
+
 function getEndDate(date: string, endsNextDay: boolean) {
   if (!endsNextDay) return date
   return toIsoDate(addDays(new Date(`${date}T12:00:00`), 1))
@@ -144,7 +160,21 @@ function formatDateLabel(date: string) {
   }).format(new Date(`${date}T12:00:00`))
 }
 
-function getEventColors(kind: 'recurring' | 'date-event', isMine: boolean) {
+function getEventColors(kind: 'recurring' | 'date-event' | 'day-off', isMine: boolean) {
+  if (kind === 'day-off') {
+    return isMine
+      ? {
+          backgroundColor: 'rgba(244, 63, 94, 0.18)',
+          borderColor: 'rgba(244, 63, 94, 0.46)',
+          textColor: 'var(--text-primary)',
+        }
+      : {
+          backgroundColor: 'rgba(148, 163, 184, 0.16)',
+          borderColor: 'rgba(148, 163, 184, 0.34)',
+          textColor: 'var(--text-primary)',
+        }
+  }
+
   if (kind === 'date-event') {
     return isMine
       ? {
@@ -176,11 +206,13 @@ function expandRecurringSchedules(
   schedules: MemberWorkScheduleItem[],
   range: CalendarRange | null,
   currentUserId: string,
+  overrides: WorkScheduleEventItem[],
 ): EventInput[] {
   if (!range) return []
 
   const start = new Date(`${range.start}T00:00:00`)
   const endExclusive = new Date(`${range.end}T00:00:00`)
+  const overriddenDates = new Set(overrides.map((item) => getOverrideKey(item.memberId, item.date)))
   const events: EventInput[] = []
 
   for (const member of schedules) {
@@ -193,6 +225,8 @@ function expandRecurringSchedules(
       if (!schedule) continue
 
       const isoDate = toIsoDate(cursor)
+      if (overriddenDates.has(getOverrideKey(member.memberId, isoDate))) continue
+
       const isMine = String(member.memberId) === currentUserId
       const colors = getEventColors('recurring', isMine)
       const startTime = formatTimeLabel(schedule.startTime)
@@ -227,11 +261,30 @@ function expandRecurringSchedules(
 }
 
 function toDateEvents(items: WorkScheduleEventItem[], currentUserId: string): EventInput[] {
-  return items.map((item) => {
+  return items.flatMap<EventInput>((item) => {
     const isMine = String(item.memberId) === currentUserId
+    if (isDayOffEvent(item)) {
+      const colors = getEventColors('day-off', isMine)
+      return [{
+        id: `date-event-${item.id}`,
+        title: `${item.memberName} 휴무`,
+        start: item.date,
+        allDay: true,
+        editable: false,
+        ...colors,
+        extendedProps: {
+          kind: 'date-event',
+          item,
+          isEditable: isMine,
+        } satisfies CalendarDateEventMeta,
+      }]
+    }
+
+    if (!item.startTime || !item.endTime) return []
+
     const colors = getEventColors('date-event', isMine)
     const endDate = item.endsNextDay ? toIsoDate(addDays(new Date(`${item.date}T12:00:00`), 1)) : item.date
-    return {
+    return [{
       id: `date-event-${item.id}`,
       title: item.memberName,
       start: `${item.date}T${item.startTime}`,
@@ -244,7 +297,7 @@ function toDateEvents(items: WorkScheduleEventItem[], currentUserId: string): Ev
         item,
         isEditable: isMine,
       } satisfies CalendarDateEventMeta,
-    }
+    }]
   })
 }
 
@@ -455,7 +508,7 @@ export function WorkSchedules() {
 
   const calendarEvents = useMemo(
     () => [
-      ...expandRecurringSchedules(recurringSchedules, calendarRange, currentUserId),
+      ...expandRecurringSchedules(recurringSchedules, calendarRange, currentUserId, filteredDateEvents),
       ...toDateEvents(filteredDateEvents, currentUserId),
     ],
     [calendarRange, currentUserId, filteredDateEvents, recurringSchedules],
@@ -468,6 +521,8 @@ export function WorkSchedules() {
       startTime: DEFAULT_START_TIME,
       endTime: DEFAULT_END_TIME,
       endsNextDay: false,
+      eventType: 'WORKING',
+      reason: '',
       item: null,
     })
   }, [])
@@ -481,12 +536,16 @@ export function WorkSchedules() {
     if (!meta) return
 
     if (meta.kind === 'date-event') {
+      const eventType = getWorkScheduleEventType(meta.item)
+      const isDayOff = eventType === 'DAY_OFF'
       setModalState({
         mode: meta.isEditable ? 'edit' : 'detail',
         date: meta.item.date,
-        startTime: formatTimeLabel(meta.item.startTime),
-        endTime: formatTimeLabel(meta.item.endTime),
-        endsNextDay: Boolean(meta.item.endsNextDay),
+        startTime: isDayOff || !meta.item.startTime ? DEFAULT_START_TIME : formatTimeLabel(meta.item.startTime),
+        endTime: isDayOff || !meta.item.endTime ? DEFAULT_END_TIME : formatTimeLabel(meta.item.endTime),
+        endsNextDay: isDayOff ? false : Boolean(meta.item.endsNextDay),
+        eventType,
+        reason: meta.item.reason ?? '',
         item: meta,
       })
       return
@@ -498,6 +557,8 @@ export function WorkSchedules() {
       startTime: meta.startTime,
       endTime: meta.endTime,
       endsNextDay: meta.endsNextDay,
+      eventType: 'WORKING',
+      reason: '',
       item: meta,
     })
   }, [])
@@ -507,12 +568,23 @@ export function WorkSchedules() {
 
     setIsModalSaving(true)
     try {
-      const payload = {
-        date: modalState.date,
-        startTime: `${modalState.startTime}:00`,
-        endTime: `${modalState.endTime}:00`,
-        endsNextDay: modalState.endsNextDay,
-      }
+      const payload = modalState.eventType === 'DAY_OFF'
+        ? {
+            date: modalState.date,
+            eventType: 'DAY_OFF' as const,
+            startTime: null,
+            endTime: null,
+            endsNextDay: false,
+            reason: modalState.reason || DAY_OFF_REASON,
+          }
+        : {
+            date: modalState.date,
+            eventType: 'WORKING' as const,
+            startTime: `${modalState.startTime}:00`,
+            endTime: `${modalState.endTime}:00`,
+            endsNextDay: modalState.endsNextDay,
+            reason: null,
+          }
 
       if (modalState.mode === 'create') {
         await createWorkScheduleEvent(payload)
@@ -524,6 +596,29 @@ export function WorkSchedules() {
       await loadCalendarData()
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '날짜별 근무 일정 저장에 실패했습니다')
+    } finally {
+      setIsModalSaving(false)
+    }
+  }
+
+  const handleCreateDayOffFromRecurring = async () => {
+    if (!modalState || modalState.item?.kind !== 'recurring') return
+    if (String(modalState.item.memberId) !== currentUserId) return
+
+    setIsModalSaving(true)
+    try {
+      await createWorkScheduleEvent({
+        date: modalState.item.date,
+        eventType: 'DAY_OFF',
+        startTime: null,
+        endTime: null,
+        endsNextDay: false,
+        reason: DAY_OFF_REASON,
+      })
+      setModalState(null)
+      await loadCalendarData()
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : '반복 일정 휴무 처리에 실패했습니다')
     } finally {
       setIsModalSaving(false)
     }
@@ -547,6 +642,7 @@ export function WorkSchedules() {
   const modalTitle = useMemo(() => {
     if (!modalState) return ''
     if (modalState.mode === 'create') return '날짜별 근무 일정 추가'
+    if (modalState.eventType === 'DAY_OFF') return '반복 일정 휴무'
     if (modalState.item?.kind === 'date-event') return '날짜별 근무 일정'
     return '근무 일정 상세'
   }, [modalState])
@@ -559,9 +655,12 @@ export function WorkSchedules() {
   const modalDateRangeLabel = useMemo(() => {
     if (!modalState) return ''
     const startDateLabel = formatDateLabel(modalState.date)
+    if (modalState.eventType === 'DAY_OFF') return `${startDateLabel} 휴무`
     if (!modalState.endsNextDay) return `${startDateLabel} 하루 일정`
     return `${startDateLabel} ~ ${formatDateLabel(modalEndDate)}`
   }, [modalEndDate, modalState])
+
+  const isModalDayOff = modalState?.eventType === 'DAY_OFF'
 
   return (
     <div className="work-schedules-page">
@@ -658,6 +757,7 @@ export function WorkSchedules() {
               <span className="legend-chip recurring-team">공유 반복 일정</span>
               <span className="legend-chip date-own">날짜별 추가 일정</span>
               <span className="legend-chip date-team">팀 공유 일정</span>
+              <span className="legend-chip day-off">반복 일정 휴무</span>
             </div>
             <button
               type="button"
@@ -740,33 +840,50 @@ export function WorkSchedules() {
             </div>
 
             {modalState.mode === 'detail' && modalState.item?.kind === 'recurring' && (
-              <div className="work-schedules-detail-list">
-                <div className="work-schedules-detail-item">
-                  <strong>멤버</strong>
-                  <span>{modalState.item.memberName}</span>
+              <>
+                <div className="work-schedules-detail-list">
+                  <div className="work-schedules-detail-item">
+                    <strong>멤버</strong>
+                    <span>{modalState.item.memberName}</span>
+                  </div>
+                  <div className="work-schedules-detail-item">
+                    <strong>팀</strong>
+                    <span>{formatTeamName(modalState.item.teamName)}</span>
+                  </div>
+                  <div className="work-schedules-detail-item">
+                    <strong>시간</strong>
+                    <span>
+                      {formatScheduleRangeLabel({
+                        startTime: modalState.startTime,
+                        endTime: modalState.endTime,
+                        endsNextDay: modalState.endsNextDay,
+                      })}
+                    </span>
+                  </div>
+                  <div className="work-schedules-detail-item">
+                    <strong>반복 주차</strong>
+                    <span>{WEEK_PATTERN_LABELS[modalState.item.weekPattern]}</span>
+                  </div>
                 </div>
-                <div className="work-schedules-detail-item">
-                  <strong>팀</strong>
-                  <span>{formatTeamName(modalState.item.teamName)}</span>
-                </div>
-                <div className="work-schedules-detail-item">
-                  <strong>시간</strong>
-                  <span>
-                    {formatScheduleRangeLabel({
-                      startTime: modalState.startTime,
-                      endTime: modalState.endTime,
-                      endsNextDay: modalState.endsNextDay,
-                    })}
-                  </span>
-                </div>
-                <div className="work-schedules-detail-item">
-                  <strong>반복 주차</strong>
-                  <span>{WEEK_PATTERN_LABELS[modalState.item.weekPattern]}</span>
-                </div>
-              </div>
+
+                {String(modalState.item.memberId) === currentUserId && (
+                  <div className="work-schedules-day-off-callout">
+                    <strong>이 반복 일정만 쉬어야 하나요?</strong>
+                    <span>반복 설정은 유지하고, 선택한 날짜만 휴무로 덮어씁니다.</span>
+                    <button
+                      type="button"
+                      className="danger-btn"
+                      onClick={handleCreateDayOffFromRecurring}
+                      disabled={isModalSaving}
+                    >
+                      {isModalSaving ? '처리 중...' : '이 날짜만 휴무'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
-            {modalState.mode === 'detail' && modalState.item?.kind === 'date-event' && (
+            {(modalState.mode === 'detail' || isModalDayOff) && modalState.item?.kind === 'date-event' && (
               <div className="work-schedules-detail-list">
                 <div className="work-schedules-detail-item">
                   <strong>멤버</strong>
@@ -777,19 +894,40 @@ export function WorkSchedules() {
                   <span>{formatTeamName(modalState.item.item.teamName)}</span>
                 </div>
                 <div className="work-schedules-detail-item">
-                  <strong>시간</strong>
-                  <span>
-                    {formatScheduleRangeLabel({
-                      startTime: modalState.startTime,
-                      endTime: modalState.endTime,
-                      endsNextDay: modalState.endsNextDay,
-                    })}
-                  </span>
+                  <strong>{isModalDayOff ? '상태' : '시간'}</strong>
+                  {isModalDayOff ? (
+                    <span>반복 일정에서 이 날짜만 휴무 처리됨</span>
+                  ) : (
+                    <span>
+                      {formatScheduleRangeLabel({
+                        startTime: modalState.startTime,
+                        endTime: modalState.endTime,
+                        endsNextDay: modalState.endsNextDay,
+                      })}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
-            {modalState.mode !== 'detail' && (
+            {modalState.mode === 'edit' && isModalDayOff && (
+              <div className="work-schedules-modal-actions">
+                <button
+                  type="button"
+                  className="danger-btn"
+                  onClick={handleDeleteEvent}
+                  disabled={isModalSaving}
+                >
+                  <Trash2 size={16} />
+                  휴무 취소
+                </button>
+                <button type="button" className="secondary-btn" onClick={() => setModalState(null)}>
+                  닫기
+                </button>
+              </div>
+            )}
+
+            {modalState.mode !== 'detail' && !isModalDayOff && (
               <>
                 <div className="work-schedules-modal-form">
                   <div

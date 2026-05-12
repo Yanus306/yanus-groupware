@@ -33,6 +33,7 @@ export const resetMyAttendance = (date?: string) =>
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
 export type WeekPattern = 'EVERY' | 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'LAST'
+export type WorkScheduleEventType = 'WORKING' | 'DAY_OFF'
 
 export interface WorkScheduleItem {
   id: number
@@ -61,9 +62,11 @@ export interface MemberWorkScheduleItem {
 export interface WorkScheduleEventItem {
   id: number
   date: string
-  startTime: string
-  endTime: string
+  eventType?: WorkScheduleEventType
+  startTime: string | null
+  endTime: string | null
   endsNextDay?: boolean
+  reason?: string | null
   memberId: number
   memberName: string
   teamName: string
@@ -71,9 +74,11 @@ export interface WorkScheduleEventItem {
 
 export interface WorkScheduleEventPayload {
   date: string
-  startTime: string
-  endTime: string
+  eventType?: WorkScheduleEventType
+  startTime: string | null
+  endTime: string | null
   endsNextDay?: boolean
+  reason?: string | null
 }
 
 interface RawMemberWorkScheduleItem {

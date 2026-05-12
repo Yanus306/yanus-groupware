@@ -164,6 +164,10 @@
   background: rgba(14, 165, 233, 0.14);
 }
 
+.legend-chip.day-off {
+  background: rgba(244, 63, 94, 0.14);
+}
+
 .quick-add-btn,
 .primary-btn,
 .secondary-btn,
@@ -194,6 +198,25 @@
 .danger-btn {
   background: color-mix(in srgb, var(--error) 12%, var(--surface));
   color: var(--error);
+}
+
+.work-schedules-day-off-callout {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--error) 28%, var(--border-color));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--error) 8%, var(--surface));
+}
+
+.work-schedules-day-off-callout span {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.work-schedules-day-off-callout .danger-btn {
+  justify-self: start;
 }
 
 .work-schedules-loading {
