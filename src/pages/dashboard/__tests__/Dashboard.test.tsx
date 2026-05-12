@@ -53,6 +53,27 @@ vi.mock('../../../shared/lib/date', () => ({
   getTodayStr: () => '2026-03-23',
 }))
 
+const DEFAULT_DAY_SCHEDULES = [
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+  { checkInTime: '09:00', checkOutTime: '18:00' },
+]
+
+function makeWorkScheduleState(overrides: Record<string, unknown> = {}) {
+  return {
+    workDays: [true, false, false, false, false, false, false],
+    daySchedules: DEFAULT_DAY_SCHEDULES,
+    todayWorkEnabled: true,
+    todayWorkSchedule: DEFAULT_DAY_SCHEDULES[0],
+    todayScheduleSource: 'RECURRING',
+    ...overrides,
+  }
+}
+
 describe('Dashboard 페이지', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -66,18 +87,7 @@ describe('Dashboard 페이지', () => {
       clearError: vi.fn(),
       isLoading: false,
     })
-    mockUseWorkSchedule.mockReturnValue({
-      workDays: [true, false, false, false, false, false, false],
-      daySchedules: [
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-      ],
-    })
+    mockUseWorkSchedule.mockReturnValue(makeWorkScheduleState())
   })
 
   it('대시보드 페이지가 렌더링된다', () => {
@@ -118,18 +128,11 @@ describe('Dashboard 페이지', () => {
 
   it('근무 일정이 없는 날에는 출근 버튼 클릭 시 경고 모달이 열린다', async () => {
     const user = userEvent.setup()
-    mockUseWorkSchedule.mockReturnValue({
+    mockUseWorkSchedule.mockReturnValue(makeWorkScheduleState({
       workDays: [false, false, false, false, false, false, false],
-      daySchedules: [
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-      ],
-    })
+      todayWorkEnabled: false,
+      todayScheduleSource: 'NONE',
+    }))
 
     render(
       <MemoryRouter>
@@ -147,18 +150,11 @@ describe('Dashboard 페이지', () => {
 
   it('근무 일정 경고 모달에서 계속하기를 누르면 출근 처리한다', async () => {
     const user = userEvent.setup()
-    mockUseWorkSchedule.mockReturnValue({
+    mockUseWorkSchedule.mockReturnValue(makeWorkScheduleState({
       workDays: [false, false, false, false, false, false, false],
-      daySchedules: [
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-        { checkInTime: '09:00', checkOutTime: '18:00' },
-      ],
-    })
+      todayWorkEnabled: false,
+      todayScheduleSource: 'NONE',
+    }))
 
     render(
       <MemoryRouter>
@@ -170,6 +166,44 @@ describe('Dashboard 페이지', () => {
     await user.click(screen.getByRole('button', { name: '계속하기' }))
 
     expect(mockHandleClockClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('오늘 날짜별 DAY_OFF가 적용되면 휴무로 표시하고 출근 전 확인 모달을 연다', async () => {
+    const user = userEvent.setup()
+    mockUseWorkSchedule.mockReturnValue(makeWorkScheduleState({
+      todayWorkEnabled: false,
+      todayScheduleSource: 'DAY_OFF',
+    }))
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('오늘은 휴무입니다')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '출근하기' }))
+
+    expect(screen.getByText('근무 일정을 등록하셨나요?')).toBeInTheDocument()
+    expect(mockHandleClockClick).not.toHaveBeenCalled()
+  })
+
+  it('오늘 날짜별 WORKING이 적용되면 반복 일정 없이도 근무 예정 시간을 표시한다', () => {
+    mockUseWorkSchedule.mockReturnValue(makeWorkScheduleState({
+      workDays: [false, false, false, false, false, false, false],
+      todayWorkEnabled: true,
+      todayWorkSchedule: { checkInTime: '13:00', checkOutTime: '18:30', endsNextDay: false },
+      todayScheduleSource: 'DATE_EVENT',
+    }))
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('오늘 근무 예정 13:00 - 18:30')).toBeInTheDocument()
   })
 
   it('퇴근 완료 상태에서 출근 내역 초기화 버튼 클릭 시 확인 모달이 열린다', async () => {
