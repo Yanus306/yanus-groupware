@@ -15,6 +15,8 @@ import {
   getAllWorkSchedules,
   getTeamWorkSchedules,
   getWorkScheduleEvents,
+  getTeamWorkScheduleEvents,
+  getAllWorkScheduleEvents,
   updateWorkScheduleEvent,
 } from '../attendanceApi'
 
@@ -36,6 +38,16 @@ const WORK_SCHEDULE_EVENTS = [
     memberId: 1,
     memberName: '김리더',
     teamName: '1팀',
+  },
+  {
+    id: 102,
+    date: '2026-03-28',
+    startTime: '22:00:00',
+    endTime: '06:00:00',
+    endsNextDay: true,
+    memberId: 2,
+    memberName: '박팀장',
+    teamName: '2팀',
   },
 ]
 
@@ -78,6 +90,20 @@ const server = setupServer(
     }),
   ),
   http.get('/api/v1/work-schedule-events', () =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: WORK_SCHEDULE_EVENTS.filter((item) => item.memberId === 1),
+    }),
+  ),
+  http.get('/api/v1/work-schedule-events/team/:teamId', ({ params }) =>
+    HttpResponse.json({
+      code: 'SUCCESS',
+      message: 'ok',
+      data: WORK_SCHEDULE_EVENTS.filter((item) => String(params.teamId) === (item.teamName === '1팀' ? '1' : '2')),
+    }),
+  ),
+  http.get('/api/v1/work-schedule-events/all', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: WORK_SCHEDULE_EVENTS }),
   ),
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
@@ -219,6 +245,18 @@ describe('workScheduleApi', () => {
     const events = await getWorkScheduleEvents('2026-03-01', '2026-03-31')
     expect(events).toHaveLength(1)
     expect(events[0]).toMatchObject({ memberName: '김리더', date: '2026-03-31' })
+  })
+
+  it('getTeamWorkScheduleEvents() 팀 날짜별 근무 일정 이벤트를 반환한다', async () => {
+    const events = await getTeamWorkScheduleEvents(2, '2026-03-01', '2026-03-31')
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ memberName: '박팀장', teamName: '2팀', endsNextDay: true })
+  })
+
+  it('getAllWorkScheduleEvents() 전체 날짜별 근무 일정 이벤트를 반환한다', async () => {
+    const events = await getAllWorkScheduleEvents('2026-03-01', '2026-03-31')
+    expect(events).toHaveLength(2)
+    expect(events.map((item) => item.memberName)).toEqual(['김리더', '박팀장'])
   })
 
   it('createWorkScheduleEvent() 날짜별 근무 일정을 생성한다', async () => {

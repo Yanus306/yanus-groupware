@@ -4,6 +4,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 const mockGetAllWorkSchedules = vi.fn()
 const mockGetTeamWorkSchedules = vi.fn()
 const mockGetWorkScheduleEvents = vi.fn()
+const mockGetTeamWorkScheduleEvents = vi.fn()
+const mockGetAllWorkScheduleEvents = vi.fn()
 const mockCreateWorkScheduleEvent = vi.fn()
 let capturedEvents: Array<Record<string, unknown>> = []
 
@@ -51,6 +53,8 @@ vi.mock('../../../shared/api/attendanceApi', () => ({
   getAllWorkSchedules: (...args: unknown[]) => mockGetAllWorkSchedules(...args),
   getTeamWorkSchedules: (...args: unknown[]) => mockGetTeamWorkSchedules(...args),
   getWorkScheduleEvents: (...args: unknown[]) => mockGetWorkScheduleEvents(...args),
+  getTeamWorkScheduleEvents: (...args: unknown[]) => mockGetTeamWorkScheduleEvents(...args),
+  getAllWorkScheduleEvents: (...args: unknown[]) => mockGetAllWorkScheduleEvents(...args),
   createWorkScheduleEvent: (...args: unknown[]) => mockCreateWorkScheduleEvent(...args),
   updateWorkScheduleEvent: vi.fn(),
   deleteWorkScheduleEvent: vi.fn(),
@@ -69,6 +73,8 @@ function addDays(date: string, days: number) {
 
 describe('WorkSchedules 페이지', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
+    capturedEvents = []
     mockState = {
       currentUser: { id: '1', name: '관리자', role: 'ADMIN', team: '1팀' },
       users: [
@@ -97,6 +103,40 @@ describe('WorkSchedules 페이지', () => {
       },
     ])
     mockGetWorkScheduleEvents.mockResolvedValue([
+      {
+        id: 100,
+        date: '2026-03-30',
+        startTime: '09:00:00',
+        endTime: '18:00:00',
+        endsNextDay: false,
+        memberId: 1,
+        memberName: '관리자',
+        teamName: '1팀',
+      },
+    ])
+    mockGetTeamWorkScheduleEvents.mockResolvedValue([
+      {
+        id: 101,
+        date: '2026-03-30',
+        startTime: '13:00:00',
+        endTime: '18:00:00',
+        endsNextDay: false,
+        memberId: 2,
+        memberName: '팀원',
+        teamName: '1팀',
+      },
+    ])
+    mockGetAllWorkScheduleEvents.mockResolvedValue([
+      {
+        id: 100,
+        date: '2026-03-30',
+        startTime: '09:00:00',
+        endTime: '18:00:00',
+        endsNextDay: false,
+        memberId: 1,
+        memberName: '관리자',
+        teamName: '1팀',
+      },
       {
         id: 101,
         date: '2026-03-30',
@@ -130,7 +170,7 @@ describe('WorkSchedules 페이지', () => {
 
     await waitFor(() => {
       expect(mockGetAllWorkSchedules).toHaveBeenCalled()
-      expect(mockGetWorkScheduleEvents).toHaveBeenCalled()
+      expect(mockGetAllWorkScheduleEvents).toHaveBeenCalled()
       expect(screen.getByTestId('mock-calendar')).toBeInTheDocument()
     })
 
@@ -141,6 +181,26 @@ describe('WorkSchedules 페이지', () => {
         return start.includes('T22:00:00') && end.slice(0, 10) > start.slice(0, 10)
       }),
     ).toBe(true)
+    expect(
+      capturedEvents.some((event) => {
+        const meta = event.extendedProps as { item?: { memberId?: number; memberName?: string } } | undefined
+        return meta?.item?.memberId === 2 && meta.item.memberName === '팀원'
+      }),
+    ).toBe(true)
+  })
+
+  it('관리자가 팀별 필터를 선택하면 팀 날짜별 일정 API를 사용한다', async () => {
+    render(<WorkSchedules />)
+
+    await waitFor(() => {
+      expect(mockGetAllWorkScheduleEvents).toHaveBeenCalled()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '팀별' }))
+
+    await waitFor(() => {
+      expect(mockGetTeamWorkScheduleEvents).toHaveBeenCalledWith(1, expect.any(String), expect.any(String))
+    })
   })
 
   it('일반 멤버는 우리 팀과 개인 필터만 본다', async () => {
@@ -161,6 +221,7 @@ describe('WorkSchedules 페이지', () => {
 
     await waitFor(() => {
       expect(mockGetTeamWorkSchedules).toHaveBeenCalled()
+      expect(mockGetTeamWorkScheduleEvents).toHaveBeenCalledWith(1, expect.any(String), expect.any(String))
     })
   })
 

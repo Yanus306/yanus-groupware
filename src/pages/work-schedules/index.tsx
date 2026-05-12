@@ -13,7 +13,9 @@ import { SetWorkDaysPersonal } from '../../features/attendance/ui'
 import {
   createWorkScheduleEvent,
   deleteWorkScheduleEvent,
+  getAllWorkScheduleEvents,
   getAllWorkSchedules,
+  getTeamWorkScheduleEvents,
   getTeamWorkSchedules,
   getWorkScheduleEvents,
   updateWorkScheduleEvent,
@@ -359,8 +361,40 @@ export function WorkSchedules() {
 
     setIsLoading(true)
     try {
+      const loadDateEvents = async () => {
+        if (scope === 'all' && canViewAll) {
+          return getAllWorkScheduleEvents(calendarRange.start, calendarRange.end)
+        }
+
+        if (scope === 'team') {
+          const teamId = selectedTeam?.id ?? currentTeam?.id ?? null
+          if (!teamId) return []
+          return getTeamWorkScheduleEvents(teamId, calendarRange.start, calendarRange.end)
+        }
+
+        if (scope === 'person' && selectedMemberId === currentUserId) {
+          return getWorkScheduleEvents(calendarRange.start, calendarRange.end)
+        }
+
+        if (scope === 'person' && canViewAll) {
+          const allEvents = await getAllWorkScheduleEvents(calendarRange.start, calendarRange.end)
+          return allEvents.filter((item) => String(item.memberId) === selectedMemberId)
+        }
+
+        if (scope === 'person' && canViewTeam) {
+          const selectedMember = selectableMembers.find((member) => member.id === selectedMemberId)
+          const teamName = selectedMember?.team ?? currentTeamName
+          const teamId = allTeams.find((team) => team.name === teamName)?.id ?? currentTeam?.id ?? null
+          if (!teamId) return []
+          const teamEvents = await getTeamWorkScheduleEvents(teamId, calendarRange.start, calendarRange.end)
+          return teamEvents.filter((item) => String(item.memberId) === selectedMemberId)
+        }
+
+        return getWorkScheduleEvents(calendarRange.start, calendarRange.end)
+      }
+
       const [events, schedules] = await Promise.all([
-        getWorkScheduleEvents(calendarRange.start, calendarRange.end),
+        loadDateEvents(),
         (async () => {
           if (scope === 'all' && canViewAll) {
             return getAllWorkSchedules()
@@ -399,7 +433,21 @@ export function WorkSchedules() {
       setIsLoading(false)
       setHasLoadedCalendar(true)
     }
-  }, [calendarRange.end, calendarRange.start, canViewAll, currentTeam, currentUser, scope, selectedMemberId, selectedTeam])
+  }, [
+    allTeams,
+    calendarRange.end,
+    calendarRange.start,
+    canViewAll,
+    canViewTeam,
+    currentTeam,
+    currentTeamName,
+    currentUser,
+    currentUserId,
+    scope,
+    selectableMembers,
+    selectedMemberId,
+    selectedTeam,
+  ])
 
   useEffect(() => {
     loadCalendarData()
