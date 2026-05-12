@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react'
-import { deleteWorkScheduleDay, getMyWorkSchedule, upsertWorkScheduleDay } from '../../../shared/api/attendanceApi'
-import type { DayOfWeek, WeekPattern } from '../../../shared/api/attendanceApi'
+import {
+  deleteWorkScheduleDay,
+  getMyWorkSchedule,
+  getWorkScheduleEvents,
+  upsertWorkScheduleDay,
+} from '../../../shared/api/attendanceApi'
+import type { DayOfWeek, WeekPattern, WorkScheduleEventItem } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
+import { getTodayStr } from '../../../shared/lib/date'
 
 export interface DaySchedule {
   checkInTime: string   // "HH:mm"
   checkOutTime: string  // "HH:mm"
   endsNextDay: boolean
 }
+
+export type TodayScheduleSource = 'RECURRING' | 'DATE_EVENT' | 'DAY_OFF' | 'NONE'
 
 export type { WeekPattern } from '../../../shared/api/attendanceApi'
 
@@ -28,12 +36,28 @@ function makeDefaultDaySchedules(checkIn: string, checkOut: string): DaySchedule
   return Array.from({ length: 7 }, () => ({ checkInTime: checkIn, checkOutTime: checkOut, endsNextDay: false }))
 }
 
+function getEventType(event: WorkScheduleEventItem) {
+  return event.eventType ?? 'WORKING'
+}
+
+function toDaySchedule(event: WorkScheduleEventItem): DaySchedule | null {
+  if (!event.startTime || !event.endTime) return null
+
+  return {
+    checkInTime: event.startTime.slice(0, 5),
+    checkOutTime: event.endTime.slice(0, 5),
+    endsNextDay: Boolean(event.endsNextDay),
+  }
+}
+
 export function useWorkSchedule() {
+  const [today] = useState(() => getTodayStr())
   const [workDays, setWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(
     makeDefaultDaySchedules(DEFAULT_CHECK_IN, DEFAULT_CHECK_OUT),
   )
   const [weekPatterns, setWeekPatterns] = useState<WeekPattern[]>(DEFAULT_WEEK_PATTERNS)
+  const [todayOverride, setTodayOverride] = useState<WorkScheduleEventItem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +72,9 @@ export function useWorkSchedule() {
         if (Array.isArray(parsed) && parsed.length === 7) {
           parsedStoredDays = parsed
         }
-      } catch {}
+      } catch {
+        // Ignore malformed localStorage and prefer the API response.
+      }
     }
 
     // localStorage에서 근무 요일 토글 상태는 API 조회 실패 시에만 fallback으로 사용
@@ -57,7 +83,9 @@ export function useWorkSchedule() {
       try {
         const parsed = JSON.parse(storedWeekPatterns) as WeekPattern[]
         if (Array.isArray(parsed) && parsed.length === 7) setWeekPatterns(parsed)
-      } catch {}
+      } catch {
+        // Ignore malformed localStorage and keep the default recurrence pattern.
+      }
     }
 
     const storedEndsNextDay = localStorage.getItem(WORK_ENDS_NEXT_DAY_STORAGE_KEY)
@@ -69,11 +97,21 @@ export function useWorkSchedule() {
             prev.map((schedule, index) => ({ ...schedule, endsNextDay: parsed[index] ?? false })),
           )
         }
-      } catch {}
+      } catch {
+        // Ignore malformed localStorage and keep same-day end defaults.
+      }
     }
 
+    const loadTodayOverride = getWorkScheduleEvents(today, today)
+      .then((items) => {
+        setTodayOverride(items.find((item) => item.date === today) ?? null)
+      })
+      .catch(() => {
+        setTodayOverride(null)
+      })
+
     // API에서 요일별 근무 시간 불러오기
-    getMyWorkSchedule()
+    const loadRecurringSchedule = getMyWorkSchedule()
       .then((items) => {
         const activeDays = INDEX_TO_DOW.map((dow) =>
           items.some((item) => item.dayOfWeek === dow),
@@ -114,8 +152,9 @@ export function useWorkSchedule() {
           setSavedWorkDays(parsedStoredDays)
         }
       })
-      .finally(() => setIsLoading(false))
-  }, [])
+
+    Promise.allSettled([loadRecurringSchedule, loadTodayOverride]).finally(() => setIsLoading(false))
+  }, [today])
 
   const toggleDay = (index: number) => {
     setWorkDays((prev) => prev.map((v, i) => (i === index ? !v : v)))
@@ -180,10 +219,34 @@ export function useWorkSchedule() {
     return saved
   }
 
+  const todayIndex = (new Date(`${today}T12:00:00`).getDay() + 6) % 7
+  const todayRecurringEnabled = workDays[todayIndex]
+  const todayRecurringSchedule = daySchedules[todayIndex]
+  const todayOverrideType = todayOverride ? getEventType(todayOverride) : null
+  const todayOverrideSchedule = todayOverride && todayOverrideType === 'WORKING'
+    ? toDaySchedule(todayOverride)
+    : null
+  const todayWorkEnabled = todayOverrideType === 'DAY_OFF'
+    ? false
+    : todayOverrideSchedule
+      ? true
+      : todayRecurringEnabled
+  const todayWorkSchedule = todayOverrideSchedule ?? todayRecurringSchedule
+  const todayScheduleSource: TodayScheduleSource = todayOverrideType === 'DAY_OFF'
+    ? 'DAY_OFF'
+    : todayOverrideSchedule
+      ? 'DATE_EVENT'
+      : todayRecurringEnabled
+        ? 'RECURRING'
+        : 'NONE'
+
   return {
     workDays,
     daySchedules,
     weekPatterns,
+    todayWorkEnabled,
+    todayWorkSchedule,
+    todayScheduleSource,
     isLoading,
     isSaving,
     error,

@@ -4,6 +4,10 @@ import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 
+const TODAY = new Date().toISOString().slice(0, 10)
+const TODAY_INDEX = (new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7
+const INDEX_TO_DOW = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+
 const DEFAULT_SCHEDULES = [
   { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
   { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
@@ -15,6 +19,9 @@ const DEFAULT_SCHEDULES = [
 const server = setupServer(
   http.get('/api/v1/work-schedules/me', () =>
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: DEFAULT_SCHEDULES }),
+  ),
+  http.get('/api/v1/work-schedule-events', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
   ),
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as Record<string, string>
@@ -80,6 +87,90 @@ describe('useWorkSchedule', () => {
       expect(result.current.workDays.slice(0, 5)).toEqual([true, true, true, true, true])
       expect(result.current.workDays[5]).toBe(false)
       expect(result.current.workDays[6]).toBe(false)
+    })
+
+    it('오늘 날짜별 DAY_OFF가 있으면 반복 일정은 유지하되 오늘 적용 일정만 휴무로 본다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: [
+              {
+                id: 100,
+                dayOfWeek: INDEX_TO_DOW[TODAY_INDEX],
+                startTime: '09:00:00',
+                endTime: '18:00:00',
+                weekPattern: 'EVERY',
+                endsNextDay: false,
+              },
+            ],
+          }),
+        ),
+        http.get('/api/v1/work-schedule-events', () =>
+          HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: [
+              {
+                id: 200,
+                date: TODAY,
+                eventType: 'DAY_OFF',
+                startTime: null,
+                endTime: null,
+                endsNextDay: false,
+                memberId: 1,
+                memberName: '김리더',
+                teamName: '1팀',
+              },
+            ],
+          }),
+        ),
+      )
+
+      const { result } = await mountHook()
+
+      expect(result.current.workDays[TODAY_INDEX]).toBe(true)
+      expect(result.current.todayWorkEnabled).toBe(false)
+      expect(result.current.todayScheduleSource).toBe('DAY_OFF')
+    })
+
+    it('오늘 날짜별 WORKING이 있으면 반복 일정이 없어도 오늘 적용 일정으로 본다', async () => {
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+        ),
+        http.get('/api/v1/work-schedule-events', () =>
+          HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: [
+              {
+                id: 201,
+                date: TODAY,
+                eventType: 'WORKING',
+                startTime: '13:00:00',
+                endTime: '18:30:00',
+                endsNextDay: false,
+                memberId: 1,
+                memberName: '김리더',
+                teamName: '1팀',
+              },
+            ],
+          }),
+        ),
+      )
+
+      const { result } = await mountHook()
+
+      expect(result.current.workDays[TODAY_INDEX]).toBe(false)
+      expect(result.current.todayWorkEnabled).toBe(true)
+      expect(result.current.todayWorkSchedule).toMatchObject({
+        checkInTime: '13:00',
+        checkOutTime: '18:30',
+        endsNextDay: false,
+      })
+      expect(result.current.todayScheduleSource).toBe('DATE_EVENT')
     })
   })
 
