@@ -68,6 +68,21 @@ function syncMyMemberWorkSchedules() {
   )
 }
 
+function filterWorkScheduleEventsByDate(items: WorkScheduleEventItem[], startDate: string | null, endDate: string | null) {
+  return items.filter((item) => {
+    if (startDate && item.date < startDate) return false
+    if (endDate && item.date > endDate) return false
+    return true
+  })
+}
+
+function getTeamNameById(teamId: number) {
+  if (teamId === 1) return '1팀'
+  if (teamId === 2) return '2팀'
+  if (teamId === 3) return '3팀'
+  return '4팀'
+}
+
 let workScheduleEvents: WorkScheduleEventItem[] = [
   {
     id: 101,
@@ -170,11 +185,7 @@ export const attendanceHandlers = [
 
   http.get('/api/v1/work-schedules/team/:teamId', ({ params }) => {
     const teamId = Number(params.teamId)
-    const teamName =
-      teamId === 1 ? '1팀' :
-      teamId === 2 ? '2팀' :
-      teamId === 3 ? '3팀' :
-      '4팀'
+    const teamName = getTeamNameById(teamId)
 
     return HttpResponse.json({
       code: 'SUCCESS',
@@ -188,11 +199,34 @@ export const attendanceHandlers = [
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
 
-    const filtered = workScheduleEvents.filter((item) => {
-      if (startDate && item.date < startDate) return false
-      if (endDate && item.date > endDate) return false
-      return true
-    })
+    const filtered = filterWorkScheduleEventsByDate(
+      workScheduleEvents.filter((item) => item.memberId === 1),
+      startDate,
+      endDate,
+    )
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
+  }),
+
+  http.get('/api/v1/work-schedule-events/team/:teamId', ({ params, request }) => {
+    const url = new URL(request.url)
+    const startDate = url.searchParams.get('startDate')
+    const endDate = url.searchParams.get('endDate')
+    const teamName = getTeamNameById(Number(params.teamId))
+    const filtered = filterWorkScheduleEventsByDate(
+      workScheduleEvents.filter((item) => item.teamName === teamName),
+      startDate,
+      endDate,
+    )
+
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
+  }),
+
+  http.get('/api/v1/work-schedule-events/all', ({ request }) => {
+    const url = new URL(request.url)
+    const startDate = url.searchParams.get('startDate')
+    const endDate = url.searchParams.get('endDate')
+    const filtered = filterWorkScheduleEventsByDate(workScheduleEvents, startDate, endDate)
 
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
   }),

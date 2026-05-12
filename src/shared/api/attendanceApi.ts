@@ -115,6 +115,14 @@ export const getTeamWorkSchedules = (teamId: number) =>
 export const getWorkScheduleEvents = (startDate: string, endDate: string) =>
   baseClient.get<WorkScheduleEventItem[]>(`/api/v1/work-schedule-events?startDate=${startDate}&endDate=${endDate}`)
 
+export const getTeamWorkScheduleEvents = (teamId: number, startDate: string, endDate: string) =>
+  baseClient.get<WorkScheduleEventItem[]>(
+    `/api/v1/work-schedule-events/team/${teamId}?startDate=${startDate}&endDate=${endDate}`,
+  )
+
+export const getAllWorkScheduleEvents = (startDate: string, endDate: string) =>
+  baseClient.get<WorkScheduleEventItem[]>(`/api/v1/work-schedule-events/all?startDate=${startDate}&endDate=${endDate}`)
+
 export const createWorkScheduleEvent = (body: WorkScheduleEventPayload) =>
   baseClient.post<WorkScheduleEventItem>('/api/v1/work-schedule-events', body)
 
