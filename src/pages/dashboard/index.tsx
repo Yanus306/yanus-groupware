@@ -78,7 +78,7 @@ export function Dashboard() {
     clearError,
     isLoading,
   } = useWorkSession()
-  const { workDays, daySchedules } = useWorkSchedule()
+  const { todayWorkEnabled, todayWorkSchedule } = useWorkSchedule()
   const { getEventsByDate, updateEvent, deleteEvent } = useEvents()
   const { channels, getMessagesByChannel, activeChannelId } = useChat()
   const { getTasksByDate, toggleTaskDone } = useTasks()
@@ -88,9 +88,6 @@ export function Dashboard() {
   const recentMessages = getMessagesByChannel(activeChannelId).slice(-3)
   const todayTasks = getTasksByDate(today)
   const activeChannel = channels.find((channel) => channel.id === activeChannelId)
-  const todayIndex = (new Date().getDay() + 6) % 7
-  const todayWorkEnabled = workDays[todayIndex]
-  const todayWorkSchedule = daySchedules[todayIndex]
   const nowMinutes = (now.getHours() * 60) + now.getMinutes()
 
   useEffect(() => {
