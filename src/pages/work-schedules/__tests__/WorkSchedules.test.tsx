@@ -35,6 +35,9 @@ vi.mock('@fullcalendar/react', () => ({
           <button type="button" onClick={() => props.dateClick?.({ dateStr: '2026-03-30' })}>
             날짜 클릭
           </button>
+          <button type="button" onClick={() => props.dateClick?.({ dateStr: '2026-05-04' })}>
+            날짜 클릭 2026-05-04
+          </button>
           {capturedEvents.map((event, index) => {
             const meta = event.extendedProps as {
               kind?: string
@@ -255,7 +258,7 @@ describe('WorkSchedules 페이지', () => {
     })
   })
 
-  it('DAY_OFF 날짜별 이벤트는 같은 날짜의 반복 일정을 가리고 휴무 이벤트를 보여준다', async () => {
+  it('DAY_OFF 날짜별 이벤트는 같은 날짜의 반복 일정을 가리고 캘린더에서는 숨긴다', async () => {
     mockGetAllWorkScheduleEvents.mockResolvedValue([
       {
         id: 200,
@@ -288,7 +291,7 @@ describe('WorkSchedules 페이지', () => {
         const meta = event.extendedProps as { kind?: string; item?: { eventType?: string; date?: string } } | undefined
         return meta?.kind === 'date-event' && meta.item?.eventType === 'DAY_OFF' && meta.item.date === '2026-05-04'
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('본인 반복 일정 상세에서 해당 날짜만 휴무 처리할 수 있다', async () => {
@@ -299,7 +302,7 @@ describe('WorkSchedules 페이지', () => {
     })
     fireEvent.click(recurringButtons[0])
 
-    fireEvent.click(screen.getByRole('button', { name: '이 날짜만 휴무' }))
+    fireEvent.click(screen.getByRole('button', { name: '이 날짜만 제외' }))
 
     await waitFor(() => {
       expect(mockCreateWorkScheduleEvent).toHaveBeenCalledWith({
@@ -313,7 +316,7 @@ describe('WorkSchedules 페이지', () => {
     })
   })
 
-  it('DAY_OFF 이벤트를 삭제하면 반복 일정 휴무를 취소한다', async () => {
+  it('DAY_OFF가 숨겨진 날짜를 클릭하면 반복 일정 제외를 취소할 수 있다', async () => {
     mockGetAllWorkScheduleEvents.mockResolvedValue([
       {
         id: 200,
@@ -330,11 +333,12 @@ describe('WorkSchedules 페이지', () => {
 
     render(<WorkSchedules />)
 
-    const dayOffButton = await screen.findByRole('button', {
-      name: /이벤트 .*관리자 휴무 date-event DAY_OFF 2026-05-04/,
+    await waitFor(() => {
+      expect(mockGetAllWorkScheduleEvents).toHaveBeenCalled()
     })
-    fireEvent.click(dayOffButton)
-    fireEvent.click(screen.getByRole('button', { name: '휴무 취소' }))
+
+    fireEvent.click(screen.getByRole('button', { name: '날짜 클릭 2026-05-04' }))
+    fireEvent.click(screen.getByRole('button', { name: '제외 취소' }))
 
     await waitFor(() => {
       expect(mockDeleteWorkScheduleEvent).toHaveBeenCalledWith(200)

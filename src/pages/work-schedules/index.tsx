@@ -160,21 +160,7 @@ function formatDateLabel(date: string) {
   }).format(new Date(`${date}T12:00:00`))
 }
 
-function getEventColors(kind: 'recurring' | 'date-event' | 'day-off', isMine: boolean) {
-  if (kind === 'day-off') {
-    return isMine
-      ? {
-          backgroundColor: 'rgba(244, 63, 94, 0.18)',
-          borderColor: 'rgba(244, 63, 94, 0.46)',
-          textColor: 'var(--text-primary)',
-        }
-      : {
-          backgroundColor: 'rgba(148, 163, 184, 0.16)',
-          borderColor: 'rgba(148, 163, 184, 0.34)',
-          textColor: 'var(--text-primary)',
-        }
-  }
-
+function getEventColors(kind: 'recurring' | 'date-event', isMine: boolean) {
   if (kind === 'date-event') {
     return isMine
       ? {
@@ -264,20 +250,7 @@ function toDateEvents(items: WorkScheduleEventItem[], currentUserId: string): Ev
   return items.flatMap<EventInput>((item) => {
     const isMine = String(item.memberId) === currentUserId
     if (isDayOffEvent(item)) {
-      const colors = getEventColors('day-off', isMine)
-      return [{
-        id: `date-event-${item.id}`,
-        title: `${item.memberName} 휴무`,
-        start: item.date,
-        allDay: true,
-        editable: false,
-        ...colors,
-        extendedProps: {
-          kind: 'date-event',
-          item,
-          isEditable: isMine,
-        } satisfies CalendarDateEventMeta,
-      }]
+      return []
     }
 
     if (!item.startTime || !item.endTime) return []
@@ -527,9 +500,36 @@ export function WorkSchedules() {
     })
   }, [])
 
+  const openDayOffModal = useCallback((item: WorkScheduleEventItem) => {
+    setModalState({
+      mode: 'edit',
+      date: item.date,
+      startTime: DEFAULT_START_TIME,
+      endTime: DEFAULT_END_TIME,
+      endsNextDay: false,
+      eventType: 'DAY_OFF',
+      reason: item.reason ?? '',
+      item: {
+        kind: 'date-event',
+        item,
+        isEditable: true,
+      },
+    })
+  }, [])
+
   const handleDateClick = useCallback((arg: DateClickArg) => {
-    openCreateModal(arg.dateStr.slice(0, 10))
-  }, [openCreateModal])
+    const date = arg.dateStr.slice(0, 10)
+    const dayOffOverride = filteredDateEvents.find(
+      (item) => isDayOffEvent(item) && item.date === date && String(item.memberId) === currentUserId,
+    )
+
+    if (dayOffOverride) {
+      openDayOffModal(dayOffOverride)
+      return
+    }
+
+    openCreateModal(date)
+  }, [currentUserId, filteredDateEvents, openCreateModal, openDayOffModal])
 
   const handleEventClick = useCallback((arg: EventClickArg) => {
     const meta = arg.event.extendedProps as WorkScheduleCalendarMeta | undefined
@@ -642,7 +642,7 @@ export function WorkSchedules() {
   const modalTitle = useMemo(() => {
     if (!modalState) return ''
     if (modalState.mode === 'create') return '날짜별 근무 일정 추가'
-    if (modalState.eventType === 'DAY_OFF') return '반복 일정 휴무'
+    if (modalState.eventType === 'DAY_OFF') return '근무 일정 제외'
     if (modalState.item?.kind === 'date-event') return '날짜별 근무 일정'
     return '근무 일정 상세'
   }, [modalState])
@@ -655,7 +655,7 @@ export function WorkSchedules() {
   const modalDateRangeLabel = useMemo(() => {
     if (!modalState) return ''
     const startDateLabel = formatDateLabel(modalState.date)
-    if (modalState.eventType === 'DAY_OFF') return `${startDateLabel} 휴무`
+    if (modalState.eventType === 'DAY_OFF') return `${startDateLabel} 일정 제외`
     if (!modalState.endsNextDay) return `${startDateLabel} 하루 일정`
     return `${startDateLabel} ~ ${formatDateLabel(modalEndDate)}`
   }, [modalEndDate, modalState])
@@ -757,7 +757,6 @@ export function WorkSchedules() {
               <span className="legend-chip recurring-team">공유 반복 일정</span>
               <span className="legend-chip date-own">날짜별 추가 일정</span>
               <span className="legend-chip date-team">팀 공유 일정</span>
-              <span className="legend-chip day-off">반복 일정 휴무</span>
             </div>
             <button
               type="button"
@@ -868,15 +867,15 @@ export function WorkSchedules() {
 
                 {String(modalState.item.memberId) === currentUserId && (
                   <div className="work-schedules-day-off-callout">
-                    <strong>이 반복 일정만 쉬어야 하나요?</strong>
-                    <span>반복 설정은 유지하고, 선택한 날짜만 휴무로 덮어씁니다.</span>
+                    <strong>이 날짜만 일정에서 제외할까요?</strong>
+                    <span>반복 설정은 유지하고, 선택한 날짜의 근무 일정만 캘린더에서 제외합니다.</span>
                     <button
                       type="button"
                       className="danger-btn"
                       onClick={handleCreateDayOffFromRecurring}
                       disabled={isModalSaving}
                     >
-                      {isModalSaving ? '처리 중...' : '이 날짜만 휴무'}
+                      {isModalSaving ? '처리 중...' : '이 날짜만 제외'}
                     </button>
                   </div>
                 )}
@@ -896,7 +895,7 @@ export function WorkSchedules() {
                 <div className="work-schedules-detail-item">
                   <strong>{isModalDayOff ? '상태' : '시간'}</strong>
                   {isModalDayOff ? (
-                    <span>반복 일정에서 이 날짜만 휴무 처리됨</span>
+                    <span>반복 일정에서 이 날짜만 제외됨</span>
                   ) : (
                     <span>
                       {formatScheduleRangeLabel({
@@ -919,7 +918,7 @@ export function WorkSchedules() {
                   disabled={isModalSaving}
                 >
                   <Trash2 size={16} />
-                  휴무 취소
+                  제외 취소
                 </button>
                 <button type="button" className="secondary-btn" onClick={() => setModalState(null)}>
                   닫기
