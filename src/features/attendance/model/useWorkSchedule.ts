@@ -7,7 +7,8 @@ import {
 } from '../../../shared/api/attendanceApi'
 import type { DayOfWeek, WeekPattern, WorkScheduleEventItem } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
-import { getTodayStr } from '../../../shared/lib/date'
+import { getTodayStr, parseDateString } from '../../../shared/lib/date'
+import { matchesWeekPattern } from '../../../shared/lib/attendanceSchedule'
 
 export interface DaySchedule {
   checkInTime: string   // "HH:mm"
@@ -220,7 +221,8 @@ export function useWorkSchedule() {
   }
 
   const todayIndex = (new Date(`${today}T12:00:00`).getDay() + 6) % 7
-  const todayRecurringEnabled = workDays[todayIndex]
+  const todayRecurringMatchesPattern = matchesWeekPattern(parseDateString(today), weekPatterns[todayIndex])
+  const todayRecurringEnabled = workDays[todayIndex] && todayRecurringMatchesPattern
   const todayRecurringSchedule = daySchedules[todayIndex]
   const todayOverrideType = todayOverride ? getEventType(todayOverride) : null
   const todayOverrideSchedule = todayOverride && todayOverrideType === 'WORKING'

@@ -298,7 +298,7 @@ describe('WorkSchedules 페이지', () => {
     render(<WorkSchedules />)
 
     const recurringButtons = await screen.findAllByRole('button', {
-      name: /이벤트 .*관리자 recurring .*2026-05-/,
+      name: /이벤트 .*관리자 recurring .*2026-\d{2}-/,
     })
     fireEvent.click(recurringButtons[0])
 
@@ -306,7 +306,7 @@ describe('WorkSchedules 페이지', () => {
 
     await waitFor(() => {
       expect(mockCreateWorkScheduleEvent).toHaveBeenCalledWith({
-        date: expect.stringMatching(/^2026-05-/),
+        date: expect.stringMatching(/^2026-\d{2}-\d{2}$/),
         eventType: 'DAY_OFF',
         startTime: null,
         endTime: null,
