@@ -24,7 +24,7 @@ import {
   type WorkScheduleEventItem,
   type WorkScheduleEventType,
 } from '../../shared/api/attendanceApi'
-import { formatScheduleRangeLabel } from '../../shared/lib/attendanceSchedule'
+import { formatScheduleRangeLabel, matchesWeekPattern } from '../../shared/lib/attendanceSchedule'
 import { formatTeamName, getTeamOptions, sortUsersByTeamAndName } from '../../shared/lib/team'
 import { canViewAllWorkSchedules, canViewTeamWorkSchedules } from '../../shared/lib/permissions'
 import { DataTableSection } from '../../shared/ui/DataTableSection'
@@ -102,27 +102,6 @@ function toIsoDate(date: Date) {
 
 function toMondayIndex(jsDay: number) {
   return (jsDay + 6) % 7
-}
-
-function getOccurrencePattern(date: Date): Exclude<WeekPattern, 'EVERY' | 'LAST'> {
-  const occurrence = Math.floor((date.getDate() - 1) / 7) + 1
-  if (occurrence === 1) return 'FIRST'
-  if (occurrence === 2) return 'SECOND'
-  if (occurrence === 3) return 'THIRD'
-  return 'FOURTH'
-}
-
-function isLastOccurrence(date: Date) {
-  const nextWeek = new Date(date)
-  nextWeek.setDate(date.getDate() + 7)
-  return nextWeek.getMonth() !== date.getMonth()
-}
-
-function matchesWeekPattern(date: Date, pattern: WeekPattern | undefined) {
-  const normalized = pattern ?? 'EVERY'
-  if (normalized === 'EVERY') return true
-  if (normalized === 'LAST') return isLastOccurrence(date)
-  return getOccurrencePattern(date) === normalized
 }
 
 function addDays(date: Date, days: number) {
