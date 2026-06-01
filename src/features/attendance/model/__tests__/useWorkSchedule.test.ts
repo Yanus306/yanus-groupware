@@ -3,6 +3,8 @@ import { renderHook, act } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
+import type { WeekPattern } from '../../../../shared/api/attendanceApi'
+import { matchesWeekPattern } from '../../../../shared/lib/attendanceSchedule'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 const TODAY_INDEX = (new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7
@@ -15,6 +17,13 @@ const DEFAULT_SCHEDULES = [
   { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
   { id: 5, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
 ]
+
+function getNonMatchingPattern(dateStr: string): Exclude<WeekPattern, 'EVERY'> {
+  const date = new Date(`${dateStr}T12:00:00`)
+  return (['FIRST', 'SECOND', 'THIRD', 'FOURTH', 'LAST'] as const).find(
+    (pattern) => !matchesWeekPattern(date, pattern),
+  ) ?? 'FIRST'
+}
 
 const server = setupServer(
   http.get('/api/v1/work-schedules/me', () =>
@@ -171,6 +180,34 @@ describe('useWorkSchedule', () => {
         endsNextDay: false,
       })
       expect(result.current.todayScheduleSource).toBe('DATE_EVENT')
+    })
+
+    it('오늘 요일의 반복 일정이 있어도 주차 패턴이 맞지 않으면 휴무로 본다', async () => {
+      const nonMatchingPattern = getNonMatchingPattern(TODAY)
+      server.use(
+        http.get('/api/v1/work-schedules/me', () =>
+          HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: [
+              {
+                id: 300,
+                dayOfWeek: INDEX_TO_DOW[TODAY_INDEX],
+                startTime: '09:00:00',
+                endTime: '18:00:00',
+                weekPattern: nonMatchingPattern,
+                endsNextDay: false,
+              },
+            ],
+          }),
+        ),
+      )
+
+      const { result } = await mountHook()
+
+      expect(result.current.workDays[TODAY_INDEX]).toBe(true)
+      expect(result.current.todayWorkEnabled).toBe(false)
+      expect(result.current.todayScheduleSource).toBe('NONE')
     })
   })
 

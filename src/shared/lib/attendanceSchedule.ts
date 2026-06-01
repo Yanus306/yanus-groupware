@@ -1,4 +1,5 @@
 import { parseDateString, toDateString } from './date'
+import type { WeekPattern } from '../api/attendanceApi'
 
 function sliceClock(value: string | null | undefined) {
   if (!value) return '-'
@@ -45,4 +46,25 @@ export function formatScheduleRangeLabel({
 
 export function formatDateTimeClock(value: string | null | undefined) {
   return sliceClock(value)
+}
+
+function getOccurrencePattern(date: Date): Exclude<WeekPattern, 'EVERY' | 'LAST'> {
+  const occurrence = Math.floor((date.getDate() - 1) / 7) + 1
+  if (occurrence === 1) return 'FIRST'
+  if (occurrence === 2) return 'SECOND'
+  if (occurrence === 3) return 'THIRD'
+  return 'FOURTH'
+}
+
+function isLastOccurrence(date: Date) {
+  const nextWeek = new Date(date)
+  nextWeek.setDate(date.getDate() + 7)
+  return nextWeek.getMonth() !== date.getMonth()
+}
+
+export function matchesWeekPattern(date: Date, pattern: WeekPattern | undefined) {
+  const normalized = pattern ?? 'EVERY'
+  if (normalized === 'EVERY') return true
+  if (normalized === 'LAST') return isLastOccurrence(date)
+  return getOccurrencePattern(date) === normalized
 }
