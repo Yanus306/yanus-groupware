@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X, ArrowLeft } from 'lucide-react'
+import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X, ArrowLeft, Bell, BellOff } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { useChat } from '../../features/chat/model'
 import type { ChatMessage } from '../../features/chat/model'
@@ -85,7 +85,18 @@ function MessageItem({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
 
 export function Chat() {
   const { state } = useApp()
-  const { channels, activeChannelId, setActiveChannelId, addMessage, getMessagesByChannel } = useChat()
+  const {
+    channels,
+    activeChannelId,
+    setActiveChannelId,
+    addMessage,
+    getMessagesByChannel,
+    isChannelMuted,
+    toggleChannelMute,
+    getUnreadCount,
+    getLastReadAt,
+    markChannelRead,
+  } = useChat()
   const [message, setMessage] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string }[]>([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -104,6 +115,35 @@ export function Chat() {
   const activeDirectUser = directRooms.find((user) => `dm-${user.id}` === activeChannelId)
   const isDirectRoom = activeChannelId.startsWith('dm-')
   const messages = getMessagesByChannel(activeChannelId)
+  const activeMuted = isChannelMuted(activeChannelId)
+
+  // 채널 진입 시점의 마지막 읽음 시각을 캡처해 "여기까지 읽음" 구분선 기준으로 사용한다.
+  const [readDividerAt, setReadDividerAt] = useState<number | undefined>(undefined)
+
+  // 채널 전환 시: 진입 시점의 읽음 시각을 캡처한 뒤 곧바로 읽음 처리한다.
+  // (markChannelRead가 lastReadAt을 갱신하므로 캡처는 activeChannelId 변경 시에만 1회 수행)
+  useEffect(() => {
+    if (!activeChannelId) return
+    setReadDividerAt(getLastReadAt(activeChannelId))
+    markChannelRead(activeChannelId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChannelId])
+
+  // 채널을 보고 있는 동안 들어온 메시지도 읽음 처리해 떠날 때 안 읽음으로 남지 않게 한다.
+  useEffect(() => {
+    if (!activeChannelId) return
+    markChannelRead(activeChannelId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length])
+
+  // 진입 시점 이후 도착한 첫 수신 메시지 위에 구분선을 표시한다.
+  const dividerMessageId = useMemo(() => {
+    const threshold = readDividerAt ?? 0
+    const firstUnread = messages.find(
+      (m) => m.userId !== currentUserId && m.timestamp.getTime() > threshold,
+    )
+    return firstUnread?.id ?? null
+  }, [messages, readDividerAt, currentUserId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -278,16 +318,30 @@ export function Chat() {
         </div>
         <section>
           <h4>채널</h4>
-          {filteredChannels.map((ch) => (
-            <div
-              key={ch.id}
-              className={`channel-item ${ch.id === activeChannelId ? 'active' : ''}`}
-              onClick={() => openRoom(ch.id)}
-            >
-              <span className="channel-name"># {CHANNEL_LABELS[ch.name] ?? ch.name}</span>
-              <span className="channel-last">{ch.lastMessage}</span>
-            </div>
-          ))}
+          {filteredChannels.map((ch) => {
+            const unread = getUnreadCount(ch.id)
+            const muted = isChannelMuted(ch.id)
+            return (
+              <div
+                key={ch.id}
+                className={`channel-item ${ch.id === activeChannelId ? 'active' : ''} ${muted ? 'muted' : ''}`}
+                onClick={() => openRoom(ch.id)}
+              >
+                <div className="channel-row">
+                  <span className="channel-name"># {CHANNEL_LABELS[ch.name] ?? ch.name}</span>
+                  <span className="channel-badges">
+                    {muted && <BellOff size={13} className="channel-muted-icon" aria-label="알림 꺼짐" />}
+                    {unread > 0 && (
+                      <span className="unread-badge" aria-label={`안 읽은 메시지 ${unread}개`}>
+                        {unread > 99 ? '99+' : unread}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <span className="channel-last">{ch.lastMessage}</span>
+              </div>
+            )
+          })}
         </section>
         <section>
           <h4>개인 대화</h4>
@@ -326,8 +380,18 @@ export function Chat() {
             </div>
           </div>
           <div className="chat-header-actions">
-            <button><Search size={18} /></button>
-            <button>⋮</button>
+            <button
+              type="button"
+              className={`chat-mute-btn ${activeMuted ? 'muted' : ''}`}
+              onClick={() => toggleChannelMute(activeChannelId)}
+              title={activeMuted ? '알림 켜기' : '알림 끄기'}
+              aria-label={activeMuted ? '이 채팅방 알림 켜기' : '이 채팅방 알림 끄기'}
+              aria-pressed={activeMuted}
+            >
+              {activeMuted ? <BellOff size={18} /> : <Bell size={18} />}
+            </button>
+            <button type="button" aria-label="검색"><Search size={18} /></button>
+            <button type="button" aria-label="더보기">⋮</button>
           </div>
         </header>
         <div className="chat-messages">
@@ -338,7 +402,14 @@ export function Chat() {
             </div>
           ) : (
             messages.map((msg) => (
-              <MessageItem key={msg.id} msg={msg} isOwn={msg.userId === currentUserId} />
+              <Fragment key={msg.id}>
+                {msg.id === dividerMessageId && (
+                  <div className="new-message-divider">
+                    <span>여기까지 읽었어요</span>
+                  </div>
+                )}
+                <MessageItem msg={msg} isOwn={msg.userId === currentUserId} />
+              </Fragment>
             ))
           )}
           <div ref={messagesEndRef} />
