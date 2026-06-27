@@ -5,11 +5,18 @@ import { setupServer } from 'msw/node'
 import { chatHandlers } from '../../../../shared/api/mock/handlers/chat'
 import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { ChatProvider, useChat } from '../ChatProvider'
+import { getCookie } from '../../../../shared/lib/cookie'
 
 const server = setupServer(...chatHandlers)
 
+function clearCookies() {
+  document.cookie.split(';').forEach((c) => {
+    document.cookie = c.replace(/=.*/, '=').trim() + '=; path=/; max-age=0'
+  })
+}
+
 beforeAll(() => server.listen())
-afterEach(() => { server.resetHandlers(); localStorage.clear() })
+afterEach(() => { server.resetHandlers(); localStorage.clear(); clearCookies() })
 afterAll(() => server.close())
 
 function AuthBootstrap({ children }: { children: ReactNode }) {
@@ -52,6 +59,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 describe('ChatProvider', () => {
   beforeEach(() => {
     localStorage.clear()
+    clearCookies()
   })
 
   describe('초기 상태', () => {
@@ -174,13 +182,13 @@ describe('ChatProvider', () => {
       expect(result.current.isChannelMuted('1')).toBe(false)
     })
 
-    it('알림 설정이 localStorage에 저장된다', async () => {
+    it('알림 설정이 쿠키에 저장된다', async () => {
       const { result } = renderHook(() => useChat(), { wrapper })
       await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
 
       act(() => result.current.toggleChannelMute('2'))
       await waitFor(() =>
-        expect(JSON.parse(localStorage.getItem('chat-muted-channels') ?? '[]')).toContain('2')
+        expect(JSON.parse(getCookie('chat-muted-channels') ?? '[]')).toContain('2')
       )
     })
   })
