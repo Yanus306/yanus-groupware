@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { chatHandlers } from '../mock/handlers/chat'
-import { getChannels, getMessages, sendMessage } from '../chatApi'
+import { getChannels, getMessages, sendMessage, parseSseMessage } from '../chatApi'
 
 const server = setupServer(...chatHandlers)
 
@@ -27,5 +27,27 @@ describe('chatApi', () => {
     expect(msg).toHaveProperty('id')
     expect(msg.content).toBe('테스트 메시지')
     expect(msg.channelId).toBe('1')
+  })
+
+  it('parseSseMessage() SSE 페이로드(백엔드 원본)를 ApiMessage로 변환한다', () => {
+    const raw = JSON.stringify({
+      id: 10,
+      channelId: 2,
+      senderId: 3,
+      senderName: '박팀장',
+      content: '실시간 메시지',
+      type: 'TEXT',
+      files: [],
+      createdAt: '2026-03-26T09:00:00.000Z',
+    })
+    const msg = parseSseMessage(raw)
+    expect(msg).toMatchObject({
+      id: '10',
+      channelId: '2',
+      userId: '3',
+      userName: '박팀장',
+      content: '실시간 메시지',
+      type: 'text',
+    })
   })
 })

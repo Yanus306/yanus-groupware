@@ -9,8 +9,11 @@ import {
   sendFileMessage as apiSendFileMessage,
   getMutedChannels,
   setChannelMuted,
+  openChatEventStream,
+  parseSseMessage,
 } from '../../../shared/api/chatApi'
 import type { ApiMessage } from '../../../shared/api/chatApi'
+import { initFcmMessaging } from '../lib/fcm'
 import { getCookie, setCookie } from '../../../shared/lib/cookie'
 
 export type { ChatMessage, Channel } from '../../../entities/message/model/types'
@@ -157,6 +160,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setMessages([])
       setActiveChannelId('')
     }
+  }, [state.currentUser?.id])
+
+  // SSE 실시간 구독: 새 메시지를 즉시 반영한다(중복 id는 무시).
+  useEffect(() => {
+    if (!state.currentUser?.id) return
+    const stream = openChatEventStream()
+    if (!stream) return
+    const onSseMessage = (event: MessageEvent) => {
+      try {
+        const chatMsg = apiMsgToChatMsg(parseSseMessage(event.data))
+        setMessages((prev) => (prev.some((m) => m.id === chatMsg.id) ? prev : [...prev, chatMsg]))
+      } catch {
+        // 파싱 실패 메시지는 무시
+      }
+    }
+    stream.addEventListener('message', onSseMessage)
+    return () => {
+      stream.removeEventListener('message', onSseMessage)
+      stream.close()
+    }
+  }, [state.currentUser?.id])
+
+  // 오프라인 푸시(FCM) 초기화 — env 키 미설정 시 자동 비활성(골격)
+  useEffect(() => {
+    if (!state.currentUser?.id) return
+    void initFcmMessaging()
   }, [state.currentUser?.id])
 
   const refreshChannels = useCallback(async () => {

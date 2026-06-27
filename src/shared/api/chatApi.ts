@@ -1,4 +1,7 @@
 import { baseClient } from './baseClient'
+import { getAccessToken } from '../lib/authStorage'
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
 
 export type ApiChannelType = 'GENERAL' | 'TEAM' | 'DIRECT'
 
@@ -112,3 +115,24 @@ export const getMutedChannels = async (): Promise<string[]> =>
 
 export const setChannelMuted = (channelId: string, muted: boolean): Promise<void> =>
   baseClient.put<void>(`/channels/${channelId}/notifications`, { muted })
+
+// --- SSE 실시간 구독 ---
+// EventSource는 Authorization 헤더를 못 실어 토큰을 쿼리 파라미터로 전달한다(백엔드가 허용).
+export function openChatEventStream(): EventSource | null {
+  const token = getAccessToken()
+  if (!token || typeof EventSource === 'undefined') return null
+  const url = `${API_BASE_URL}/channels/subscribe?token=${encodeURIComponent(token)}`
+  return new EventSource(url)
+}
+
+// SSE로 받은 메시지 페이로드(백엔드 MessageResponse 원본)를 ApiMessage로 변환
+export function parseSseMessage(raw: string): ApiMessage {
+  return mapMessage(JSON.parse(raw) as RawMessage)
+}
+
+// --- FCM 디바이스 토큰 ---
+export const registerDeviceToken = (token: string): Promise<void> =>
+  baseClient.post<void>('/fcm/tokens', { token })
+
+export const unregisterDeviceToken = (token: string): Promise<void> =>
+  baseClient.delete<void>(`/fcm/tokens?token=${encodeURIComponent(token)}`)
