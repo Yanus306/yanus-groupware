@@ -31,6 +31,11 @@ vi.mock('../../../features/chat/model', () => ({
     setActiveChannelId: mockSetActiveChannelId,
     addMessage: mockAddMessage,
     getMessagesByChannel: () => [],
+    isChannelMuted: () => false,
+    toggleChannelMute: vi.fn(),
+    getUnreadCount: () => 0,
+    getLastReadAt: () => undefined,
+    markChannelRead: vi.fn(),
   }),
 }))
 

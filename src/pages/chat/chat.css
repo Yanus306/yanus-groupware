@@ -118,6 +118,75 @@
   white-space: nowrap;
 }
 
+.channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.channel-row .channel-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.channel-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.channel-muted-icon {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.channel-item.muted .channel-name,
+.channel-item.muted .channel-last {
+  opacity: 0.6;
+}
+
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent-purple);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 알림이 꺼진 방은 안 읽음 배지를 중립색으로 낮춰 표시 */
+.channel-item.muted .unread-badge {
+  background: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.new-message-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  color: var(--accent-purple);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.new-message-divider::before,
+.new-message-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent-purple) 35%, transparent);
+}
+
 .dm-item {
   display: flex;
   align-items: center;
@@ -261,6 +330,20 @@
 .chat-header-actions button:hover {
   background: var(--nav-hover);
   color: var(--text-primary);
+}
+
+.chat-mute-btn {
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.chat-mute-btn.muted {
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.chat-mute-btn.muted:hover {
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 18%, transparent);
 }
 
 .chat-messages {

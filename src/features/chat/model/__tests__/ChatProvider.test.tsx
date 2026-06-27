@@ -156,6 +156,58 @@ describe('ChatProvider', () => {
     })
   })
 
+  describe('채팅방 알림 설정 (mute)', () => {
+    it('기본값은 알림 켜짐(muted 아님)이다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+      expect(result.current.isChannelMuted('1')).toBe(false)
+    })
+
+    it('toggleChannelMute로 알림을 끄고 켤 수 있다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+
+      act(() => result.current.toggleChannelMute('1'))
+      expect(result.current.isChannelMuted('1')).toBe(true)
+
+      act(() => result.current.toggleChannelMute('1'))
+      expect(result.current.isChannelMuted('1')).toBe(false)
+    })
+
+    it('알림 설정이 localStorage에 저장된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+
+      act(() => result.current.toggleChannelMute('2'))
+      await waitFor(() =>
+        expect(JSON.parse(localStorage.getItem('chat-muted-channels') ?? '[]')).toContain('2')
+      )
+    })
+  })
+
+  describe('안 읽음/읽음 상태', () => {
+    it('markChannelRead 이후에는 안 읽음 개수가 0이 된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.messages.length).toBeGreaterThan(0))
+
+      act(() => result.current.markChannelRead('1'))
+      expect(result.current.getUnreadCount('1')).toBe(0)
+    })
+
+    it('읽음 처리 후 들어온 상대 메시지는 안 읽음으로 집계된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.messages.length).toBeGreaterThan(0))
+
+      act(() => result.current.markChannelRead('3'))
+      act(() => {
+        result.current.setActiveChannelId('3')
+        result.current.addMessage('3', '내가 보낸 메시지')
+      })
+      // 본인이 보낸 메시지는 안 읽음에 포함되지 않는다
+      expect(result.current.getUnreadCount('3')).toBe(0)
+    })
+  })
+
   describe('useChat 훅', () => {
     it('ChatProvider 외부에서 useChat 호출 시 에러를 던진다', () => {
       expect(() => renderHook(() => useChat())).toThrow(
