@@ -114,18 +114,20 @@ const server = setupServer(
     HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: events }),
   ),
   http.get('/channels', () =>
-    HttpResponse.json([{ id: '1', name: 'General', lastMessage: '안녕하세요' }]),
+    HttpResponse.json([{ id: 1, name: 'General', type: 'GENERAL', memberCount: 5, lastMessage: '안녕하세요' }]),
   ),
+  http.get('/channels/notifications/muted', () => HttpResponse.json([])),
   http.get('/channels/:channelId/messages', () =>
     HttpResponse.json([
       {
-        id: 'm1',
-        channelId: '1',
-        userId: '1',
-        userName: '관리자',
+        id: 1,
+        channelId: 1,
+        senderId: 1,
+        senderName: '관리자',
         content: '안녕하세요',
-        type: 'text',
-        timestamp: '2026-03-26T09:00:00.000Z',
+        type: 'TEXT',
+        files: [],
+        createdAt: '2026-03-26T09:00:00.000Z',
       },
     ]),
   ),

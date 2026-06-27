@@ -2,13 +2,19 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import type { ReactNode } from 'react'
 import { useApp } from '../../auth/model/AppProvider'
 import type { ChatMessage, Channel } from '../../../entities/message/model/types'
-import { getChannels, getMessages, sendMessage as apiSendMessage } from '../../../shared/api/chatApi'
+import {
+  getChannels,
+  getMessages,
+  sendMessage as apiSendMessage,
+  sendFileMessage as apiSendFileMessage,
+  getMutedChannels,
+  setChannelMuted,
+} from '../../../shared/api/chatApi'
 import type { ApiMessage } from '../../../shared/api/chatApi'
 import { getCookie, setCookie } from '../../../shared/lib/cookie'
 
 export type { ChatMessage, Channel } from '../../../entities/message/model/types'
 
-const MUTED_CHANNELS_COOKIE_KEY = 'chat-muted-channels'
 const LAST_READ_COOKIE_KEY = 'chat-last-read'
 const LEFT_CHANNELS_COOKIE_KEY = 'chat-left-channels'
 
@@ -20,10 +26,6 @@ function loadStringList(cookieKey: string): string[] {
   } catch {
     return []
   }
-}
-
-function loadMutedChannels(): string[] {
-  return loadStringList(MUTED_CHANNELS_COOKIE_KEY)
 }
 
 function loadLastRead(): Record<string, number> {
@@ -44,6 +46,7 @@ function apiMsgToChatMsg(m: ApiMessage): ChatMessage {
     userName: m.userName,
     content: m.content,
     type: m.type as 'text' | 'file',
+    files: m.files?.map((f) => ({ name: f.name, url: '', type: f.contentType ?? '' })),
     timestamp: new Date(m.timestamp),
   }
 }
@@ -53,7 +56,12 @@ type ChatContextValue = {
   messages: ChatMessage[]
   activeChannelId: string
   setActiveChannelId: (id: string) => void
-  addMessage: (channelId: string, content?: string, files?: { name: string; url: string; type: string }[]) => void
+  addMessage: (
+    channelId: string,
+    content?: string,
+    files?: { name: string; url: string; type: string }[],
+    rawFiles?: File[],
+  ) => void
   getMessagesByChannel: (channelId: string) => ChatMessage[]
   refreshChannels: () => Promise<void>
   isChannelMuted: (channelId: string) => boolean
@@ -73,19 +81,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [channels, setChannels] = useState<Channel[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeChannelId, setActiveChannelId] = useState('')
-  const [mutedChannels, setMutedChannels] = useState<string[]>(() => loadMutedChannels())
+  const [mutedChannels, setMutedChannels] = useState<string[]>([])
   const [lastReadAt, setLastReadAt] = useState<Record<string, number>>(() => loadLastRead())
   const [leftChannels, setLeftChannels] = useState<string[]>(() => loadStringList(LEFT_CHANNELS_COOKIE_KEY))
 
   const isDirectChannel = useCallback((channelId: string) => channelId.startsWith('dm-'), [])
-
-  useEffect(() => {
-    try {
-      setCookie(MUTED_CHANNELS_COOKIE_KEY, JSON.stringify(mutedChannels))
-    } catch {
-      // 저장 실패는 무시 — 알림 설정은 메모리 상태로만 유지된다
-    }
-  }, [mutedChannels])
 
   useEffect(() => {
     try {
@@ -100,11 +100,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [mutedChannels]
   )
 
+  // 알림(음소거) 설정은 서버에 영속화한다. 낙관적 업데이트 후 실패 시 롤백.
   const toggleChannelMute = useCallback((channelId: string) => {
+    if (isDirectChannel(channelId)) return
+    const nextMuted = !mutedChannels.includes(channelId)
     setMutedChannels((prev) =>
-      prev.includes(channelId) ? prev.filter((id) => id !== channelId) : [...prev, channelId]
+      nextMuted ? [...prev, channelId] : prev.filter((id) => id !== channelId)
     )
-  }, [])
+    setChannelMuted(channelId, nextMuted).catch(() => {
+      setMutedChannels((prev) =>
+        nextMuted ? prev.filter((id) => id !== channelId) : [...prev, channelId]
+      )
+    })
+  }, [isDirectChannel, mutedChannels])
 
   const getLastReadAt = useCallback(
     (channelId: string) => lastReadAt[channelId],
@@ -162,6 +170,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const data = await getChannels()
     setChannels(data)
 
+    // 서버에 저장된 채널 알림(음소거) 설정을 불러온다.
+    getMutedChannels().then(setMutedChannels).catch(() => {})
+
     const nextActiveChannelId = data.find((channel) => channel.id === activeChannelId)?.id ?? data[0]?.id ?? ''
     setActiveChannelId(nextActiveChannelId)
 
@@ -189,7 +200,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [activeChannelId, isDirectChannel])
 
   const addMessage = useCallback(
-    (channelId: string, content?: string, files?: { name: string; url: string; type: string }[]) => {
+    (
+      channelId: string,
+      content?: string,
+      files?: { name: string; url: string; type: string }[],
+      rawFiles?: File[],
+    ) => {
       const hasFiles = !!files?.length
       const hasContent = !!content?.trim()
       const type = hasFiles ? 'file' : 'text'
@@ -207,7 +223,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (isDirectChannel(channelId)) {
         return
       }
-      apiSendMessage(channelId, content ?? '', type).catch(() => {})
+      if (hasFiles && rawFiles?.length) {
+        apiSendFileMessage(channelId, hasContent ? content!.trim() : undefined, rawFiles).catch(() => {})
+      } else {
+        apiSendMessage(channelId, content ?? '', type).catch(() => {})
+      }
     },
     [isDirectChannel, state.currentUser?.id, state.currentUser?.name]
   )

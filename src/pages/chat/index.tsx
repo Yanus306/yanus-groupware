@@ -102,7 +102,7 @@ export function Chat() {
     leaveChannel,
   } = useChat()
   const [message, setMessage] = useState('')
-  const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string }[]>([])
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string; file: File }[]>([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
@@ -214,7 +214,12 @@ export function Chat() {
   const handleSend = () => {
     const trimmed = message.trim()
     if (!trimmed && !attachedFiles.length) return
-    addMessage(activeChannelId, trimmed || undefined, attachedFiles.length ? attachedFiles : undefined)
+    addMessage(
+      activeChannelId,
+      trimmed || undefined,
+      attachedFiles.length ? attachedFiles.map(({ name, url, type }) => ({ name, url, type })) : undefined,
+      attachedFiles.length ? attachedFiles.map((a) => a.file) : undefined,
+    )
     setMessage('')
     setAttachedFiles([])
   }
@@ -285,13 +290,14 @@ export function Chat() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files?.length) return
-    const newFiles: { name: string; url: string; type: string }[] = []
+    const newFiles: { name: string; url: string; type: string; file: File }[] = []
     for (let i = 0; i < files.length; i++) {
       const f = files[i]
       newFiles.push({
         name: f.name,
         url: f.type.startsWith('image/') ? URL.createObjectURL(f) : '',
         type: f.type,
+        file: f,
       })
     }
     setAttachedFiles((prev) => [...prev, ...newFiles])
