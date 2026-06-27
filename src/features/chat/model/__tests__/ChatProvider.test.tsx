@@ -216,6 +216,42 @@ describe('ChatProvider', () => {
     })
   })
 
+  describe('채팅방 나가기 (leave)', () => {
+    it('나간 채널은 visibleChannels에서 제외된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+
+      act(() => result.current.leaveChannel('2'))
+
+      expect(result.current.isChannelLeft('2')).toBe(true)
+      expect(result.current.visibleChannels.some((c) => c.id === '2')).toBe(false)
+      // 전체 채널 목록에는 그대로 남아 있다
+      expect(result.current.channels.some((c) => c.id === '2')).toBe(true)
+    })
+
+    it('현재 보고 있던 방을 나가면 남은 방으로 전환된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+
+      act(() => result.current.setActiveChannelId('2'))
+      expect(result.current.activeChannelId).toBe('2')
+
+      act(() => result.current.leaveChannel('2'))
+      expect(result.current.activeChannelId).not.toBe('2')
+      expect(result.current.isChannelLeft(result.current.activeChannelId)).toBe(false)
+    })
+
+    it('나간 방 목록이 쿠키에 저장된다', async () => {
+      const { result } = renderHook(() => useChat(), { wrapper })
+      await waitFor(() => expect(result.current.channels.length).toBeGreaterThan(0))
+
+      act(() => result.current.leaveChannel('3'))
+      await waitFor(() =>
+        expect(JSON.parse(getCookie('chat-left-channels') ?? '[]')).toContain('3')
+      )
+    })
+  })
+
   describe('useChat 훅', () => {
     it('ChatProvider 외부에서 useChat 호출 시 에러를 던진다', () => {
       expect(() => renderHook(() => useChat())).toThrow(

@@ -3,6 +3,8 @@ import { baseClient } from './baseClient'
 export interface ApiChannel {
   id: string
   name: string
+  type?: 'GENERAL' | 'TEAM' | 'DIRECT'
+  memberCount?: number
   lastMessage?: string
 }
 

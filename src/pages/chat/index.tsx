@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X, ArrowLeft, Bell, BellOff } from 'lucide-react'
+import { Search, Send, Paperclip, Smile, Bold, Italic, Strikethrough, Link as LinkIcon, List, ListOrdered, Code, X, ArrowLeft, Bell, BellOff, Users, LogOut, MoreVertical, Hash } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { useChat } from '../../features/chat/model'
 import type { ChatMessage } from '../../features/chat/model'
@@ -12,6 +12,8 @@ const CHANNEL_LABELS: Record<string, string> = {
   General: '전체 공지',
   'Design Team': '디자인팀',
   'Dev Team': '개발팀',
+  'Marketing Team': '마케팅팀',
+  'Product Team': '프로덕트팀',
 }
 function formatTime(date: Date): string {
   const now = new Date()
@@ -96,6 +98,8 @@ export function Chat() {
     getUnreadCount,
     getLastReadAt,
     markChannelRead,
+    visibleChannels,
+    leaveChannel,
   } = useChat()
   const [message, setMessage] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; url: string; type: string }[]>([])
@@ -116,6 +120,11 @@ export function Chat() {
   const isDirectRoom = activeChannelId.startsWith('dm-')
   const messages = getMessagesByChannel(activeChannelId)
   const activeMuted = isChannelMuted(activeChannelId)
+  const isTeamRoom = activeChannel?.type === 'TEAM'
+
+  const [showRoomMenu, setShowRoomMenu] = useState(false)
+  const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const roomMenuRef = useRef<HTMLDivElement>(null)
 
   // 채널 진입 시점의 마지막 읽음 시각을 캡처해 "여기까지 읽음" 구분선 기준으로 사용한다.
   const [readDividerAt, setReadDividerAt] = useState<number | undefined>(undefined)
@@ -180,6 +189,27 @@ export function Chat() {
     document.addEventListener('click', onOutside)
     return () => document.removeEventListener('click', onOutside)
   }, [showEmojiPicker])
+
+  useEffect(() => {
+    if (!showRoomMenu) return
+    const onOutside = (e: MouseEvent) => {
+      if (roomMenuRef.current?.contains(e.target as Node)) return
+      setShowRoomMenu(false)
+    }
+    document.addEventListener('click', onOutside)
+    return () => document.removeEventListener('click', onOutside)
+  }, [showRoomMenu])
+
+  // 채널을 전환하면 열려 있던 방 메뉴를 닫는다.
+  useEffect(() => {
+    setShowRoomMenu(false)
+  }, [activeChannelId])
+
+  const handleLeaveChannel = () => {
+    leaveChannel(activeChannelId)
+    setShowLeaveModal(false)
+    setShowRoomMenu(false)
+  }
 
   const handleSend = () => {
     const trimmed = message.trim()
@@ -276,10 +306,12 @@ export function Chat() {
     })
   }
 
-  const filteredChannels = channels.filter((channel) =>
+  const filteredChannels = visibleChannels.filter((channel) =>
     channel.name.toLowerCase().includes(roomQuery.toLowerCase()) ||
     (channel.lastMessage ?? '').toLowerCase().includes(roomQuery.toLowerCase()),
   )
+  const generalChannels = filteredChannels.filter((channel) => channel.type !== 'TEAM')
+  const teamChannels = filteredChannels.filter((channel) => channel.type === 'TEAM')
 
   const filteredDirectRooms = directRooms.filter((user) =>
     user.name.toLowerCase().includes(roomQuery.toLowerCase()) ||
@@ -293,13 +325,45 @@ export function Chat() {
     }
   }
 
+  const renderChannelItem = (ch: (typeof filteredChannels)[number], team: boolean) => {
+    const unread = getUnreadCount(ch.id)
+    const muted = isChannelMuted(ch.id)
+    const label = CHANNEL_LABELS[ch.name] ?? ch.name
+    return (
+      <div
+        key={ch.id}
+        className={`channel-item ${team ? 'team-room' : ''} ${ch.id === activeChannelId ? 'active' : ''} ${muted ? 'muted' : ''}`}
+        onClick={() => openRoom(ch.id)}
+      >
+        <div className="channel-row">
+          <span className="channel-name">
+            {team ? <Users size={15} className="channel-kind-icon" /> : <Hash size={15} className="channel-kind-icon" />}
+            <span className="channel-name-text">{label}</span>
+          </span>
+          <span className="channel-badges">
+            {muted && <BellOff size={13} className="channel-muted-icon" aria-label="알림 꺼짐" />}
+            {unread > 0 && (
+              <span className="unread-badge" aria-label={`안 읽은 메시지 ${unread}개`}>
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
+          </span>
+        </div>
+        <span className="channel-last">{ch.lastMessage}</span>
+        {team && ch.memberCount != null && (
+          <span className="channel-member-count">멤버 {ch.memberCount}명</span>
+        )}
+      </div>
+    )
+  }
+
   const roomTitle = isDirectRoom
     ? activeDirectUser?.name ?? '대화방'
     : `# ${CHANNEL_LABELS[activeChannel?.name ?? ''] ?? activeChannel?.name ?? '디자인팀'}`
 
   const roomMeta = isDirectRoom
     ? `${formatTeamName(activeDirectUser?.team)} · ${activeDirectUser?.online ? '대화 가능' : '현재 자리 비움'}`
-    : '23명 참여 중'
+    : `${activeChannel?.memberCount ?? 0}명 참여 중`
 
   return (
     <div className={`chat-page ${isMobileRoomOpen ? 'room-open-mobile' : 'list-open-mobile'}`}>
@@ -316,32 +380,19 @@ export function Chat() {
             onChange={(e) => setRoomQuery(e.target.value)}
           />
         </div>
+        {generalChannels.length > 0 && (
+          <section>
+            <h4>채널</h4>
+            {generalChannels.map((ch) => renderChannelItem(ch, false))}
+          </section>
+        )}
         <section>
-          <h4>채널</h4>
-          {filteredChannels.map((ch) => {
-            const unread = getUnreadCount(ch.id)
-            const muted = isChannelMuted(ch.id)
-            return (
-              <div
-                key={ch.id}
-                className={`channel-item ${ch.id === activeChannelId ? 'active' : ''} ${muted ? 'muted' : ''}`}
-                onClick={() => openRoom(ch.id)}
-              >
-                <div className="channel-row">
-                  <span className="channel-name"># {CHANNEL_LABELS[ch.name] ?? ch.name}</span>
-                  <span className="channel-badges">
-                    {muted && <BellOff size={13} className="channel-muted-icon" aria-label="알림 꺼짐" />}
-                    {unread > 0 && (
-                      <span className="unread-badge" aria-label={`안 읽은 메시지 ${unread}개`}>
-                        {unread > 99 ? '99+' : unread}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <span className="channel-last">{ch.lastMessage}</span>
-              </div>
-            )
-          })}
+          <h4>팀 채팅방</h4>
+          {teamChannels.length > 0
+            ? teamChannels.map((ch) => renderChannelItem(ch, true))
+            : !roomQuery && (
+                <div className="chat-empty-search">참여 중인 팀 채팅방이 없습니다.</div>
+              )}
         </section>
         <section>
           <h4>개인 대화</h4>
@@ -375,7 +426,14 @@ export function Chat() {
               </button>
             )}
             <div>
-              <h3>{roomTitle}</h3>
+              <h3>
+                {roomTitle}
+                {isTeamRoom && (
+                  <span className="room-type-badge">
+                    <Users size={12} />팀
+                  </span>
+                )}
+              </h3>
               <span className="members-count">{roomMeta}</span>
             </div>
           </div>
@@ -391,7 +449,48 @@ export function Chat() {
               {activeMuted ? <BellOff size={18} /> : <Bell size={18} />}
             </button>
             <button type="button" aria-label="검색"><Search size={18} /></button>
-            <button type="button" aria-label="더보기">⋮</button>
+            <div className="chat-room-menu" ref={roomMenuRef}>
+              <button
+                type="button"
+                className="chat-room-menu-btn"
+                aria-label="채팅방 메뉴"
+                aria-haspopup="menu"
+                aria-expanded={showRoomMenu}
+                onClick={() => setShowRoomMenu((v) => !v)}
+              >
+                <MoreVertical size={18} />
+              </button>
+              {showRoomMenu && (
+                <div className="chat-room-menu-dropdown" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="chat-room-menu-item"
+                    onClick={() => {
+                      toggleChannelMute(activeChannelId)
+                      setShowRoomMenu(false)
+                    }}
+                  >
+                    {activeMuted ? <Bell size={15} /> : <BellOff size={15} />}
+                    {activeMuted ? '알림 켜기' : '알림 끄기'}
+                  </button>
+                  {isTeamRoom && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="chat-room-menu-item danger"
+                      onClick={() => {
+                        setShowRoomMenu(false)
+                        setShowLeaveModal(true)
+                      }}
+                    >
+                      <LogOut size={15} />
+                      채팅방 나가기
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <div className="chat-messages">
@@ -498,6 +597,22 @@ export function Chat() {
             <div className="link-modal-actions">
               <button onClick={() => setShowLinkModal(false)}>취소</button>
               <button className="primary" onClick={handleLink}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLeaveModal && (
+        <div className="link-modal-overlay" onClick={() => setShowLeaveModal(false)}>
+          <div className="link-modal glass leave-modal" onClick={(e) => e.stopPropagation()}>
+            <h4>채팅방을 나가시겠어요?</h4>
+            <p className="leave-modal-desc">
+              <strong># {CHANNEL_LABELS[activeChannel?.name ?? ''] ?? activeChannel?.name}</strong> 채팅방에서 나갑니다.
+              나가면 목록에서 사라지고 새 메시지 알림을 받지 않습니다.
+            </p>
+            <div className="link-modal-actions">
+              <button onClick={() => setShowLeaveModal(false)}>취소</button>
+              <button className="danger" onClick={handleLeaveChannel}>나가기</button>
             </div>
           </div>
         </div>

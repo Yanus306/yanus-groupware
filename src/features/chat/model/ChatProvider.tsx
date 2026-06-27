@@ -10,15 +10,20 @@ export type { ChatMessage, Channel } from '../../../entities/message/model/types
 
 const MUTED_CHANNELS_COOKIE_KEY = 'chat-muted-channels'
 const LAST_READ_COOKIE_KEY = 'chat-last-read'
+const LEFT_CHANNELS_COOKIE_KEY = 'chat-left-channels'
 
-function loadMutedChannels(): string[] {
+function loadStringList(cookieKey: string): string[] {
   try {
-    const raw = getCookie(MUTED_CHANNELS_COOKIE_KEY)
+    const raw = getCookie(cookieKey)
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
   } catch {
     return []
   }
+}
+
+function loadMutedChannels(): string[] {
+  return loadStringList(MUTED_CHANNELS_COOKIE_KEY)
 }
 
 function loadLastRead(): Record<string, number> {
@@ -56,6 +61,9 @@ type ChatContextValue = {
   getUnreadCount: (channelId: string) => number
   getLastReadAt: (channelId: string) => number | undefined
   markChannelRead: (channelId: string) => void
+  visibleChannels: Channel[]
+  isChannelLeft: (channelId: string) => boolean
+  leaveChannel: (channelId: string) => void
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -67,6 +75,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [activeChannelId, setActiveChannelId] = useState('')
   const [mutedChannels, setMutedChannels] = useState<string[]>(() => loadMutedChannels())
   const [lastReadAt, setLastReadAt] = useState<Record<string, number>>(() => loadLastRead())
+  const [leftChannels, setLeftChannels] = useState<string[]>(() => loadStringList(LEFT_CHANNELS_COOKIE_KEY))
 
   const isDirectChannel = useCallback((channelId: string) => channelId.startsWith('dm-'), [])
 
@@ -105,6 +114,34 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const markChannelRead = useCallback((channelId: string) => {
     setLastReadAt((prev) => ({ ...prev, [channelId]: Date.now() }))
   }, [])
+
+  useEffect(() => {
+    try {
+      setCookie(LEFT_CHANNELS_COOKIE_KEY, JSON.stringify(leftChannels))
+    } catch {
+      // 저장 실패는 무시 — 나간 채팅방 목록은 메모리 상태로만 유지된다
+    }
+  }, [leftChannels])
+
+  const isChannelLeft = useCallback(
+    (channelId: string) => leftChannels.includes(channelId),
+    [leftChannels]
+  )
+
+  const leaveChannel = useCallback(
+    (channelId: string) => {
+      setLeftChannels((prev) => (prev.includes(channelId) ? prev : [...prev, channelId]))
+      // 나간 방이 현재 보고 있던 방이면 남아있는 첫 번째 방으로 전환한다.
+      setActiveChannelId((prev) => {
+        if (prev !== channelId) return prev
+        const next = channels.find((c) => c.id !== channelId && !leftChannels.includes(c.id))
+        return next?.id ?? ''
+      })
+    },
+    [channels, leftChannels]
+  )
+
+  const visibleChannels = channels.filter((c) => !leftChannels.includes(c.id))
 
   useEffect(() => {
     if (!state.currentUser?.id) {
@@ -212,6 +249,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         getUnreadCount,
         getLastReadAt,
         markChannelRead,
+        visibleChannels,
+        isChannelLeft,
+        leaveChannel,
       }}
     >
       {children}

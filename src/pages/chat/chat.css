@@ -101,8 +101,19 @@
 }
 
 .channel-name {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 500;
+  min-width: 0;
+}
+
+.channel-kind-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.channel-name-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -746,6 +757,23 @@
   color: var(--text-on-accent);
 }
 
+.link-modal-actions button.danger {
+  background: var(--error);
+  border: none;
+  color: #fff;
+}
+
+.leave-modal-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 4px 0 4px;
+}
+
+.leave-modal-desc strong {
+  color: var(--text-primary);
+}
+
 .send-btn {
   display: flex;
   align-items: center;
@@ -932,4 +960,82 @@
   .send-btn {
     width: 100%;
   }
+}
+
+/* ===== #404 팀 채팅방 구분 / 멤버수 / 방 메뉴 ===== */
+.channel-item.team-room.active {
+  background: var(--nav-active);
+}
+
+.channel-item.team-room .channel-kind-icon {
+  color: var(--accent-purple);
+}
+
+.channel-member-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+/* 상세(헤더)에서 팀 채팅방 구분 배지 */
+.room-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+  color: var(--accent-purple);
+  background: color-mix(in srgb, var(--accent-purple) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 24%, transparent);
+}
+
+/* 방 메뉴(⋮) 드롭다운 */
+.chat-room-menu {
+  position: relative;
+}
+
+.chat-room-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 168px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-room-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+}
+
+.chat-room-menu-item:hover {
+  background: var(--nav-hover);
+}
+
+.chat-room-menu-item.danger {
+  color: var(--error);
+}
+
+.chat-room-menu-item.danger:hover {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
 }
