@@ -22,21 +22,27 @@ vi.mock('../../../features/auth/model', () => ({
 }))
 
 vi.mock('../../../features/chat/model', () => ({
-  useChat: () => ({
-    channels: [
-      { id: '1', name: 'General', lastMessage: '안녕하세요!' },
-      { id: '2', name: 'Design Team', lastMessage: '디자인 피드백 부탁드려요' },
-    ],
-    activeChannelId: '1',
-    setActiveChannelId: mockSetActiveChannelId,
-    addMessage: mockAddMessage,
-    getMessagesByChannel: () => [],
-    isChannelMuted: () => false,
-    toggleChannelMute: vi.fn(),
-    getUnreadCount: () => 0,
-    getLastReadAt: () => undefined,
-    markChannelRead: vi.fn(),
-  }),
+  useChat: () => {
+    const channels = [
+      { id: '1', name: 'General', type: 'GENERAL', memberCount: 23, lastMessage: '안녕하세요!' },
+      { id: '2', name: 'Design Team', type: 'TEAM', memberCount: 6, lastMessage: '디자인 피드백 부탁드려요' },
+    ]
+    return {
+      channels,
+      activeChannelId: '1',
+      setActiveChannelId: mockSetActiveChannelId,
+      addMessage: mockAddMessage,
+      getMessagesByChannel: () => [],
+      isChannelMuted: () => false,
+      toggleChannelMute: vi.fn(),
+      getUnreadCount: () => 0,
+      getLastReadAt: () => undefined,
+      markChannelRead: vi.fn(),
+      visibleChannels: channels,
+      isChannelLeft: () => false,
+      leaveChannel: vi.fn(),
+    }
+  },
 }))
 
 vi.mock('../../../shared/api/membersApi', () => ({

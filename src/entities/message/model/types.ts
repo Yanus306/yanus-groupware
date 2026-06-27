@@ -9,8 +9,12 @@ export interface ChatMessage {
   timestamp: Date
 }
 
+export type ChannelType = 'GENERAL' | 'TEAM' | 'DIRECT'
+
 export interface Channel {
   id: string
   name: string
+  type?: ChannelType
+  memberCount?: number
   lastMessage?: string
 }
