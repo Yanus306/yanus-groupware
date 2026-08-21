@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { attendanceHandlers } from '../../../shared/api/mock/handlers/attendance'
-import { getDateStringsBetween, getTodayStr, getWeekRange } from '../../../shared/lib/date'
+import { getDateStringsBetween, getTodayStr, getWeekRange, parseDateString } from '../../../shared/lib/date'
 import { Attendance } from '../index'
 
 const server = setupServer(...attendanceHandlers)
@@ -26,6 +26,10 @@ beforeEach(() => {
   })
 })
 afterEach(() => server.resetHandlers())
+afterEach(() => {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
+})
 afterAll(() => server.close())
 
 const mocks = vi.hoisted(() => ({
@@ -159,7 +163,8 @@ describe('Attendance 페이지', () => {
     expect(await screen.findByText('처리할 출석 기록이 없습니다')).toBeInTheDocument()
   })
 
-  it('멤버에게 오늘 CTA와 상태 타임라인을 표시한다', () => {
+  it('멤버에게 오늘 CTA와 상태 타임라인을 표시한다', async () => {
+    localStorage.setItem('accessToken', 'mock-token-3')
     mocks.useApp.mockReturnValue({
       state: { currentUser: { id: '3', name: '이멤버', role: 'MEMBER' }, users: [] },
       isAdmin: false,
@@ -170,7 +175,8 @@ describe('Attendance 페이지', () => {
     expect(screen.getByRole('heading', { name: '오늘 출석' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '출근하기' })).toBeInTheDocument()
     expect(screen.getAllByText('출근 전').length).toBeGreaterThan(0)
-    expect(screen.getByText(/09:00.*18:00/)).toBeInTheDocument()
+    const expectedScheduleByDay = ['휴무', '08:30 - 17:30', '휴무', '08:30 - 17:30', '휴무', '08:30 - 17:30', '휴무']
+    expect(await screen.findByText(expectedScheduleByDay[parseDateString(getTodayStr()).getDay()])).toBeInTheDocument()
   })
 
   it('멤버가 오늘 CTA를 누르면 출퇴근 액션을 호출한다', async () => {
