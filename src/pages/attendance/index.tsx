@@ -3,10 +3,25 @@ import { Download } from 'lucide-react'
 import { useApp } from '../../features/auth/model'
 import { useWorkSession } from '../../features/attendance/model/useWorkSession'
 import { SetWorkDaysPersonal } from '../../features/attendance/ui'
-import { getAttendanceByDate, getAttendanceByDates, getMyAttendance } from '../../shared/api/attendanceApi'
-import type { AttendanceRecord } from '../../shared/api/attendanceApi'
+import {
+  getAllWorkScheduleEvents,
+  getAllWorkSchedules,
+  getAttendanceByDate,
+  getAttendanceByDates,
+  getMyAttendance,
+  getMyWorkSchedule,
+  getTeamWorkScheduleEvents,
+  getTeamWorkSchedules,
+  getWorkScheduleEvents,
+} from '../../shared/api/attendanceApi'
+import type {
+  AttendanceRecord,
+  MemberWorkScheduleItem,
+  WorkScheduleEventItem,
+} from '../../shared/api/attendanceApi'
 import { canViewManagedAttendance } from '../../shared/lib/permissions'
 import { formatDateRangeLabel, formatDateRangeToken, getDateStringsBetween, getTodayStr, getWeekRange } from '../../shared/lib/date'
+import { formatWorkScheduleForDate } from '../../shared/lib/attendanceSchedule'
 import { exportAttendanceToCsv } from '../../shared/lib/exportCsv'
 import { MemberAttendanceView } from './components/MemberAttendanceView'
 import { OperatorAttendanceBoard } from './components/OperatorAttendanceBoard'
@@ -14,12 +29,26 @@ import './attendance.css'
 
 type AttendanceFilter = 'today' | 'week' | 'custom'
 
+function getTeamIdForName(
+  teamName: string | undefined,
+  teams: Array<{ id: number; name: string }> | undefined,
+) {
+  const matchedTeam = teams?.find((team) => team.name === teamName)
+  if (matchedTeam) return matchedTeam.id
+
+  const parsedTeamId = Number.parseInt(teamName ?? '', 10)
+  return Number.isFinite(parsedTeamId) ? parsedTeamId : null
+}
+
 export function Attendance() {
   const { state } = useApp()
   const workSession = useWorkSession()
   const [filter, setFilter] = useState<AttendanceFilter>('today')
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [myRecords, setMyRecords] = useState<AttendanceRecord[]>([])
+  const [memberScheduleLabel, setMemberScheduleLabel] = useState('일정 확인 중')
+  const [managedSchedules, setManagedSchedules] = useState<MemberWorkScheduleItem[]>([])
+  const [managedScheduleEvents, setManagedScheduleEvents] = useState<WorkScheduleEventItem[]>([])
   const [dateInput, setDateInput] = useState('')
   const [activeRange, setActiveRange] = useState(() => {
     const today = getTodayStr()
@@ -31,6 +60,9 @@ export function Attendance() {
   const todayStr = getTodayStr()
   const currentUser = state.currentUser
   const canManageAttendance = canViewManagedAttendance(currentUser)
+  const managedTeamId = currentUser?.role === 'TEAM_LEAD'
+    ? getTeamIdForName(currentUser.team, state.teams)
+    : null
   const activeDate = formatDateRangeLabel(activeRange.start, activeRange.end)
 
   const filterManagedRecords = useCallback((nextRecords: AttendanceRecord[]) => {
@@ -50,31 +82,66 @@ export function Attendance() {
 
     try {
       const dates = getDateStringsBetween(startDate, endDate)
-      const nextRecords = startDate === endDate
-        ? await getAttendanceByDate(startDate)
-        : await getAttendanceByDates(dates)
-      setRecords(filterManagedRecords(nextRecords))
+      const scheduleRequest = currentUser?.role === 'TEAM_LEAD'
+        ? managedTeamId
+          ? getTeamWorkSchedules(managedTeamId)
+          : Promise.resolve<MemberWorkScheduleItem[]>([])
+        : getAllWorkSchedules()
+      const scheduleEventRequest = currentUser?.role === 'TEAM_LEAD'
+        ? managedTeamId
+          ? getTeamWorkScheduleEvents(managedTeamId, startDate, endDate)
+          : Promise.resolve<WorkScheduleEventItem[]>([])
+        : getAllWorkScheduleEvents(startDate, endDate)
+      const [attendanceResult, scheduleResult, scheduleEventResult] = await Promise.allSettled([
+        startDate === endDate ? getAttendanceByDate(startDate) : getAttendanceByDates(dates),
+        scheduleRequest,
+        scheduleEventRequest,
+      ])
+
+      if (attendanceResult.status === 'rejected') {
+        throw attendanceResult.reason
+      }
+
+      setRecords(filterManagedRecords(attendanceResult.value))
+      setManagedSchedules(scheduleResult.status === 'fulfilled' ? scheduleResult.value : [])
+      setManagedScheduleEvents(scheduleEventResult.status === 'fulfilled' ? scheduleEventResult.value : [])
       setActiveRange({ start: startDate, end: endDate })
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '출석 데이터를 불러오지 못했습니다')
     } finally {
       setIsLoading(false)
     }
-  }, [filterManagedRecords])
+  }, [currentUser?.role, filterManagedRecords, managedTeamId])
 
   const loadMemberAttendance = useCallback(async () => {
     setIsLoading(true)
     setErrorMessage(null)
 
     try {
-      const nextMyRecords = await getMyAttendance()
-      setMyRecords(nextMyRecords)
+      const [attendanceResult, scheduleResult, scheduleEventResult] = await Promise.allSettled([
+        getMyAttendance(),
+        getMyWorkSchedule(),
+        getWorkScheduleEvents(todayStr, todayStr),
+      ])
+
+      if (attendanceResult.status === 'rejected') {
+        throw attendanceResult.reason
+      }
+
+      setMyRecords(attendanceResult.value)
+      const schedules = scheduleResult.status === 'fulfilled' ? scheduleResult.value : []
+      const events = scheduleEventResult.status === 'fulfilled' ? scheduleEventResult.value : []
+      setMemberScheduleLabel(
+        scheduleResult.status === 'fulfilled'
+          ? formatWorkScheduleForDate(schedules, events, todayStr)
+          : '일정 확인 불가',
+      )
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : '출석 데이터를 불러오지 못했습니다')
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [todayStr])
 
   useEffect(() => {
     if (canManageAttendance) {
@@ -176,6 +243,8 @@ export function Attendance() {
             isLoading={isLoading}
             errorMessage={errorMessage}
             onRetry={() => void loadManagedAttendance(activeRange.start, activeRange.end)}
+            memberSchedules={managedSchedules}
+            scheduleEvents={managedScheduleEvents}
           />
         ) : (
           <>
@@ -190,6 +259,7 @@ export function Attendance() {
                 workSession.clearError()
                 void loadMemberAttendance()
               }}
+              scheduleLabel={memberScheduleLabel}
             />
             <section className="member-schedule-section" aria-labelledby="member-schedule-title">
               <div className="section-heading-row">

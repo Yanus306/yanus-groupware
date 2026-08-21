@@ -1,10 +1,15 @@
 import { AlertCircle, CheckCircle2, Clock3, Search, X } from 'lucide-react'
 import { useState } from 'react'
-import type { AttendanceRecord } from '../../../shared/api/attendanceApi'
+import type {
+  AttendanceRecord,
+  MemberWorkScheduleItem,
+  WorkScheduleEventItem,
+} from '../../../shared/api/attendanceApi'
 import {
   getAttendanceSummary,
   getTimeLabel,
 } from '../attendanceView'
+import { formatWorkScheduleForDate } from '../../../shared/lib/attendanceSchedule'
 import './operator-attendance.css'
 
 type StatusFilter = 'all' | 'working' | 'left'
@@ -15,6 +20,8 @@ interface OperatorAttendanceBoardProps {
   isLoading: boolean
   errorMessage: string | null
   onRetry: () => void
+  memberSchedules: MemberWorkScheduleItem[]
+  scheduleEvents: WorkScheduleEventItem[]
 }
 
 function sortRecords(records: AttendanceRecord[]): AttendanceRecord[] {
@@ -34,6 +41,8 @@ export function OperatorAttendanceBoard({
   isLoading,
   errorMessage,
   onRetry,
+  memberSchedules,
+  scheduleEvents,
 }: OperatorAttendanceBoardProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -47,6 +56,16 @@ export function OperatorAttendanceBoard({
       (statusFilter === 'left' && record.status === 'LEFT')
     return matchesSearch && matchesStatus
   })
+  const selectedMemberSchedule = selectedRecord
+    ? memberSchedules.find((item) => item.memberId === selectedRecord.memberId)
+    : undefined
+  const selectedScheduleLabel = selectedRecord
+    ? formatWorkScheduleForDate(
+      selectedMemberSchedule?.workSchedules ?? [],
+      scheduleEvents.filter((event) => event.memberId === selectedRecord.memberId),
+      selectedRecord.workDate,
+    )
+    : '휴무'
 
   return (
     <section className="operator-board" aria-labelledby="operator-board-title">
@@ -183,7 +202,7 @@ export function OperatorAttendanceBoard({
             <dl className="operator-detail-list">
               <div><dt>날짜</dt><dd>{selectedRecord.workDate}</dd></div>
               <div><dt>상태</dt><dd>{getRecordStatusLabel(selectedRecord.status)}</dd></div>
-              <div><dt>예정 시간</dt><dd>09:00–18:00</dd></div>
+              <div><dt>예정 시간</dt><dd>{selectedScheduleLabel}</dd></div>
               <div><dt>출근</dt><dd>{getTimeLabel(selectedRecord.checkInTime)}</dd></div>
               <div><dt>퇴근</dt><dd>{getTimeLabel(selectedRecord.checkOutTime)}</dd></div>
             </dl>

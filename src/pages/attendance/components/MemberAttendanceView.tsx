@@ -17,6 +17,7 @@ interface MemberAttendanceViewProps {
   handleClockClick: () => Promise<void> | void
   errorMessage: string | null
   onRetry: () => void
+  scheduleLabel: string
 }
 
 const timelineSteps = [
@@ -44,6 +45,7 @@ export function MemberAttendanceView({
   handleClockClick,
   errorMessage,
   onRetry,
+  scheduleLabel,
 }: MemberAttendanceViewProps) {
   const todayRecord = records.find((record) => record.workDate === todayStr)
   const attendanceStatus = getMemberAttendanceStatus(todayRecord, sessionStatus)
@@ -59,7 +61,7 @@ export function MemberAttendanceView({
           </div>
           <div className="schedule-chip" aria-label="오늘 예정 근무 시간">
             <Clock3 size={16} aria-hidden="true" />
-            <span>09:00–18:00</span>
+            <span>{scheduleLabel}</span>
           </div>
         </div>
 
