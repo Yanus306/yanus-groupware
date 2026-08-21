@@ -38,52 +38,51 @@ function getRecordsForDate(date: string) {
   return [...records.filter((record) => record.memberId !== myRecord?.memberId), myRecord]
 }
 
-// 근무 일정 mock 데이터
-let workSchedules: WorkScheduleItem[] = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
-]
-
-let memberWorkSchedules: MemberWorkScheduleItem[] = [
-  {
-    memberId: 1,
-    memberName: '김리더',
-    teamName: '1팀',
-      workSchedules: [
+function createWorkSchedulesByMemberId(): Record<number, WorkScheduleItem[]> {
+  return {
+    1: [
       { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
       { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
       { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
+      { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+      { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
     ],
-  },
-  {
-    memberId: 2,
-    memberName: '박팀장',
-    teamName: '2팀',
-      workSchedules: [
-      { id: 4, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
-      { id: 5, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
+    2: [
+      { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
+      { id: 7, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
     ],
-  },
-  {
-    memberId: 4,
-    memberName: '최개발',
-    teamName: '1팀',
-      workSchedules: [
-      { id: 6, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
+    3: [
+      { id: 8, dayOfWeek: 'MONDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
+      { id: 9, dayOfWeek: 'WEDNESDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
+      { id: 10, dayOfWeek: 'FRIDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
     ],
-  },
-]
+    4: [
+      { id: 11, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
+    ],
+  }
+}
 
-function syncMyMemberWorkSchedules() {
+let workSchedulesByMemberId = createWorkSchedulesByMemberId()
+
+function getWorkSchedulesForMember(memberId: number) {
+  return workSchedulesByMemberId[memberId] ?? []
+}
+
+function createMemberWorkSchedules(): MemberWorkScheduleItem[] {
+  return [
+    { memberId: 1, memberName: '김리더', teamName: '1팀', workSchedules: getWorkSchedulesForMember(1) },
+    { memberId: 2, memberName: '박팀장', teamName: '2팀', workSchedules: getWorkSchedulesForMember(2) },
+    { memberId: 3, memberName: '이멤버', teamName: '3팀', workSchedules: getWorkSchedulesForMember(3) },
+    { memberId: 4, memberName: '최개발', teamName: '1팀', workSchedules: getWorkSchedulesForMember(4) },
+  ]
+}
+
+let memberWorkSchedules = createMemberWorkSchedules()
+
+function syncMemberWorkSchedules(memberId: number) {
   memberWorkSchedules = memberWorkSchedules.map((item) =>
-    item.memberId === 1
-      ? {
-          ...item,
-          workSchedules,
-        }
+    item.memberId === memberId
+      ? { ...item, workSchedules: getWorkSchedulesForMember(memberId) }
       : item,
   )
 }
@@ -129,6 +128,8 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
 
 export function resetAttendanceMockData() {
   myRecord = null
+  workSchedulesByMemberId = createWorkSchedulesByMemberId()
+  memberWorkSchedules = createMemberWorkSchedules()
 }
 
 export const attendanceHandlers = [
@@ -203,8 +204,8 @@ export const attendanceHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
   }),
 
-  http.get('/api/v1/work-schedules/me', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: workSchedules }),
+  http.get('/api/v1/work-schedules/me', ({ request }) =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getWorkSchedulesForMember(getMemberId(request)) }),
   ),
 
   http.get('/api/v1/work-schedules/all', () =>
@@ -228,7 +229,7 @@ export const attendanceHandlers = [
     const endDate = url.searchParams.get('endDate')
 
     const filtered = filterWorkScheduleEventsByDate(
-      workScheduleEvents.filter((item) => item.memberId === 1),
+      workScheduleEvents.filter((item) => item.memberId === getMemberId(request)),
       startDate,
       endDate,
     )
@@ -260,6 +261,7 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
+    const memberId = getMemberId(request)
     const body = await request.json() as {
       date: string
       eventType?: 'WORKING' | 'DAY_OFF'
@@ -277,9 +279,9 @@ export const attendanceHandlers = [
       endTime: eventType === 'DAY_OFF' ? null : body.endTime,
       endsNextDay: eventType === 'DAY_OFF' ? false : Boolean(body.endsNextDay),
       reason: body.reason ?? null,
-      memberId: 1,
-      memberName: '김리더',
-      teamName: '1팀',
+      memberId,
+      memberName: memberNames[memberId] ?? '김리더',
+      teamName: getTeamNameById(memberId),
     }
 
     workScheduleEvents = [...workScheduleEvents, created]
@@ -327,6 +329,7 @@ export const attendanceHandlers = [
   }),
 
   http.put('/api/v1/work-schedules', async ({ request }) => {
+    const memberId = getMemberId(request)
     const body = await request.json() as {
       dayOfWeek: DayOfWeek
       startTime: string
@@ -334,7 +337,8 @@ export const attendanceHandlers = [
       weekPattern?: WeekPattern
       endsNextDay?: boolean
     }
-    const existing = workSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
+    const currentSchedules = getWorkSchedulesForMember(memberId)
+    const existing = currentSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
     let updated: WorkScheduleItem
     if (existing) {
       updated = {
@@ -344,7 +348,7 @@ export const attendanceHandlers = [
         weekPattern: body.weekPattern ?? existing.weekPattern ?? 'EVERY',
         endsNextDay: Boolean(body.endsNextDay),
       }
-      workSchedules = workSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
+      workSchedulesByMemberId[memberId] = currentSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
     } else {
       updated = {
         id: Date.now(),
@@ -354,16 +358,18 @@ export const attendanceHandlers = [
         weekPattern: body.weekPattern ?? 'EVERY',
         endsNextDay: Boolean(body.endsNextDay),
       }
-      workSchedules = [...workSchedules, updated]
+      workSchedulesByMemberId[memberId] = [...currentSchedules, updated]
     }
-    syncMyMemberWorkSchedules()
+    syncMemberWorkSchedules(memberId)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
 
-  http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params }) => {
+  http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params, request }) => {
+    const memberId = getMemberId(request)
     const dayOfWeek = String(params.dayOfWeek) as DayOfWeek
-    workSchedules = workSchedules.filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
-    syncMyMemberWorkSchedules()
+    workSchedulesByMemberId[memberId] = getWorkSchedulesForMember(memberId)
+      .filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
+    syncMemberWorkSchedules(memberId)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 ]
