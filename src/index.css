@@ -91,27 +91,6 @@
   --error: var(--color-error);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-scheme: light;
-    --bg-dark: #f6f8fa;
-    --bg-card: #ffffff;
-    --bg-sidebar: #ffffff;
-    --surface: #ffffff;
-    --surface-popover: #f6f8fa;
-    --surface-modal: #ffffff;
-    --text-primary: #1f2328;
-    --text-secondary: #656d76;
-    --text-muted: #818b98;
-    --border-color: #d0d7de;
-    --color-primary: #0969da;
-    --color-primary-hover: #0550ae;
-    --color-secondary: #1a7f37;
-    --color-secondary-hover: #116329;
-    --color-on-primary: #ffffff;
-  }
-}
-
 :root[data-theme='light'] {
   --color-scheme: light;
   --bg-dark: #f6f8fa;
