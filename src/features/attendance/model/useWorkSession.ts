@@ -129,7 +129,11 @@ export function useWorkSession() {
             // 이미 출근 처리됨 — 서버 기록으로 동기화 후 working 전환
             setToastType('info')
             setErrorMessage('이미 출근 처리된 기록이 있습니다')
-            syncTodayAttendance().catch(() => {})
+            syncTodayAttendance().catch(() => {
+              setStatus('working')
+              setToastType('info')
+              setErrorMessage('출근 상태를 동기화하지 못했습니다')
+            })
           } else if (isAttendanceIpError(err)) {
             setToastType('error')
             setErrorMessage('출근은 220.69 대역 IP에서만 가능합니다')
