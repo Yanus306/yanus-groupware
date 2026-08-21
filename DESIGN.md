@@ -137,7 +137,7 @@ Before interaction findings:
 
 ### After
 
-After captures were regenerated on `2026-08-22` at implementation commit `cbcf7bd9bc306e23b73b841dd83fcb00fdbbe0cd`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position.
+After captures were regenerated on `2026-08-22` at implementation commit `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
