@@ -336,7 +336,7 @@
 
   .main-content {
     margin-left: 0;
-    margin-bottom: 82px;
+    margin-bottom: 104px;
     padding: 16px 14px calc(24px + env(safe-area-inset-bottom));
     min-height: auto;
   }

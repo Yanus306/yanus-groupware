@@ -45,7 +45,7 @@
   flex-shrink: 0;
 }
 
-.member-avatar {
+.set-work-days-personal .member-avatar {
   display: flex;
   width: 32px;
   height: 32px;
@@ -60,7 +60,7 @@
   font-weight: 600;
 }
 
-.member-name {
+.set-work-days-personal .member-name {
   font-weight: 500;
   font-size: var(--font-size-sm);
 }
@@ -429,7 +429,10 @@
   }
 
   .set-work-days-personal .desc,
-  .schedule-summary p,
+  .schedule-summary p {
+    font-size: var(--font-size-sm);
+  }
+
   .day-off-label span {
     font-size: var(--font-size-xs);
   }
