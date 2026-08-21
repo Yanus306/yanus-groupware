@@ -1,0 +1,296 @@
+.member-attendance-view {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.member-today-card {
+  padding: var(--space-8);
+}
+
+.member-today-card.status-before {
+  border-color: color-mix(in srgb, var(--color-secondary) 55%, var(--border-color));
+}
+
+.member-today-card.status-working {
+  border-color: color-mix(in srgb, var(--color-warning) 65%, var(--border-color));
+}
+
+.member-today-card.status-done {
+  border-color: color-mix(in srgb, var(--color-success) 65%, var(--border-color));
+}
+
+.member-today-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.member-today-heading h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.schedule-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--surface-popover);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
+.member-status-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: var(--space-8) 0 var(--space-6);
+}
+
+.status-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  color: var(--color-secondary);
+}
+
+.status-working .status-icon {
+  color: var(--color-warning);
+}
+
+.status-done .status-icon {
+  color: var(--color-success);
+}
+
+.status-label {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.status-description {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.member-clock-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  min-width: 160px;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-secondary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), opacity var(--motion-fast);
+}
+
+.member-clock-cta:hover:not(:disabled) {
+  background: var(--color-secondary-hover);
+  border-color: var(--color-secondary-hover);
+}
+
+.member-clock-cta:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.member-timeline-section,
+.member-history-section {
+  padding: var(--space-6);
+}
+
+.attendance-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attendance-timeline li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 2px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.attendance-timeline li.current {
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.timeline-marker {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  margin-top: 3px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.attendance-timeline li.current .timeline-marker {
+  background: currentColor;
+}
+
+.attendance-timeline strong,
+.attendance-timeline small {
+  display: block;
+}
+
+.attendance-timeline strong {
+  font-size: var(--font-size-sm);
+}
+
+.attendance-timeline small {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.member-history-list {
+  display: grid;
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--border-color);
+}
+
+.member-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 64px;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.member-history-row strong,
+.member-history-row span,
+.history-times span,
+.history-times small {
+  display: block;
+}
+
+.member-history-row > div:first-child span {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.history-times {
+  display: flex;
+  gap: var(--space-6);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  text-align: right;
+}
+
+.history-times small {
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  text-align: right;
+}
+
+.member-empty-state,
+.member-error-state {
+  margin-top: var(--space-5);
+  padding: var(--space-6);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.member-error-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-style: solid;
+  border-color: var(--color-error);
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.member-error-state button,
+.operator-state button {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--surface-popover);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .member-today-card {
+    padding: var(--space-5);
+  }
+
+  .member-today-heading {
+    display: grid;
+  }
+
+  .schedule-chip {
+    justify-self: start;
+  }
+
+  .attendance-timeline {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .member-timeline-section,
+  .member-history-section {
+    padding: var(--space-4);
+  }
+
+  .attendance-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .member-history-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .history-times {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .history-times small {
+    text-align: left;
+  }
+
+  .member-error-state {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

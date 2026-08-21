@@ -5,7 +5,7 @@ export interface AttendanceRecord {
   memberId: number
   memberName: string
   workDate: string
-  checkInTime: string
+  checkInTime: string | null
   checkOutTime: string | null
   status: 'WORKING' | 'LEFT'
 }

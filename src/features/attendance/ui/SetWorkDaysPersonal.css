@@ -424,3 +424,10 @@
     transform: translateX(18px);
   }
 }
+
+.schedule-note {
+  margin: 20px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
