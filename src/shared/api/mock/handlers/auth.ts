@@ -27,15 +27,14 @@ export function resetAuthMockData() {
   verifiedEmails = new Set(Object.keys(INITIAL_CREDENTIALS))
 }
 
-export function getAuthMockUserByAuthorization(authorization: string | null): User {
-  if (!authorization?.startsWith('Bearer ')) {
-    return mockUsers[0]
-  }
+export function getAuthMockUserByAuthorization(authorization: string | null): User | null {
+  if (!authorization?.startsWith('Bearer ')) return null
 
   const token = authorization.replace('Bearer ', '')
+  if (!/^mock-token-\d+$/.test(token)) return null
   const userId = token.replace('mock-token-', '')
 
-  return mockUsers.find((user) => user.id === userId) ?? mockUsers[0]
+  return mockUsers.find((user) => user.id === userId && user.status !== 'INACTIVE') ?? null
 }
 
 export const authHandlers = [
@@ -159,6 +158,12 @@ export const authHandlers = [
       )
     }
     const user = getAuthMockUserByAuthorization(authorization)
+    if (!user) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증 정보가 유효하지 않습니다', data: null },
+        { status: 401 },
+      )
+    }
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: user })
   }),
 

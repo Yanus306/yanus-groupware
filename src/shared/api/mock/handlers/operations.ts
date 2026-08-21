@@ -348,7 +348,7 @@ function createSettlement(yearMonth: string, memberId: number): AttendanceSettle
 }
 
 function getCurrentUserId(authorization: string | null) {
-  return Number(getAuthMockUserByAuthorization(authorization).id)
+  return Number(getAuthMockUserByAuthorization(authorization)?.id ?? 0)
 }
 
 function filterTasksByRange(tasks: MockTask[], startDate: string | null, endDate: string | null) {
@@ -514,6 +514,12 @@ export const operationsHandlers = [
   http.post('/api/v1/leaves', async ({ request }) => {
     const body = await request.json() as { category: Leave['category']; detail: string; date: string }
     const currentUser = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (!currentUser) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
     const newLeave: Leave = {
       id: nextLeaveId++,
       memberId: Number(currentUser.id),
@@ -701,6 +707,12 @@ export const operationsHandlers = [
       paymentStatus: AttendanceSettlementPaymentStatus
     }
     const currentUser = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (!currentUser) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
 
     mockSettlementPayments.set(`${body.yearMonth}:${body.targetMemberId}`, {
       paymentStatus: body.paymentStatus,

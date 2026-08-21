@@ -10,6 +10,8 @@ import { Attendance } from '../index'
 const server = setupServer(...attendanceHandlers)
 beforeAll(() => server.listen())
 beforeEach(() => {
+  localStorage.setItem('accessToken', 'mock-token-1')
+  localStorage.setItem('refreshToken', 'refresh-1')
   mocks.useApp.mockReturnValue({
     state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN' }, users: [] },
     isAdmin: true,

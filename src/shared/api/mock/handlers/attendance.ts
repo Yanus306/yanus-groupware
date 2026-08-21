@@ -7,6 +7,8 @@ import type {
   WorkScheduleEventItem,
   WorkScheduleItem,
 } from '../../attendanceApi'
+import type { User } from '../../../../entities/user/model/types'
+import { getAuthMockUserByAuthorization } from './auth'
 import { getTodayStr } from '../../../lib/date'
 
 const today = getTodayStr()
@@ -21,21 +23,65 @@ const memberNames: Record<number, string> = {
   1: '김리더',
   2: '박팀장',
   3: '이멤버',
+  4: '최개발',
 }
 
-let myRecord: AttendanceRecord | null = null
-
-function getMemberId(request: Request) {
-  const token = request.headers.get('Authorization') ?? ''
-  const parsedId = Number(token.replace('Bearer mock-token-', ''))
-  return Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 1
+const memberTeams: Record<number, string> = {
+  1: '1팀',
+  2: '2팀',
+  3: '3팀',
+  4: '1팀',
 }
 
-function getRecordsForDate(date: string) {
+let myRecordsByMemberId: Record<number, AttendanceRecord | null> = {}
+
+function getAuthenticatedUser(request: Request) {
+  return getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+}
+
+function unauthorizedResponse() {
+  return HttpResponse.json(
+    { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+    { status: 401 },
+  )
+}
+
+function forbiddenResponse() {
+  return HttpResponse.json(
+    { code: 'FORBIDDEN', message: '접근 권한이 없습니다', data: null },
+    { status: 403 },
+  )
+}
+
+function getTeamNameByMemberId(memberId: number) {
+  return memberTeams[memberId] ?? '4팀'
+}
+
+function getTeamIdByName(teamName: string | undefined) {
+  const matched = /^([1-4])팀$/.exec(teamName ?? '')
+  return matched ? Number(matched[1]) : null
+}
+
+function canReadTeam(user: User, teamId: number) {
+  if (user.role === 'ADMIN') return true
+  return getTeamIdByName(user.team) === teamId
+}
+
+function getRecordsForDate(date: string, user?: User) {
   const records = mockRecords.filter((record) => record.workDate === date)
-  if (!myRecord || myRecord.workDate !== date) return records
+  const overrides = Object.entries(myRecordsByMemberId)
+    .map(([memberId, record]) => ({ memberId: Number(memberId), record }))
+  const overriddenMemberIds = new Set(overrides.map(({ memberId }) => memberId))
+  const visibleRecords = records.filter((record) => !overriddenMemberIds.has(record.memberId))
+  const dynamicRecords = overrides
+    .map(({ record }) => record)
+    .filter((record): record is AttendanceRecord => record?.workDate === date)
+  const allRecords = [...visibleRecords, ...dynamicRecords]
 
-  return [...records.filter((record) => record.memberId !== myRecord?.memberId), myRecord]
+  if (!user) return allRecords
+  if (user.role === 'ADMIN') return allRecords
+  if (user.role === 'TEAM_LEAD') return allRecords.filter((record) => getTeamNameByMemberId(record.memberId) === user.team)
+  return allRecords.filter((record) => record.memberId === Number(user.id))
 }
 
 function createWorkSchedulesByMemberId(): Record<number, WorkScheduleItem[]> {
@@ -127,50 +173,86 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
 ]
 
 export function resetAttendanceMockData() {
-  myRecord = null
+  myRecordsByMemberId = {}
   workSchedulesByMemberId = createWorkSchedulesByMemberId()
   memberWorkSchedules = createMemberWorkSchedules()
+  workScheduleEvents = [
+    {
+      id: 101,
+      date: '2026-03-31',
+      eventType: 'WORKING',
+      startTime: '13:00:00',
+      endTime: '18:00:00',
+      memberId: 1,
+      memberName: '김리더',
+      teamName: '1팀',
+    },
+    {
+      id: 102,
+      date: '2026-04-02',
+      eventType: 'WORKING',
+      startTime: '22:00:00',
+      endTime: '06:00:00',
+      endsNextDay: true,
+      memberId: 4,
+      memberName: '최개발',
+      teamName: '1팀',
+    },
+  ]
 }
 
 export const attendanceHandlers = [
   http.get('/api/v1/attendances', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const date = url.searchParams.get('date') ?? getTodayStr()
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getRecordsForDate(date) })
+    const requestedTeamId = Number(url.searchParams.get('teamId'))
+    if (user.role === 'TEAM_LEAD' && requestedTeamId && !canReadTeam(user, requestedTeamId)) {
+      return forbiddenResponse()
+    }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getRecordsForDate(date, user) })
   }),
 
   http.get('/api/v1/attendances/me', ({ request }) => {
-    const memberId = getMemberId(request)
-    const data = getRecordsForDate(getTodayStr()).filter((record) => record.memberId === memberId)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const data = getRecordsForDate(getTodayStr(), user).filter((record) => record.memberId === Number(user.id))
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
   http.delete('/api/v1/attendances/me', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const date = url.searchParams.get('date') ?? getTodayStr()
+    const memberId = Number(user.id)
 
-    if (!myRecord || myRecord.workDate !== date) {
+    const existingRecord = getRecordsForDate(date, user).find((record) => record.memberId === memberId)
+    if (!existingRecord) {
       return HttpResponse.json(
         { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
         { status: 400 },
       )
     }
 
-    myRecord = null
+    myRecordsByMemberId[memberId] = null
     return new HttpResponse(null, { status: 200 })
   }),
 
   http.post('/api/v1/attendances/check-in', ({ request }) => {
     const today = getTodayStr()
-    const memberId = getMemberId(request)
-    const existingRecord = getRecordsForDate(today).find((record) => record.memberId === memberId)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const existingRecord = getRecordsForDate(today, user).find((record) => record.memberId === memberId)
     if (existingRecord) {
       return HttpResponse.json(
         { code: 'ALREADY_CHECKED_IN', message: '이미 출근 처리되었습니다.', data: null },
         { status: 409 },
       )
     }
-    myRecord = {
+    myRecordsByMemberId[memberId] = {
       id: Date.now(),
       memberId,
       memberName: memberNames[memberId] ?? '김리더',
@@ -179,15 +261,17 @@ export const attendanceHandlers = [
       checkOutTime: null,
       status: 'WORKING',
     }
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecordsByMemberId[memberId] })
   }),
 
   http.post('/api/v1/attendances/check-out', ({ request }) => {
     const today = getTodayStr()
-    const memberId = getMemberId(request)
-    const existingRecord = myRecord?.memberId === memberId
-      ? myRecord
-      : getRecordsForDate(today).find((record) => record.memberId === memberId)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const existingRecord = myRecordsByMemberId[memberId]?.memberId === memberId
+      ? myRecordsByMemberId[memberId]
+      : getRecordsForDate(today, user).find((record) => record.memberId === memberId)
     if (!existingRecord) {
       return HttpResponse.json(
         { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
@@ -200,20 +284,28 @@ export const attendanceHandlers = [
         { status: 400 },
       )
     }
-    myRecord = { ...existingRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
+    myRecordsByMemberId[memberId] = { ...existingRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecordsByMemberId[memberId] })
   }),
 
-  http.get('/api/v1/work-schedules/me', ({ request }) =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getWorkSchedulesForMember(getMemberId(request)) }),
-  ),
+  http.get('/api/v1/work-schedules/me', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getWorkSchedulesForMember(Number(user.id)) })
+  }),
 
-  http.get('/api/v1/work-schedules/all', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: memberWorkSchedules }),
-  ),
+  http.get('/api/v1/work-schedules/all', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    if (user.role !== 'ADMIN') return forbiddenResponse()
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: memberWorkSchedules })
+  }),
 
-  http.get('/api/v1/work-schedules/team/:teamId', ({ params }) => {
+  http.get('/api/v1/work-schedules/team/:teamId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const teamId = Number(params.teamId)
+    if (!Number.isInteger(teamId) || teamId <= 0 || !canReadTeam(user, teamId)) return forbiddenResponse()
     const teamName = getTeamNameById(teamId)
 
     return HttpResponse.json({
@@ -224,12 +316,14 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
 
     const filtered = filterWorkScheduleEventsByDate(
-      workScheduleEvents.filter((item) => item.memberId === getMemberId(request)),
+      workScheduleEvents.filter((item) => item.memberId === Number(user.id)),
       startDate,
       endDate,
     )
@@ -238,10 +332,14 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events/team/:teamId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
     const url = new URL(request.url)
+    if (!user) return unauthorizedResponse()
+    const teamId = Number(params.teamId)
+    if (!Number.isInteger(teamId) || teamId <= 0 || !canReadTeam(user, teamId)) return forbiddenResponse()
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
-    const teamName = getTeamNameById(Number(params.teamId))
+    const teamName = getTeamNameById(teamId)
     const filtered = filterWorkScheduleEventsByDate(
       workScheduleEvents.filter((item) => item.teamName === teamName),
       startDate,
@@ -252,6 +350,9 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events/all', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    if (user.role !== 'ADMIN') return forbiddenResponse()
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
@@ -261,7 +362,9 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
-    const memberId = getMemberId(request)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
     const body = await request.json() as {
       date: string
       eventType?: 'WORKING' | 'DAY_OFF'
@@ -281,7 +384,7 @@ export const attendanceHandlers = [
       reason: body.reason ?? null,
       memberId,
       memberName: memberNames[memberId] ?? '김리더',
-      teamName: getTeamNameById(memberId),
+      teamName: getTeamNameByMemberId(memberId),
     }
 
     workScheduleEvents = [...workScheduleEvents, created]
@@ -289,6 +392,8 @@ export const attendanceHandlers = [
   }),
 
   http.put('/api/v1/work-schedule-events/:eventId', async ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
     const body = await request.json() as {
       date: string
@@ -307,6 +412,11 @@ export const attendanceHandlers = [
       )
     }
 
+    const canEdit = user.role === 'ADMIN'
+      || (user.role === 'TEAM_LEAD' && existing.teamName === user.team)
+      || existing.memberId === Number(user.id)
+    if (!canEdit) return forbiddenResponse()
+
     const eventType = body.eventType ?? 'WORKING'
     const updated: WorkScheduleEventItem = {
       ...existing,
@@ -322,14 +432,24 @@ export const attendanceHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
 
-  http.delete('/api/v1/work-schedule-events/:eventId', ({ params }) => {
+  http.delete('/api/v1/work-schedule-events/:eventId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
+    const existing = workScheduleEvents.find((item) => item.id === eventId)
+    if (!existing) return new HttpResponse(null, { status: 204 })
+    const canDelete = user.role === 'ADMIN'
+      || (user.role === 'TEAM_LEAD' && existing.teamName === user.team)
+      || existing.memberId === Number(user.id)
+    if (!canDelete) return forbiddenResponse()
     workScheduleEvents = workScheduleEvents.filter((item) => item.id !== eventId)
     return new HttpResponse(null, { status: 200 })
   }),
 
   http.put('/api/v1/work-schedules', async ({ request }) => {
-    const memberId = getMemberId(request)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
     const body = await request.json() as {
       dayOfWeek: DayOfWeek
       startTime: string
@@ -365,7 +485,9 @@ export const attendanceHandlers = [
   }),
 
   http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params, request }) => {
-    const memberId = getMemberId(request)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
     const dayOfWeek = String(params.dayOfWeek) as DayOfWeek
     workSchedulesByMemberId[memberId] = getWorkSchedulesForMember(memberId)
       .filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
