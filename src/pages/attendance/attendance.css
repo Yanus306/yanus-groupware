@@ -109,7 +109,7 @@
 
 .attendance-filter-group button,
 .operator-filters button {
-  min-height: 32px;
+  min-height: 36px;
   padding: 0 var(--space-3);
   border-radius: var(--radius-xs);
   background: transparent;
@@ -144,9 +144,16 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text-primary);
-  color-scheme: dark;
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
+}
+
+:root[data-theme='dark'] .date-input {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] .date-input {
+  color-scheme: light;
 }
 
 .attendance-content {
