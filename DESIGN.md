@@ -137,7 +137,7 @@ Before interaction findings:
 
 ### After
 
-After captures were generated on `2026-08-22` at commit `802abc0` with the same route, role, viewport, mock mode, and default scroll position as the Before set. A second browser pass checked bottom clearance at the maximum scroll position.
+After captures were generated on `2026-08-22` before the develop sync at implementation commit `802abc0`; the equivalent rebased commit is `a8cd407`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. A second browser pass checked bottom clearance at the maximum scroll position.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
