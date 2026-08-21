@@ -12,6 +12,7 @@ import type {
   AttendanceSettlement,
   AttendanceSettlementPaymentStatus,
 } from '../../../api/attendanceSettlementApi'
+import { getTodayStr, toDateString } from '../../../lib/date'
 import { getAuthMockUserByAuthorization } from './auth'
 
 type MockTaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
@@ -30,8 +31,10 @@ interface MockTask {
   memberNames?: string[] | null
 }
 
-const today = new Date().toISOString().slice(0, 10)
-const tomorrow = new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().slice(0, 10)
+const today = getTodayStr()
+const tomorrowDate = new Date(`${today}T12:00:00`)
+tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+const tomorrow = toDateString(tomorrowDate)
 
 let nextTaskId = 5
 let nextLeaveId = 4

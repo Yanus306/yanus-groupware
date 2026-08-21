@@ -7,16 +7,14 @@ import type {
   WorkScheduleEventItem,
   WorkScheduleItem,
 } from '../../attendanceApi'
+import { getTodayStr } from '../../../lib/date'
 
-function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+const today = getTodayStr()
 
 const mockRecords: AttendanceRecord[] = [
-  { id: 1, memberId: 1, memberName: '김리더', workDate: todayStr(), checkInTime: `${todayStr()}T09:02:00`, checkOutTime: `${todayStr()}T18:15:00`, status: 'LEFT' },
-  { id: 2, memberId: 2, memberName: '박팀장', workDate: todayStr(), checkInTime: `${todayStr()}T09:45:00`, checkOutTime: null, status: 'WORKING' },
-  { id: 3, memberId: 3, memberName: '이멤버', workDate: todayStr(), checkInTime: `${todayStr()}T09:00:00`, checkOutTime: null, status: 'WORKING' },
+  { id: 1, memberId: 1, memberName: '김리더', workDate: today, checkInTime: `${today}T09:02:00`, checkOutTime: `${today}T18:15:00`, status: 'LEFT' },
+  { id: 2, memberId: 2, memberName: '박팀장', workDate: today, checkInTime: `${today}T09:45:00`, checkOutTime: null, status: 'WORKING' },
+  { id: 3, memberId: 3, memberName: '이멤버', workDate: today, checkInTime: `${today}T09:00:00`, checkOutTime: null, status: 'WORKING' },
 ]
 
 const memberNames: Record<number, string> = {
@@ -136,19 +134,19 @@ export function resetAttendanceMockData() {
 export const attendanceHandlers = [
   http.get('/api/v1/attendances', ({ request }) => {
     const url = new URL(request.url)
-    const date = url.searchParams.get('date') ?? todayStr()
+    const date = url.searchParams.get('date') ?? getTodayStr()
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getRecordsForDate(date) })
   }),
 
   http.get('/api/v1/attendances/me', ({ request }) => {
     const memberId = getMemberId(request)
-    const data = getRecordsForDate(todayStr()).filter((record) => record.memberId === memberId)
+    const data = getRecordsForDate(getTodayStr()).filter((record) => record.memberId === memberId)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
   http.delete('/api/v1/attendances/me', ({ request }) => {
     const url = new URL(request.url)
-    const date = url.searchParams.get('date') ?? todayStr()
+    const date = url.searchParams.get('date') ?? getTodayStr()
 
     if (!myRecord || myRecord.workDate !== date) {
       return HttpResponse.json(
@@ -162,7 +160,7 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/attendances/check-in', ({ request }) => {
-    const today = todayStr()
+    const today = getTodayStr()
     const memberId = getMemberId(request)
     const existingRecord = getRecordsForDate(today).find((record) => record.memberId === memberId)
     if (existingRecord) {
@@ -184,7 +182,7 @@ export const attendanceHandlers = [
   }),
 
   http.post('/api/v1/attendances/check-out', ({ request }) => {
-    const today = todayStr()
+    const today = getTodayStr()
     const memberId = getMemberId(request)
     const existingRecord = myRecord?.memberId === memberId
       ? myRecord
