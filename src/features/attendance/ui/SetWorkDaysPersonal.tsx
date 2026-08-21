@@ -60,7 +60,7 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
           <div>
             <h3>근무 일정 설정</h3>
             <p className="desc">
-              요일별 시간과 반복 주차를 함께 정리해 개인 근무 루틴을 <span className="schedule-phrase">관리할 수 있습니다</span>.
+              요일별 시간과 <span className="schedule-phrase">반복 주차</span>를 함께 정리해 개인 <span className="schedule-phrase">근무 루틴</span>을 <span className="schedule-phrase">관리할 수 있습니다</span>.
             </p>
           </div>
           <div className="member-info">
@@ -73,7 +73,7 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
       <div className="schedule-summary">
         <span className="summary-chip">활성 요일 {workDays.filter(Boolean).length}일</span>
         <p>
-          반복 근무를 요일별로 정리하고, 근무 시간과 반복 주차를 한 번에 <span className="schedule-phrase">저장할 수 있습니다</span>.
+          <span className="schedule-phrase">반복 근무</span>를 요일별로 정리하고, <span className="schedule-phrase">근무 시간</span>과 <span className="schedule-phrase">반복 주차</span>를 한 번에 <span className="schedule-phrase">저장할 수 있습니다</span>.
         </p>
       </div>
 
