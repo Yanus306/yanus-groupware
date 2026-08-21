@@ -1,9 +1,17 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createElement, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSession } from '../useWorkSession'
 import { getTodayStr } from '../../../../shared/lib/date'
+import { AppProvider } from '../../../auth/model/AppProvider'
+import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../../shared/lib/attendanceStorage'
+
+const TEST_USER = { id: '1', name: '테스터', email: 'test@yanus.kr', team: '1팀', role: 'MEMBER' as const }
+const SESSION_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.session, TEST_USER.id)!
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(AppProvider, { initialUser: TEST_USER }, children)
 
 const CLOCK_IN_RECORD = {
   id: 1, memberId: 1, memberName: '테스터',
@@ -39,7 +47,7 @@ afterAll(() => server.close())
 
 /** 초기 getMyAttendance() 비동기 효과가 완료될 때까지 flush */
 async function mountHook() {
-  const hook = renderHook(() => useWorkSession())
+  const hook = renderHook(() => useWorkSession(), { wrapper })
   await act(async () => {})
   return hook
 }
@@ -47,7 +55,7 @@ async function mountHook() {
 describe('useWorkSession', () => {
   describe('로딩 상태', () => {
     it('초기 isLoading은 true이다', () => {
-      const { result } = renderHook(() => useWorkSession())
+      const { result } = renderHook(() => useWorkSession(), { wrapper })
       expect(result.current.isLoading).toBe(true)
     })
 
@@ -201,13 +209,13 @@ describe('useWorkSession', () => {
     it('상태 변경 시 localStorage에 저장된다', async () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.handleClockClick() })
-      const stored = localStorage.getItem('yanus-work-session')
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY)
       expect(stored).not.toBeNull()
       expect(JSON.parse(stored!).status).toBe('working')
     })
 
     it('서버에 오늘 기록이 없으면 이전 localStorage working 상태를 복구하지 않는다', async () => {
-      localStorage.setItem('yanus-work-session', JSON.stringify({
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
         status: 'working',
         clockIn: `${getTodayStr()}T09:00:00.000Z`,
       }))
@@ -216,7 +224,7 @@ describe('useWorkSession', () => {
 
       expect(result.current.status).toBe('idle')
       expect(result.current.clockIn).toBeNull()
-      expect(localStorage.getItem('yanus-work-session')).toBeNull()
+      expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
     })
 
     it('요청 실패 시에도 이전 날짜 localStorage 상태는 복구하지 않는다', async () => {
@@ -225,7 +233,7 @@ describe('useWorkSession', () => {
           HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
         ),
       )
-      localStorage.setItem('yanus-work-session', JSON.stringify({
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
         status: 'working',
         clockIn: '2026-03-21T09:00:00.000Z',
       }))
@@ -242,7 +250,7 @@ describe('useWorkSession', () => {
           HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
         ),
       )
-      localStorage.setItem('yanus-work-session', JSON.stringify({
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
         status: 'working',
         clockIn: `${getTodayStr()}T09:10:00.000Z`,
       }))
@@ -260,7 +268,7 @@ describe('useWorkSession', () => {
         ),
       )
       const kstEarlyMorning = new Date(`${getTodayStr()}T00:30:00+09:00`).toISOString()
-      localStorage.setItem('yanus-work-session', JSON.stringify({
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
         status: 'working',
         clockIn: kstEarlyMorning,
       }))

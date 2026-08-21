@@ -9,6 +9,8 @@ import type { DayOfWeek, WeekPattern, WorkScheduleEventItem } from '../../../sha
 import { ApiError } from '../../../shared/api/baseClient'
 import { getTodayStr, parseDateString } from '../../../shared/lib/date'
 import { matchesWeekPattern } from '../../../shared/lib/attendanceSchedule'
+import { useApp } from '../../auth/model/AppProvider'
+import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../shared/lib/attendanceStorage'
 
 export interface DaySchedule {
   checkInTime: string   // "HH:mm"
@@ -25,9 +27,6 @@ const INDEX_TO_DOW: DayOfWeek[] = [
   'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
 ]
 
-const WORK_DAYS_STORAGE_KEY = 'yanus-work-days'
-const WORK_WEEK_PATTERNS_STORAGE_KEY = 'yanus-work-week-patterns'
-const WORK_ENDS_NEXT_DAY_STORAGE_KEY = 'yanus-work-ends-next-day'
 const DEFAULT_CHECK_IN = '09:00'
 const DEFAULT_CHECK_OUT = '18:00'
 const DEFAULT_WORK_DAYS = [false, false, false, false, false, false, false]
@@ -52,6 +51,11 @@ function toDaySchedule(event: WorkScheduleEventItem): DaySchedule | null {
 }
 
 export function useWorkSchedule() {
+  const { state } = useApp()
+  const userId = state.currentUser?.id
+  const workDaysStorageKey = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.days, userId)
+  const weekPatternsStorageKey = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.weekPatterns, userId)
+  const endsNextDayStorageKey = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.endsNextDay, userId)
   const [today] = useState(() => getTodayStr())
   const [workDays, setWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(
@@ -65,7 +69,20 @@ export function useWorkSchedule() {
   const [savedWorkDays, setSavedWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
 
   useEffect(() => {
-    const storedDays = localStorage.getItem(WORK_DAYS_STORAGE_KEY)
+    setWorkDays(DEFAULT_WORK_DAYS)
+    setDaySchedules(makeDefaultDaySchedules(DEFAULT_CHECK_IN, DEFAULT_CHECK_OUT))
+    setWeekPatterns(DEFAULT_WEEK_PATTERNS)
+    setTodayOverride(null)
+    setSavedWorkDays(DEFAULT_WORK_DAYS)
+    setError(null)
+    setIsLoading(true)
+
+    if (!userId || !workDaysStorageKey || !weekPatternsStorageKey || !endsNextDayStorageKey) {
+      setIsLoading(false)
+      return
+    }
+
+    const storedDays = localStorage.getItem(workDaysStorageKey)
     let parsedStoredDays: boolean[] | null = null
     if (storedDays) {
       try {
@@ -79,7 +96,7 @@ export function useWorkSchedule() {
     }
 
     // localStorage에서 근무 요일 토글 상태는 API 조회 실패 시에만 fallback으로 사용
-    const storedWeekPatterns = localStorage.getItem(WORK_WEEK_PATTERNS_STORAGE_KEY)
+    const storedWeekPatterns = localStorage.getItem(weekPatternsStorageKey)
     if (storedWeekPatterns) {
       try {
         const parsed = JSON.parse(storedWeekPatterns) as WeekPattern[]
@@ -89,7 +106,7 @@ export function useWorkSchedule() {
       }
     }
 
-    const storedEndsNextDay = localStorage.getItem(WORK_ENDS_NEXT_DAY_STORAGE_KEY)
+    const storedEndsNextDay = localStorage.getItem(endsNextDayStorageKey)
     if (storedEndsNextDay) {
       try {
         const parsed = JSON.parse(storedEndsNextDay) as boolean[]
@@ -155,7 +172,7 @@ export function useWorkSchedule() {
       })
 
     Promise.allSettled([loadRecurringSchedule, loadTodayOverride]).finally(() => setIsLoading(false))
-  }, [today])
+  }, [endsNextDayStorageKey, today, userId, weekPatternsStorageKey, workDaysStorageKey])
 
   const toggleDay = (index: number) => {
     setWorkDays((prev) => prev.map((v, i) => (i === index ? !v : v)))
@@ -174,6 +191,11 @@ export function useWorkSchedule() {
   }
 
   const saveSchedule = async () => {
+    if (!userId || !workDaysStorageKey || !weekPatternsStorageKey || !endsNextDayStorageKey) {
+      setError('로그인이 필요합니다')
+      return false
+    }
+
     setIsSaving(true)
     setError(null)
     let saved = false
@@ -200,10 +222,10 @@ export function useWorkSchedule() {
 
       await Promise.all([...upsertPromises, ...deletePromises])
       setSavedWorkDays([...workDays])
-      localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(workDays))
-      localStorage.setItem(WORK_WEEK_PATTERNS_STORAGE_KEY, JSON.stringify(weekPatterns))
+      localStorage.setItem(workDaysStorageKey, JSON.stringify(workDays))
+      localStorage.setItem(weekPatternsStorageKey, JSON.stringify(weekPatterns))
       localStorage.setItem(
-        WORK_ENDS_NEXT_DAY_STORAGE_KEY,
+        endsNextDayStorageKey,
         JSON.stringify(daySchedules.map((schedule) => schedule.endsNextDay)),
       )
       saved = true

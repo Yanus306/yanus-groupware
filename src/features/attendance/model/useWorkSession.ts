@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { WorkStatus } from '../ui/AnimatedClockRing'
 import { clockIn as apiClockIn, clockOut as apiClockOut, getMyAttendance, resetMyAttendance } from '../../../shared/api/attendanceApi'
 import { ApiError } from '../../../shared/api/baseClient'
 import { getTodayStr } from '../../../shared/lib/date'
-
-const STORAGE_KEY = 'yanus-work-session'
+import { useApp } from '../../auth/model/AppProvider'
+import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../shared/lib/attendanceStorage'
 
 interface StoredWorkSession {
   status: WorkStatus
@@ -12,8 +12,9 @@ interface StoredWorkSession {
   clockOut?: string
 }
 
-function readStoredSession(): StoredWorkSession | null {
-  const stored = localStorage.getItem(STORAGE_KEY)
+function readStoredSession(storageKey: string | null): StoredWorkSession | null {
+  if (!storageKey) return null
+  const stored = localStorage.getItem(storageKey)
   if (!stored) return null
 
   try {
@@ -36,6 +37,11 @@ function canRestoreStoredSession(session: StoredWorkSession | null, todayStr: st
 }
 
 export function useWorkSession() {
+  const { state } = useApp()
+  const storageKey = getUserAttendanceStorageKey(
+    ATTENDANCE_STORAGE_KEYS.session,
+    state.currentUser?.id,
+  )
   const [status, setStatus] = useState<WorkStatus>('idle')
   const [clockIn, setClockIn] = useState<Date | null>(null)
   const [clockOut, setClockOut] = useState<Date | null>(null)
@@ -45,7 +51,7 @@ export function useWorkSession() {
   const [isLoading, setIsLoading] = useState(true)
   const actionInFlightRef = useRef(false)
 
-  const syncTodayAttendance = async () => {
+  const syncTodayAttendance = useCallback(async () => {
     const todayStr = getTodayStr()
     const records = await getMyAttendance()
     const todayRecord = records.find((record) => record.workDate === todayStr)
@@ -71,51 +77,63 @@ export function useWorkSession() {
     setClockOut(null)
     setAttendanceDate(todayRecord.workDate)
     return todayRecord
-  }
+  }, [])
 
   const isAttendanceIpError = (error: ApiError) =>
     error.code.toUpperCase().includes('IP') ||
     /220\.69|아이피|IP/.test(error.message)
 
+  const syncStoredState = useCallback(async () => {
+    setErrorMessage(null)
+    if (!storageKey) {
+      setIsLoading(false)
+      return
+    }
+
+    const todayStr = getTodayStr()
+    try {
+      const todayRecord = await syncTodayAttendance()
+      if (!todayRecord) localStorage.removeItem(storageKey)
+    } catch (err) {
+      const stored = readStoredSession(storageKey)
+      if (canRestoreStoredSession(stored, todayStr) && stored) {
+        setStatus(stored.status)
+        setClockIn(stored.clockIn ? new Date(stored.clockIn) : null)
+        setClockOut(stored.clockOut ? new Date(stored.clockOut) : null)
+      } else {
+        localStorage.removeItem(storageKey)
+      }
+      setToastType('error')
+      setErrorMessage(err instanceof ApiError ? err.message : '출퇴근 상태를 불러오지 못했습니다')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [storageKey, syncTodayAttendance])
+
   // 서버 출퇴근 기록으로 초기 상태 동기화
   useEffect(() => {
-    const todayStr = getTodayStr()
-
-    syncTodayAttendance()
-      .then((todayRecord) => {
-        if (!todayRecord) {
-          localStorage.removeItem(STORAGE_KEY)
-        }
-      })
-      .catch((err) => {
-        const stored = readStoredSession()
-        if (canRestoreStoredSession(stored, todayStr) && stored) {
-          setStatus(stored.status)
-          setClockIn(stored.clockIn ? new Date(stored.clockIn) : null)
-          setClockOut(stored.clockOut ? new Date(stored.clockOut) : null)
-        } else {
-          localStorage.removeItem(STORAGE_KEY)
-        }
-        setToastType('error')
-        setErrorMessage(err instanceof ApiError ? err.message : '출퇴근 상태를 불러오지 못했습니다')
-      })
-      .finally(() => setIsLoading(false))
-  }, [])
+    setStatus('idle')
+    setClockIn(null)
+    setClockOut(null)
+    setAttendanceDate(null)
+    void syncStoredState()
+  }, [storageKey, syncStoredState])
 
   useEffect(() => {
     if (isLoading) return
 
     if (status === 'idle' && !clockIn && !clockOut) {
-      localStorage.removeItem(STORAGE_KEY)
+      if (storageKey) localStorage.removeItem(storageKey)
       return
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    if (!storageKey) return
+    localStorage.setItem(storageKey, JSON.stringify({
       status,
       clockIn: clockIn?.toISOString(),
       clockOut: clockOut?.toISOString(),
     }))
-  }, [status, clockIn, clockOut, isLoading])
+  }, [status, clockIn, clockOut, isLoading, storageKey])
 
   const handleClockClick = async () => {
     if (actionInFlightRef.current) return
@@ -226,5 +244,5 @@ export function useWorkSession() {
 
   const clearError = () => setErrorMessage(null)
 
-  return { status, clockIn, clockOut, handleClockClick, errorMessage, toastType, clearError, isLoading }
+  return { status, clockIn, clockOut, handleClockClick, retry: syncStoredState, errorMessage, toastType, clearError, isLoading }
 }

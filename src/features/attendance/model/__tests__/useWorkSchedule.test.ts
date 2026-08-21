@@ -1,15 +1,24 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createElement, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 import type { WeekPattern } from '../../../../shared/api/attendanceApi'
 import { matchesWeekPattern } from '../../../../shared/lib/attendanceSchedule'
 import { getTodayStr } from '../../../../shared/lib/date'
+import { AppProvider } from '../../../auth/model/AppProvider'
+import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../../shared/lib/attendanceStorage'
 
 const TODAY = getTodayStr()
 const TODAY_INDEX = (new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7
 const INDEX_TO_DOW = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+const TEST_USER = { id: '1', name: '테스터', email: 'test@yanus.kr', team: '1팀', role: 'MEMBER' as const }
+const WORK_DAYS_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.days, TEST_USER.id)!
+const WORK_WEEK_PATTERNS_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.weekPatterns, TEST_USER.id)!
+const WORK_ENDS_NEXT_DAY_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.endsNextDay, TEST_USER.id)!
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(AppProvider, { initialUser: TEST_USER }, children)
 
 const DEFAULT_SCHEDULES = [
   { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY', endsNextDay: false },
@@ -50,7 +59,7 @@ afterEach(() => {
 afterAll(() => server.close())
 
 async function mountHook() {
-  const hook = renderHook(() => useWorkSchedule())
+  const hook = renderHook(() => useWorkSchedule(), { wrapper })
   await act(async () => {})
   return hook
 }
@@ -264,7 +273,7 @@ describe('useWorkSchedule', () => {
     it('저장 시 localStorage에 workDays가 저장된다', async () => {
       const { result } = await mountHook()
       await act(async () => { await result.current.saveSchedule() })
-      const stored = localStorage.getItem('yanus-work-days')
+      const stored = localStorage.getItem(WORK_DAYS_STORAGE_KEY)
       expect(stored).not.toBeNull()
       const parsed = JSON.parse(stored!)
       expect(Array.isArray(parsed)).toBe(true)
@@ -281,7 +290,7 @@ describe('useWorkSchedule', () => {
         await result.current.saveSchedule()
       })
 
-      const stored = localStorage.getItem('yanus-work-week-patterns')
+      const stored = localStorage.getItem(WORK_WEEK_PATTERNS_STORAGE_KEY)
       expect(stored).not.toBeNull()
       expect(JSON.parse(stored!)[0]).toBe('THIRD')
     })
@@ -297,13 +306,13 @@ describe('useWorkSchedule', () => {
         await result.current.saveSchedule()
       })
 
-      const stored = localStorage.getItem('yanus-work-ends-next-day')
+      const stored = localStorage.getItem(WORK_ENDS_NEXT_DAY_STORAGE_KEY)
       expect(stored).not.toBeNull()
       expect(JSON.parse(stored!)[0]).toBe(true)
     })
 
     it('서버에 저장된 근무 일정이 있으면 localStorage보다 API 응답을 우선한다', async () => {
-      localStorage.setItem('yanus-work-days', JSON.stringify(
+      localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(
         [false, true, true, true, true, false, false],
       ))
       const { result } = await mountHook()
@@ -317,7 +326,7 @@ describe('useWorkSchedule', () => {
         ),
       )
 
-      localStorage.setItem('yanus-work-days', JSON.stringify(
+      localStorage.setItem(WORK_DAYS_STORAGE_KEY, JSON.stringify(
         [false, true, true, false, false, false, false],
       ))
 
@@ -332,7 +341,7 @@ describe('useWorkSchedule', () => {
         ),
       )
 
-      localStorage.setItem('yanus-work-week-patterns', JSON.stringify([
+      localStorage.setItem(WORK_WEEK_PATTERNS_STORAGE_KEY, JSON.stringify([
         'LAST',
         'EVERY',
         'EVERY',
@@ -353,7 +362,7 @@ describe('useWorkSchedule', () => {
         ),
       )
 
-      localStorage.setItem('yanus-work-ends-next-day', JSON.stringify([
+      localStorage.setItem(WORK_ENDS_NEXT_DAY_STORAGE_KEY, JSON.stringify([
         true,
         false,
         false,
