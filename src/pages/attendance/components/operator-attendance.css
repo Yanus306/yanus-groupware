@@ -152,7 +152,7 @@
   border-radius: 50%;
   background: var(--surface);
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .operator-member-info strong,

@@ -4,6 +4,10 @@
   gap: var(--space-5);
 }
 
+.set-work-days-personal strong {
+  font-weight: 600;
+}
+
 .schedule-header {
   display: flex;
   align-items: flex-start;
@@ -97,7 +101,7 @@
   background: var(--surface-tint);
   color: var(--text-primary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .schedule-calendar-layout {
@@ -130,7 +134,7 @@
   border: 1px solid var(--border-color);
   background: var(--surface);
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -150,7 +154,7 @@
 .day-label {
   display: block;
   font-size: var(--font-size-md);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -161,7 +165,7 @@
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .day-status.active {
@@ -364,7 +368,7 @@
   background: var(--color-primary);
   color: var(--color-on-primary);
   border-radius: var(--radius-sm);
-  font-weight: 700;
+  font-weight: 600;
   font-size: var(--font-size-sm);
   transition: background-color var(--motion-fast), border-color var(--motion-fast);
 }

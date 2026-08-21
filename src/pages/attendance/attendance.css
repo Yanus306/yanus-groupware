@@ -3,6 +3,10 @@
   margin: 0 auto;
 }
 
+.attendance-page strong {
+  font-weight: 600;
+}
+
 .attendance-header {
   display: flex;
   align-items: flex-start;
