@@ -139,14 +139,6 @@ export function OperatorAttendanceBoard({
         </div>
       </div>
 
-      {scheduleErrorMessage && (
-        <div className="operator-state operator-state-error" role="alert">
-          <AlertCircle size={20} aria-hidden="true" />
-          <strong>{scheduleErrorMessage}</strong>
-          <button type="button" onClick={onRetry}>다시 시도</button>
-        </div>
-      )}
-
       <div className="operator-content-grid">
         <div className="operator-records-panel">
           <div className="operator-panel-heading">
@@ -163,6 +155,12 @@ export function OperatorAttendanceBoard({
             <div className="operator-state operator-state-error" role="alert">
               <AlertCircle size={20} aria-hidden="true" />
               <strong>{errorMessage}</strong>
+              <button type="button" onClick={onRetry}>다시 시도</button>
+            </div>
+          ) : scheduleErrorMessage ? (
+            <div className="operator-state operator-state-error" role="alert">
+              <AlertCircle size={20} aria-hidden="true" />
+              <strong>{scheduleErrorMessage}</strong>
               <button type="button" onClick={onRetry}>다시 시도</button>
             </div>
           ) : visibleRecords.length === 0 ? (

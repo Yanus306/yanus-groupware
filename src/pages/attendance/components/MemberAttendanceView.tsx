@@ -121,6 +121,11 @@ export function MemberAttendanceView({
         </div>
         {isLoading ? (
           <div className="member-empty-state" role="status">출석 기록을 불러오는 중입니다.</div>
+        ) : errorMessage ? (
+          <div className="member-error-state" role="alert">
+            <strong>{errorMessage}</strong>
+            <button type="button" onClick={onRetry}>다시 시도</button>
+          </div>
         ) : records.length === 0 ? (
           <div className="member-empty-state">아직 출퇴근 기록이 없습니다.</div>
         ) : (
@@ -140,13 +145,6 @@ export function MemberAttendanceView({
           </div>
         )}
       </section>
-
-      {errorMessage && (
-        <div className="member-error-state" role="alert">
-          <strong>{errorMessage}</strong>
-          <button type="button" onClick={onRetry}>다시 시도</button>
-        </div>
-      )}
     </div>
   )
 }
