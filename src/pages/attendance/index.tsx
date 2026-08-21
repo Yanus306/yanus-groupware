@@ -31,6 +31,12 @@ export function Attendance() {
     workSession,
   } = useAttendancePage()
 
+  const managementDescription = filter === 'today'
+    ? '오늘의 출석 현황과 확인이 필요한 기록을'
+    : filter === 'week'
+      ? '이번 주의 출석 현황과 확인이 필요한 기록을'
+      : '선택한 날짜의 출석 현황과 확인이 필요한 기록을'
+
   const handleExport = () => {
     exportAttendanceToCsv(
       records.map((record) => ({
@@ -54,7 +60,7 @@ export function Attendance() {
           <h1>{canManageAttendance ? '출석 관리' : '오늘 출석'}</h1>
           <p className="page-description">
             {canManageAttendance ? (
-              <>오늘의 출석 현황과 확인이 필요한 기록을 <span className="attendance-phrase">한 곳</span>에서 관리합니다.</>
+              <>{managementDescription} <span className="attendance-phrase">한 곳</span>에서 관리합니다.</>
             ) : '오늘 예정된 근무 시간과 출퇴근 상태를 확인하세요.'}
           </p>
         </div>
@@ -99,7 +105,7 @@ export function Attendance() {
         {canManageAttendance ? (
           <OperatorAttendanceBoard
             records={records}
-            todayStr={activeDate}
+            dateLabel={activeDate}
             isLoading={isLoading}
             errorMessage={errorMessage}
             onRetry={retry}

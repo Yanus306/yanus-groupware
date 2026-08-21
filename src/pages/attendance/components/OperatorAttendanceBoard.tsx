@@ -16,7 +16,7 @@ type StatusFilter = 'all' | 'working' | 'left'
 
 interface OperatorAttendanceBoardProps {
   records: AttendanceRecord[]
-  todayStr: string
+  dateLabel: string
   isLoading: boolean
   errorMessage: string | null
   onRetry: () => void
@@ -38,7 +38,7 @@ function getRecordStatusLabel(status: AttendanceRecord['status']): string {
 
 export function OperatorAttendanceBoard({
   records,
-  todayStr,
+  dateLabel,
   isLoading,
   errorMessage,
   onRetry,
@@ -77,11 +77,11 @@ export function OperatorAttendanceBoard({
 
   return (
     <section className="operator-board" aria-labelledby="operator-board-title">
-      <div className="operator-summary-grid" aria-label="오늘 출석 요약">
+      <div className="operator-summary-grid" aria-label={`${dateLabel} 출석 요약`}>
         <article className="operator-summary-card">
           <span>전체 기록</span>
           <strong>{summary.total}</strong>
-          <small>{todayStr}</small>
+          <small>{dateLabel}</small>
         </article>
         <article className="operator-summary-card operator-summary-card-warning">
           <span>처리 필요</span>
@@ -143,8 +143,8 @@ export function OperatorAttendanceBoard({
         <div className="operator-records-panel">
           <div className="operator-panel-heading">
             <div>
-              <p className="section-eyebrow">TODAY RECORDS</p>
-              <h3>오늘 기록</h3>
+              <p className="section-eyebrow">ATTENDANCE RECORDS</p>
+              <h3>{dateLabel} 기록</h3>
             </div>
             <span>{visibleRecords.length}명</span>
           </div>
