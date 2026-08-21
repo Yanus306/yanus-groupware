@@ -137,7 +137,7 @@ Before interaction findings:
 
 ### After
 
-After captures were regenerated on `2026-08-22` against final HEAD `b9f0a236bfe321bb204cac4b50712da153cb3fb3` after the state-region fix at `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position. Each PNG carries a `capture-sha` metadata marker for the final verification pass.
+After captures were regenerated on `2026-08-22` against rendered implementation commit `ca3881ea20908846a24026ad221ea8f27de2c753`, after the state-region fix at `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position. Each PNG carries a `capture-source-sha` metadata marker for the rendered implementation; later commits only update DESIGN/evidence metadata.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
