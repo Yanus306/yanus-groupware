@@ -59,7 +59,9 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
         <div className="schedule-header">
           <div>
             <h3>근무 일정 설정</h3>
-            <p className="desc">요일별 시간과 반복 주차를 함께 정리해 개인 근무 루틴을 관리할 수 있습니다.</p>
+            <p className="desc">
+              요일별 시간과 반복 주차를 함께 정리해 개인 근무 루틴을 <span className="schedule-phrase">관리할 수 있습니다</span>.
+            </p>
           </div>
           <div className="member-info">
             <span className="member-avatar">{state.currentUser?.name[0] ?? '?'}</span>

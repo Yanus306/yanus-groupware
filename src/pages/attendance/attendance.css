@@ -40,6 +40,10 @@
   word-break: keep-all;
 }
 
+.attendance-phrase {
+  white-space: nowrap;
+}
+
 .header-actions {
   display: flex;
   align-items: center;

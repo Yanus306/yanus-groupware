@@ -126,7 +126,9 @@ export function Attendance() {
           <p className="page-eyebrow">ATTENDANCE · {activeDate}</p>
           <h1>{canManageAttendance ? '출석 관리' : '오늘 출석'}</h1>
           <p className="page-description">
-            {canManageAttendance ? '오늘의 출석 현황과 확인이 필요한 기록을 한 곳에서 관리합니다.' : '오늘 예정된 근무 시간과 출퇴근 상태를 확인하세요.'}
+            {canManageAttendance ? (
+              <>오늘의 출석 현황과 확인이 필요한 기록을 <span className="attendance-phrase">한 곳</span>에서 관리합니다.</>
+            ) : '오늘 예정된 근무 시간과 출퇴근 상태를 확인하세요.'}
           </p>
         </div>
         <div className="header-actions">

@@ -28,6 +28,10 @@
   word-break: keep-all;
 }
 
+.schedule-phrase {
+  white-space: nowrap;
+}
+
 .member-info {
   display: flex;
   align-items: center;
