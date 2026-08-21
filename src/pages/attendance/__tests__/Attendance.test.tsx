@@ -73,6 +73,17 @@ describe('Attendance 페이지', () => {
     expect(screen.queryByText('김리더')).not.toBeInTheDocument()
   })
 
+  it('관리자 날짜 범위가 설명과 운영 기록 제목에 반영된다', async () => {
+    const user = userEvent.setup()
+    const week = getWeekRange(getTodayStr())
+    render(<Attendance />)
+
+    await user.click(screen.getByRole('button', { name: '이번 주' }))
+
+    expect(screen.getByRole('banner')).toHaveTextContent('이번 주의 출석 현황과 확인이 필요한 기록')
+    expect(screen.getByRole('heading', { name: `${week.start} ~ ${week.end} 기록` })).toBeInTheDocument()
+  })
+
   it('팀장에게 운영 보드와 소속 팀 기록만 표시한다', async () => {
     mocks.useApp.mockReturnValue({
       state: {
