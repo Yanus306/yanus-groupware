@@ -1,69 +1,75 @@
 .set-work-days-personal {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .schedule-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .set-work-days-personal h3 {
-  font-size: 1.1rem;
-  margin-bottom: 4px;
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-lg);
+  line-height: 1.3;
 }
 
 .set-work-days-personal .desc {
   color: var(--text-secondary);
-  font-size: 0.85rem;
-  line-height: 1.6;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
   margin: 0;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: keep-all;
 }
 
 .member-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
 .member-avatar {
+  display: flex;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: var(--gradient-purple);
-  display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  font-size: 0.82rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-popover);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  flex-shrink: 0;
 }
 
 .member-name {
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
 }
 
 .schedule-loading {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  padding: 12px 0;
+  font-size: var(--font-size-sm);
+  padding: var(--space-3) 0;
 }
 
 .schedule-summary {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 14px;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: var(--bg-soft);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-popover);
   border: 1px solid var(--border-color);
 }
 
@@ -72,19 +78,21 @@
   flex: 1;
   min-width: 0;
   color: var(--text-secondary);
-  font-size: 0.83rem;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: keep-all;
 }
 
 .summary-chip {
   display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
-  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
   background: var(--surface-tint);
   color: var(--text-primary);
-  font-size: 0.82rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
 }
 
@@ -95,36 +103,36 @@
 .schedule-day-editor {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 22px;
-  background: var(--bg-soft);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-sm);
+  background: var(--surface-popover);
   border: 1px solid var(--border-color);
 }
 
 .schedule-day-editor.active {
-  background: color-mix(in srgb, var(--accent-purple) 8%, var(--bg-soft));
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--surface-popover));
 }
 
 .schedule-day-tabs {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .schedule-day-tab {
-  min-height: 40px;
-  border-radius: 12px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
-  background: var(--bg-card-solid);
+  background: var(--surface);
   color: var(--text-secondary);
   font-weight: 700;
   cursor: pointer;
 }
 
 .schedule-day-tab.active {
-  border-color: var(--accent-purple);
-  background: color-mix(in srgb, var(--accent-purple) 16%, var(--bg-card-solid));
+  border-color: var(--color-primary);
+  background: var(--surface-tint);
   color: var(--text-primary);
 }
 
@@ -132,12 +140,12 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .day-label {
   display: block;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -145,31 +153,31 @@
 .day-status {
   display: inline-flex;
   align-items: center;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
   font-weight: 700;
 }
 
 .day-status.active {
-  background: rgba(37, 164, 111, 0.16);
-  color: var(--success);
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
 }
 
 .day-status.inactive {
-  background: rgba(148, 163, 184, 0.14);
+  background: var(--surface-muted);
   color: var(--text-secondary);
 }
 
 .toggle {
   width: 48px;
   height: 28px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.3);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
   position: relative;
-  border: 1px solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--border-color);
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -179,17 +187,16 @@
   position: absolute;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   background: var(--text-primary);
   top: 3px;
   left: 3px;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--motion-fast);
 }
 
 .toggle.on {
-  background: var(--accent-purple);
-  border-color: rgba(138, 114, 216, 0.34);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .toggle.on::after {
@@ -199,16 +206,16 @@
 .day-times {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .overnight-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 14px;
-  border-radius: 16px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
 }
@@ -216,53 +223,56 @@
 .overnight-toggle-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .overnight-toggle-copy strong {
-  font-size: 0.86rem;
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
 }
 
 .overnight-toggle-copy small {
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: var(--font-size-xs);
   line-height: 1.5;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: keep-all;
 }
 
 .overnight-toggle-row input[type='checkbox'] {
   width: 18px;
   height: 18px;
-  accent-color: var(--accent-purple);
+  accent-color: var(--color-primary);
   flex-shrink: 0;
 }
 
 .time-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .time-field label {
-  font-size: 0.76rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .time-field input {
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   background: var(--bg-input);
   color: var(--text-primary);
-  font-size: 0.88rem;
+  font-size: var(--font-size-sm);
   width: 100%;
   color-scheme: dark light;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
 }
 
 .time-field input:focus {
-  border-color: var(--accent-purple);
+  border-color: var(--color-primary);
   outline: none;
   background: var(--bg-card-solid);
 }
@@ -270,30 +280,33 @@
 .day-off-label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   color: var(--text-secondary);
   min-height: 120px;
   justify-content: center;
 }
 
 .day-off-label strong {
-  font-size: 0.86rem;
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
 }
 
 .day-off-label span {
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: keep-all;
 }
 
 .week-pattern-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .week-pattern-label {
-  font-size: 0.78rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -305,34 +318,36 @@
 .week-pattern-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .week-pattern-chip {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid transparent;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
 }
 
 .week-pattern-chip:hover {
-  background: rgba(138, 114, 216, 0.12);
+  background: var(--surface-popover);
   color: var(--text-primary);
 }
 
 .week-pattern-chip.active {
-  background: var(--accent-purple);
-  color: var(--text-on-accent);
-  border-color: rgba(138, 114, 216, 0.38);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
 }
 
 .schedule-error {
   color: var(--error);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
+  word-break: keep-all;
 }
 
 .schedule-save-btn {
@@ -340,14 +355,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px;
-  background: var(--gradient-purple);
-  color: var(--text-on-accent);
-  border-radius: 14px;
+  min-height: 36px;
+  padding: 0 var(--space-5);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-sm);
   font-weight: 700;
-  font-size: 0.92rem;
-  box-shadow: var(--shadow-soft);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
 }
 
 .schedule-save-btn:disabled {
@@ -356,8 +371,7 @@
 }
 
 .schedule-save-btn:hover:not(:disabled) {
-  opacity: 0.92;
-  transform: translateY(-1px);
+  background: var(--color-primary-hover);
 }
 
 @media (max-width: 960px) {
@@ -368,7 +382,7 @@
 
 @media (max-width: 640px) {
   .schedule-summary {
-    padding: 14px 16px;
+    padding: var(--space-3) var(--space-4);
     align-items: flex-start;
   }
 
@@ -381,16 +395,16 @@
   }
 
   .schedule-day-editor {
-    padding: 14px;
+    padding: var(--space-4);
   }
 
   .week-pattern-options {
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .week-pattern-chip {
-    padding: 7px 10px;
-    font-size: 0.76rem;
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .schedule-save-btn {
@@ -401,13 +415,13 @@
 
 @media (max-width: 480px) {
   .set-work-days-personal h3 {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
   }
 
   .set-work-days-personal .desc,
   .schedule-summary p,
   .day-off-label span {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
 
   .toggle {
@@ -426,8 +440,9 @@
 }
 
 .schedule-note {
-  margin: 20px 0 0;
+  margin: var(--space-5) 0 0;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   line-height: 1.5;
+  word-break: keep-all;
 }

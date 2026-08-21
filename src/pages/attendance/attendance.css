@@ -35,6 +35,9 @@
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1.5;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: keep-all;
 }
 
 .header-actions {
