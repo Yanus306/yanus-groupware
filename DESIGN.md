@@ -99,10 +99,10 @@ Status is always represented by text, layout, and an icon or border treatment. C
 - Desktop target: `1280px` wide content with a fixed `200px` shell and `32px` page padding.
 - Narrow target: at `768px` and below, navigation becomes a fixed bottom bar and content receives bottom clearance. At `700px`/`480px`, operator rows and member timeline collapse without horizontal scrolling.
 - Touch targets are at least `36px`; the member clock CTA is at least `44px` high.
-- Dark mode uses the Octo Code layers in this document. A light-mode token set is provided through `prefers-color-scheme: light`; content structure and status wording remain unchanged.
+- Dark mode uses the Octo Code layers in this document. Light mode is opt-in through the existing explicit `data-theme="light"` preference; the operating-system color scheme does not override the dark default.
 - Every action is keyboard reachable, focus-visible, labelled, and has a text equivalent. Status timeline uses `aria-current`, record rows expose a member-specific accessible name, and the detail panel uses a labelled `aside`.
 - Loading, API error, retry, empty, and filtered-empty states occupy the same record region. Authentication and permission routing remain owned by the existing route guards.
-- Offline behavior is limited to visible failure and retry in this issue; no new cache or backend contract is introduced.
+- Offline behavior is limited to visible failure and retry in this issue. Attendance schedule/session cache entries are scoped by authenticated user and cleared on logout; the server remains the source of truth.
 
 ### Implementation boundary and next stages
 
@@ -112,7 +112,7 @@ Status is always represented by text, layout, and an icon or border treatment. C
 4. Extension slot: #377 adds settlement/report columns and CSV mapping to the operator record model.
 5. Extension slot: #378 adds audit history to the detail panel.
 
-Backend API contracts are not changed by this design pass. Existing attendance endpoints remain the data source.
+Existing attendance endpoints remain the data source. Operator reads may send date/team filters, and the server must enforce the authenticated role and team claims; the mock handlers mirror those authorization boundaries for local verification.
 
 ## Before / After evidence — #410
 
@@ -137,27 +137,30 @@ Before interaction findings:
 
 ### After
 
-After captures were generated on `2026-08-22` before the develop sync at implementation commit `802abc0`; the equivalent rebased commit is `a8cd407`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. A second browser pass checked bottom clearance at the maximum scroll position.
+After captures were regenerated on `2026-08-22` at implementation commit `cbcf7bd9bc306e23b73b841dd83fcb00fdbbe0cd`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
 | Admin desktop | ADMIN | `1280×900` | `scrollWidth=1280`; 3 current records rendered, with 2 `근무 중` records ordered before the completed record. | `.qa/issue-410/after/admin-1280.png` |
-| Admin narrow | ADMIN | `768×1024` | `scrollWidth=768`, `scrollHeight=1088`; summary and record/detail regions remain in one readable column. | `.qa/issue-410/after/admin-768.png` |
-| Admin mobile | ADMIN | `390×844` | `scrollWidth=390`, `scrollHeight=1203`; no horizontal overflow, 2×2 summary grid, compact record rows, and 50px clearance above the fixed navigation at max scroll. | `.qa/issue-410/after/admin-390.png` |
-| Member mobile | MEMBER | `390×844` | `scrollWidth=390`, `scrollHeight=1757`; today status, one `퇴근하기` CTA, timeline, records, and schedule settings stack without horizontal overflow; 32px clearance above the fixed navigation at max scroll. | `.qa/issue-410/after/member-390.png` |
-| Member desktop | MEMBER | `1280×900` | `scrollWidth=1280`; today status and `09:00–18:00` schedule are first, followed by the text timeline, personal record, and settings sections. | `.qa/issue-410/after/member-1280.png` |
+| Admin narrow | ADMIN | `768×1024` | `scrollWidth=768`, full-page `scrollHeight=1027`; summary and record/detail regions remain in one readable column, with 44px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-768.png` |
+| Admin mobile | ADMIN | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1306`; no horizontal overflow, 2×2 summary grid, compact record rows, and 44px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-390.png` |
+| Team lead mobile | TEAM_LEAD | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1170`; only the team lead's `박팀장` record is rendered, with 52px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/team-lead-390.png` |
+| Member mobile | MEMBER | `390×844` | `scrollWidth=390`, full-page `scrollHeight=2233`; today status, one `퇴근하기` CTA, timeline, records, and schedule settings stack without horizontal overflow, with 52px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/member-390.png` |
+| Member desktop | MEMBER | `1280×900` | `scrollWidth=1280`, full-page `scrollHeight=1671`; today status and `08:30–17:30` schedule are first, followed by the text timeline, personal record, and settings sections. | `.qa/issue-410/after/member-1280.png` |
 
 After interaction evidence:
 
 - Admin search for `박` reduced the record list to `박팀장`; clearing the search restored all 3 records.
 - Selecting `김리더 기록 상세 보기` opened a labelled detail panel with date, status, scheduled time, `09:02`, and `18:15`.
 - Member `퇴근하기` changed the status copy to `퇴근 완료` and disabled the CTA after the mock API response.
-- At maximum mobile scroll, the admin record list and member schedule section ended above the fixed navigation (`50px` and `32px` respectively).
+- Team lead login rendered only the own-team `박팀장` record; admin retained the full three-record view.
+- At maximum narrow/mobile scroll, the admin record region and member schedule section ended above the fixed navigation (`44px` and `52px` respectively).
 
 After verification checklist:
 
-- [x] Same-role, same-viewport screenshots exist for every Before row.
+- [x] Same-role, same-viewport screenshots exist for every Before row, plus a team-lead scope capture.
 - [x] `scrollWidth` is no greater than the viewport width at `390px`, `768px`, and `1280px`.
 - [x] Admin records show current mock data, priority ordering, search filtering, and a selectable detail panel.
 - [x] Member view shows one CTA, schedule chip, text timeline, personal records, and retry state.
 - [x] Keyboard focus, text status, contrast, touch target size, and mobile bottom clearance are checked in the browser.
+- [x] Fresh PNG signatures and dimensions were checked for all six After captures at the implementation SHA.
