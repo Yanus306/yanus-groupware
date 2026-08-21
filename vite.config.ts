@@ -23,8 +23,8 @@ export default defineConfig({
         name: 'yANUs',
         short_name: 'yANUs',
         description: '업무 채팅, 출퇴근, 파일 공유, AI 챗봇',
-        theme_color: '#9680cc',
-        background_color: '#111118',
+        theme_color: '#0d1117',
+        background_color: '#0d1117',
         display: 'standalone',
         start_url: '/',
         icons: [
