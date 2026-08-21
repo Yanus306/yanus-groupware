@@ -1,139 +1,151 @@
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { attendanceHandlers } from '../../../shared/api/mock/handlers/attendance'
 import { Attendance } from '../index'
 
-const TODAY = new Date().toISOString().slice(0, 10)
-
-const server = setupServer(
-  ...attendanceHandlers,
-  http.get('*/api/v1/members', () =>
-    HttpResponse.json({
-      code: 'SUCCESS',
-      message: 'ok',
-      data: [
-        { id: 1, name: '김리더', email: 'admin@yanus.kr', team: '1팀', role: 'ADMIN', status: 'ACTIVE' },
-      ],
-    }),
-  ),
-)
+const server = setupServer(...attendanceHandlers)
 beforeAll(() => server.listen())
+beforeEach(() => {
+  mocks.useApp.mockReturnValue({
+    state: { currentUser: { id: '1', name: '김리더', role: 'ADMIN' }, users: [] },
+    isAdmin: true,
+  })
+  mocks.useWorkSession.mockReturnValue({
+    status: 'idle',
+    clockIn: null,
+    clockOut: null,
+    handleClockClick: vi.fn(),
+    errorMessage: null,
+    clearError: vi.fn(),
+  })
+})
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-vi.mock('../../../features/auth/model', () => ({
-  useApp: () => ({
-    state: {
-      currentUser: { id: '1', name: '김리더', role: 'ADMIN', team: '1팀' },
-      users: [
-        { id: '1', name: '김리더', role: 'ADMIN', team: '1팀', email: 'admin@yanus.kr', status: 'ACTIVE' },
-      ],
-      teams: [{ id: 1, name: '1팀' }],
-    },
-    isAdmin: true,
-    isTeamLead: false,
-  }),
+const mocks = vi.hoisted(() => ({
+  useApp: vi.fn(),
+  useWorkSession: vi.fn(),
+}))
+
+vi.mock('../../../features/auth/model', () => ({ useApp: mocks.useApp }))
+vi.mock('../../../features/attendance/model/useWorkSession', () => ({
+  useWorkSession: mocks.useWorkSession,
 }))
 
 vi.mock('../../../features/attendance/ui', () => ({
-  TeamAttendanceStatus: () => <div data-testid="team-attendance-status" />,
-}))
-
-vi.mock('../../../features/leave/ui/LeaveSection', () => ({
-  LeaveSection: () => <div data-testid="leave-section" />,
+  SetWorkDaysPersonal: () => <div data-testid="set-work-days" />,
 }))
 
 describe('Attendance 페이지', () => {
-  it('출퇴근 헤더가 렌더링된다', () => {
+  it('관리자 보드 헤더와 처리 필요 요약을 렌더링한다', () => {
     render(<Attendance />)
-    expect(screen.getByText('오늘 근무 현황과 출퇴근 이력을 한 화면에서 확인합니다.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '출석 관리' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '처리 필요' })).toBeInTheDocument()
   })
 
   it('관리자에게 Export CSV 버튼이 표시된다', () => {
     render(<Attendance />)
-    expect(screen.getByText('CSV 내보내기')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CSV 내보내기' })).toBeInTheDocument()
   })
 
-  it('필터 탭이 렌더링된다', () => {
+  it('관리자 필터와 검색으로 기록을 좁힐 수 있다', async () => {
+    const user = userEvent.setup()
     render(<Attendance />)
-    expect(screen.getByText('이번 주')).toBeInTheDocument()
-    expect(screen.getByText('이번 달')).toBeInTheDocument()
-  })
+    expect(screen.getByRole('button', { name: '오늘' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '이번 주' })).toBeInTheDocument()
 
-  it('기본 범위 라벨로 이번 달이 표시된다', async () => {
-    render(<Attendance />)
+    const searchInput = screen.getByRole('searchbox', { name: '멤버 검색' })
+    await user.type(searchInput, '박')
 
-    const [year, month] = TODAY.split('-')
-    const monthStart = `${year}-${month}-01`
-    await waitFor(() => {
-      expect(screen.getAllByText(new RegExp(`${monthStart} ~ ${year}-${month}`)).length).toBeGreaterThan(0)
-    })
+    expect(screen.getByText('박팀장')).toBeInTheDocument()
+    expect(screen.queryByText('김리더')).not.toBeInTheDocument()
   })
 
   it('출퇴근 기록을 로드한다', async () => {
-    server.use(
-      http.get('/api/v1/attendances', () =>
-        HttpResponse.json({
-          code: 'SUCCESS', message: 'ok',
-          data: [{ id: 1, memberId: 1, memberName: '김리더', workDate: TODAY, checkInTime: `${TODAY}T09:00:00`, checkOutTime: `${TODAY}T18:00:00`, status: 'LEFT' }],
-        }),
-      ),
-    )
     render(<Attendance />)
     await waitFor(() => {
-      expect(screen.getAllByText('김리더').length).toBeGreaterThan(0)
+      expect(screen.getByText('김리더')).toBeInTheDocument()
+      expect(screen.getByText('박팀장')).toBeInTheDocument()
     })
   })
 
-  it('출퇴근 기록의 근무 요일에 멤버 근무 일정이 반영된다', async () => {
+  it('관리자가 기록을 선택하면 상세 패널을 연다', async () => {
+    const user = userEvent.setup()
+    render(<Attendance />)
+
+    const recordButton = await screen.findByRole('button', { name: '김리더 기록 상세 보기' })
+    await user.click(recordButton)
+
+    const detailPanel = screen.getByRole('complementary')
+    expect(screen.getByRole('heading', { name: '김리더 상세' })).toBeInTheDocument()
+    expect(detailPanel).toHaveTextContent('09:02')
+    expect(detailPanel).toHaveTextContent('18:15')
+  })
+
+  it('오늘 기록이 없으면 운영 빈 상태를 표시한다', async () => {
     server.use(
       http.get('/api/v1/attendances', () =>
-        HttpResponse.json({
-          code: 'SUCCESS', message: 'ok',
-          data: [{ id: 1, memberId: 1, memberName: '김리더', workDate: TODAY, checkInTime: `${TODAY}T09:00:00`, checkOutTime: `${TODAY}T18:00:00`, status: 'LEFT' }],
-        }),
+        HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
       ),
     )
 
     render(<Attendance />)
 
-    await waitFor(() => {
-      const scheduledDaysCell = screen.getByTestId('scheduled-days-1')
-      expect(within(scheduledDaysCell).getAllByLabelText(/근무 예정/)).toHaveLength(3)
-      expect(within(scheduledDaysCell).getAllByLabelText(/휴무/)).toHaveLength(4)
-    })
+    expect(await screen.findByText('처리할 출석 기록이 없습니다')).toBeInTheDocument()
   })
 
-  it('직접 선택 기간 조회가 날짜 범위 기준으로 동작한다', async () => {
-    const requestedDates: string[] = []
+  it('멤버에게 오늘 CTA와 상태 타임라인을 표시한다', () => {
+    mocks.useApp.mockReturnValue({
+      state: { currentUser: { id: '3', name: '이멤버', role: 'MEMBER' }, users: [] },
+      isAdmin: false,
+    })
 
+    render(<Attendance />)
+
+    expect(screen.getByRole('heading', { name: '오늘 출석' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '출근하기' })).toBeInTheDocument()
+    expect(screen.getAllByText('출근 전').length).toBeGreaterThan(0)
+    expect(screen.getByText(/09:00.*18:00/)).toBeInTheDocument()
+  })
+
+  it('멤버가 오늘 CTA를 누르면 출퇴근 액션을 호출한다', async () => {
+    const user = userEvent.setup()
+    const handleClockClick = vi.fn()
+    mocks.useApp.mockReturnValue({
+      state: { currentUser: { id: '3', name: '이멤버', role: 'MEMBER' }, users: [] },
+      isAdmin: false,
+    })
+    mocks.useWorkSession.mockReturnValue({
+      status: 'idle',
+      clockIn: null,
+      clockOut: null,
+      handleClockClick,
+      errorMessage: null,
+      clearError: vi.fn(),
+    })
+
+    render(<Attendance />)
+    await user.click(screen.getByRole('button', { name: '출근하기' }))
+
+    expect(handleClockClick).toHaveBeenCalledOnce()
+  })
+
+  it('API 오류 시 재시도 가능한 오류 상태를 표시한다', async () => {
     server.use(
-      http.get('/api/v1/attendances', ({ request }) => {
-        const url = new URL(request.url)
-        const date = url.searchParams.get('date') ?? TODAY
-        requestedDates.push(date)
-
-        const data = date === '2026-03-01'
-          ? [{ id: 11, memberId: 1, memberName: '김리더', workDate: date, checkInTime: `${date}T09:00:00`, checkOutTime: `${date}T18:00:00`, status: 'LEFT' }]
-          : []
-
-        return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
-      }),
+      http.get('/api/v1/attendances', () =>
+        HttpResponse.json(
+          { code: 'ATTENDANCE_LOAD_FAILED', message: '출석 데이터를 불러오지 못했습니다', data: null },
+          { status: 500 },
+        ),
+      ),
     )
 
     render(<Attendance />)
 
-    fireEvent.click(screen.getByRole('button', { name: '직접 선택' }))
-    fireEvent.change(screen.getByLabelText('조회 시작일'), { target: { value: '2026-03-01' } })
-    fireEvent.change(screen.getByLabelText('조회 종료일'), { target: { value: '2026-03-03' } })
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
-
-    await waitFor(() => {
-      expect(requestedDates).toEqual(expect.arrayContaining(['2026-03-01', '2026-03-02', '2026-03-03']))
-      expect(screen.getByText('2026-03-01 ~ 2026-03-03')).toBeInTheDocument()
-      expect(screen.getAllByText('김리더').length).toBeGreaterThan(0)
-    })
+    expect(await screen.findByText('출석 데이터를 불러오지 못했습니다')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument()
   })
 })
