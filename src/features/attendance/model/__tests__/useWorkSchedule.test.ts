@@ -5,8 +5,9 @@ import { http, HttpResponse } from 'msw'
 import { useWorkSchedule } from '../useWorkSchedule'
 import type { WeekPattern } from '../../../../shared/api/attendanceApi'
 import { matchesWeekPattern } from '../../../../shared/lib/attendanceSchedule'
+import { getTodayStr } from '../../../../shared/lib/date'
 
-const TODAY = new Date().toISOString().slice(0, 10)
+const TODAY = getTodayStr()
 const TODAY_INDEX = (new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7
 const INDEX_TO_DOW = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
 
