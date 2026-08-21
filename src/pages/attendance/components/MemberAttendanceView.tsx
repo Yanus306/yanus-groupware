@@ -13,6 +13,7 @@ interface MemberAttendanceViewProps {
   records: AttendanceRecord[]
   todayStr: string
   sessionStatus: WorkSessionStatus
+  isLoading: boolean
   handleClockClick: () => Promise<void> | void
   errorMessage: string | null
   onRetry: () => void
@@ -39,6 +40,7 @@ export function MemberAttendanceView({
   records,
   todayStr,
   sessionStatus,
+  isLoading,
   handleClockClick,
   errorMessage,
   onRetry,
@@ -75,7 +77,7 @@ export function MemberAttendanceView({
           type="button"
           className="member-clock-cta"
           onClick={() => void handleClockClick()}
-          disabled={sessionStatus === 'done'}
+          disabled={isLoading || sessionStatus === 'done'}
         >
           <RotateCw size={18} aria-hidden="true" />
           {actionLabel}
