@@ -58,8 +58,8 @@ export function OperatorAttendanceBoard({
       (statusFilter === 'left' && record.status === 'LEFT')
     return matchesSearch && matchesStatus
   })
-  const visibleSelectedRecord = selectedRecord && records.some((record) => record.id === selectedRecord.id)
-    ? selectedRecord
+  const visibleSelectedRecord = selectedRecord
+    ? visibleRecords.find((record) => record.id === selectedRecord.id) ?? null
     : null
   const selectedMemberSchedule = visibleSelectedRecord
     ? memberSchedules.find((item) => item.memberId === visibleSelectedRecord.memberId)

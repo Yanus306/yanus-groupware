@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
@@ -7,13 +7,14 @@ import { useWorkSchedule } from '../useWorkSchedule'
 import type { WeekPattern } from '../../../../shared/api/attendanceApi'
 import { matchesWeekPattern } from '../../../../shared/lib/attendanceSchedule'
 import { getTodayStr } from '../../../../shared/lib/date'
-import { AppProvider } from '../../../auth/model/AppProvider'
+import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../../shared/lib/attendanceStorage'
 
 const TODAY = getTodayStr()
 const TODAY_INDEX = (new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7
 const INDEX_TO_DOW = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
 const TEST_USER = { id: '1', name: '테스터', email: 'test@yanus.kr', team: '1팀', role: 'MEMBER' as const }
+const SECOND_USER = { id: '3', name: '두번째 사용자', email: 'second@yanus.kr', team: '3팀', role: 'MEMBER' as const }
 const WORK_DAYS_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.days, TEST_USER.id)!
 const WORK_WEEK_PATTERNS_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.weekPatterns, TEST_USER.id)!
 const WORK_ENDS_NEXT_DAY_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.endsNextDay, TEST_USER.id)!
@@ -99,6 +100,38 @@ describe('useWorkSchedule', () => {
     it('로드 완료 후 isLoading이 false가 된다', async () => {
       const { result } = await mountHook()
       expect(result.current.isLoading).toBe(false)
+    })
+
+    it('사용자 전환 뒤 이전 사용자의 늦은 일정 응답이 새 상태를 덮어쓰지 않는다', async () => {
+      let requestCount = 0
+      let releaseFirstRequest: (() => void) | undefined
+      const firstRequest = new Promise<void>((resolve) => { releaseFirstRequest = resolve })
+
+      server.use(
+        http.get('/api/v1/work-schedules/me', async () => {
+          const requestNumber = ++requestCount
+          if (requestNumber === 1) await firstRequest
+          return HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: requestNumber === 1 ? DEFAULT_SCHEDULES : [],
+          })
+        }),
+      )
+
+      const { result } = renderHook(() => ({ schedule: useWorkSchedule(), loadUser: useApp().loadUser }), { wrapper })
+      await waitFor(() => expect(requestCount).toBe(1))
+
+      act(() => { result.current.loadUser(SECOND_USER) })
+      await waitFor(() => expect(requestCount).toBe(2))
+      await waitFor(() => expect(result.current.schedule.workDays).toEqual([false, false, false, false, false, false, false]))
+
+      await act(async () => {
+        releaseFirstRequest?.()
+        await firstRequest
+      })
+
+      expect(result.current.schedule.workDays).toEqual([false, false, false, false, false, false, false])
     })
 
     it('API 응답에 있는 요일만 활성화한다 (localStorage 없을 때)', async () => {

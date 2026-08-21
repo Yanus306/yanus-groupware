@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   deleteWorkScheduleDay,
   getMyWorkSchedule,
@@ -67,8 +67,12 @@ export function useWorkSchedule() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedWorkDays, setSavedWorkDays] = useState<boolean[]>(DEFAULT_WORK_DAYS)
+  const requestGenerationRef = useRef(0)
 
   useEffect(() => {
+    const generation = ++requestGenerationRef.current
+    const isCurrentGeneration = () => generation === requestGenerationRef.current
+
     setWorkDays(DEFAULT_WORK_DAYS)
     setDaySchedules(makeDefaultDaySchedules(DEFAULT_CHECK_IN, DEFAULT_CHECK_OUT))
     setWeekPatterns(DEFAULT_WEEK_PATTERNS)
@@ -122,15 +126,18 @@ export function useWorkSchedule() {
 
     const loadTodayOverride = getWorkScheduleEvents(today, today)
       .then((items) => {
+        if (!isCurrentGeneration()) return
         setTodayOverride(items.find((item) => item.date === today) ?? null)
       })
       .catch(() => {
+        if (!isCurrentGeneration()) return
         setTodayOverride(null)
       })
 
     // API에서 요일별 근무 시간 불러오기
     const loadRecurringSchedule = getMyWorkSchedule()
       .then((items) => {
+        if (!isCurrentGeneration()) return
         const activeDays = INDEX_TO_DOW.map((dow) =>
           items.some((item) => item.dayOfWeek === dow),
         )
@@ -165,13 +172,19 @@ export function useWorkSchedule() {
         })
       })
       .catch(() => {
+        if (!isCurrentGeneration()) return
         if (parsedStoredDays) {
           setWorkDays(parsedStoredDays)
           setSavedWorkDays(parsedStoredDays)
         }
       })
 
-    Promise.allSettled([loadRecurringSchedule, loadTodayOverride]).finally(() => setIsLoading(false))
+    Promise.allSettled([loadRecurringSchedule, loadTodayOverride]).finally(() => {
+      if (isCurrentGeneration()) setIsLoading(false)
+    })
+    return () => {
+      requestGenerationRef.current += 1
+    }
   }, [endsNextDayStorageKey, today, userId, weekPatternsStorageKey, workDaysStorageKey])
 
   const toggleDay = (index: number) => {

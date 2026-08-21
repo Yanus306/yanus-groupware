@@ -50,10 +50,12 @@ export function useWorkSession() {
   const [toastType, setToastType] = useState<'error' | 'info'>('error')
   const [isLoading, setIsLoading] = useState(true)
   const actionInFlightRef = useRef(false)
+  const syncGenerationRef = useRef(0)
 
-  const syncTodayAttendance = useCallback(async () => {
+  const syncTodayAttendance = useCallback(async (generation: number) => {
     const todayStr = getTodayStr()
     const records = await getMyAttendance()
+    if (generation !== syncGenerationRef.current) return null
     const todayRecord = records.find((record) => record.workDate === todayStr)
 
     if (!todayRecord) {
@@ -84,17 +86,21 @@ export function useWorkSession() {
     /220\.69|아이피|IP/.test(error.message)
 
   const syncStoredState = useCallback(async () => {
+    const generation = ++syncGenerationRef.current
+    const isCurrentGeneration = () => generation === syncGenerationRef.current
     setErrorMessage(null)
     if (!storageKey) {
-      setIsLoading(false)
+      if (isCurrentGeneration()) setIsLoading(false)
       return
     }
 
     const todayStr = getTodayStr()
     try {
-      const todayRecord = await syncTodayAttendance()
+      const todayRecord = await syncTodayAttendance(generation)
+      if (!isCurrentGeneration()) return
       if (!todayRecord) localStorage.removeItem(storageKey)
     } catch (err) {
+      if (!isCurrentGeneration()) return
       const stored = readStoredSession(storageKey)
       if (canRestoreStoredSession(stored, todayStr) && stored) {
         setStatus(stored.status)
@@ -106,7 +112,7 @@ export function useWorkSession() {
       setToastType('error')
       setErrorMessage(err instanceof ApiError ? err.message : '출퇴근 상태를 불러오지 못했습니다')
     } finally {
-      setIsLoading(false)
+      if (isCurrentGeneration()) setIsLoading(false)
     }
   }, [storageKey, syncTodayAttendance])
 
@@ -117,6 +123,9 @@ export function useWorkSession() {
     setClockOut(null)
     setAttendanceDate(null)
     void syncStoredState()
+    return () => {
+      syncGenerationRef.current += 1
+    }
   }, [storageKey, syncStoredState])
 
   useEffect(() => {
@@ -155,7 +164,9 @@ export function useWorkSession() {
               // 이미 출근 처리됨 — 서버 기록으로 동기화 후 working 전환
               setToastType('info')
               setErrorMessage('이미 출근 처리된 기록이 있습니다')
-              syncTodayAttendance().catch(() => {
+              const generation = syncGenerationRef.current
+              syncTodayAttendance(generation).catch(() => {
+                if (generation !== syncGenerationRef.current) return
                 setStatus('working')
                 setToastType('info')
                 setErrorMessage('출근 상태를 동기화하지 못했습니다')

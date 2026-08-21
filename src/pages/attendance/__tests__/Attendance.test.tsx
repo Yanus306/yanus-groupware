@@ -153,6 +153,16 @@ describe('Attendance 페이지', () => {
     expect(detailPanel).toHaveTextContent('18:15')
   })
 
+  it('검색 필터로 선택 기록이 숨겨지면 상세 패널도 숨긴다', async () => {
+    const user = userEvent.setup()
+    render(<Attendance />)
+
+    await user.click(await screen.findByRole('button', { name: '김리더 기록 상세 보기' }))
+    await user.type(screen.getByRole('searchbox', { name: '멤버 검색' }), '박')
+
+    await waitFor(() => expect(screen.queryByRole('complementary')).not.toBeInTheDocument())
+  })
+
   it('오늘 기록이 없으면 운영 빈 상태를 표시한다', async () => {
     server.use(
       http.get('/api/v1/attendances', () =>

@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useWorkSession } from '../useWorkSession'
 import { getTodayStr } from '../../../../shared/lib/date'
-import { AppProvider } from '../../../auth/model/AppProvider'
+import { AppProvider, useApp } from '../../../auth/model/AppProvider'
 import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../../../shared/lib/attendanceStorage'
 
 const TEST_USER = { id: '1', name: '테스터', email: 'test@yanus.kr', team: '1팀', role: 'MEMBER' as const }
+const SECOND_USER = { id: '3', name: '두번째 사용자', email: 'second@yanus.kr', team: '3팀', role: 'MEMBER' as const }
 const SESSION_STORAGE_KEY = getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.session, TEST_USER.id)!
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(AppProvider, { initialUser: TEST_USER }, children)
@@ -277,6 +278,44 @@ describe('useWorkSession', () => {
 
       expect(result.current.status).toBe('working')
       expect(result.current.clockIn?.toISOString()).toBe(kstEarlyMorning)
+    })
+
+    it('사용자 전환 뒤 이전 사용자의 늦은 출석 응답이 새 상태를 덮어쓰지 않는다', async () => {
+      let requestCount = 0
+      let releaseFirstRequest: (() => void) | undefined
+      const firstRequest = new Promise<void>((resolve) => { releaseFirstRequest = resolve })
+      const todayRecord = {
+        ...CLOCK_IN_RECORD,
+        workDate: getTodayStr(),
+        checkInTime: `${getTodayStr()}T09:00:00`,
+      }
+
+      server.use(
+        http.get('/api/v1/attendances/me', async () => {
+          const requestNumber = ++requestCount
+          if (requestNumber === 1) await firstRequest
+          return HttpResponse.json({
+            code: 'SUCCESS',
+            message: 'ok',
+            data: requestNumber === 1 ? [todayRecord] : [],
+          })
+        }),
+      )
+
+      const { result } = renderHook(() => ({ session: useWorkSession(), loadUser: useApp().loadUser }), { wrapper })
+      await waitFor(() => expect(requestCount).toBe(1))
+
+      act(() => { result.current.loadUser(SECOND_USER) })
+      await waitFor(() => expect(requestCount).toBe(2))
+      await waitFor(() => expect(result.current.session.status).toBe('idle'))
+
+      await act(async () => {
+        releaseFirstRequest?.()
+        await firstRequest
+      })
+
+      expect(result.current.session.status).toBe('idle')
+      expect(result.current.session.clockIn).toBeNull()
     })
   })
 
