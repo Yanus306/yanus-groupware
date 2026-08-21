@@ -69,6 +69,34 @@ describe('MSW 출석 핸들러 — 멤버별 근무 일정', () => {
     expect(body.data.every((record) => record.memberId === 2)).toBe(true)
   })
 
+  it('일반 멤버는 팀 출석과 팀 일정 범위를 직접 조회할 수 없다', async () => {
+    const headers = { Authorization: 'Bearer mock-token-3' }
+    const attendanceResponse = await fetch('/api/v1/attendances?date=2026-08-22&teamId=3', { headers })
+    const scheduleResponse = await fetch('/api/v1/work-schedules/team/3', { headers })
+    const eventResponse = await fetch('/api/v1/work-schedule-events/team/3?startDate=2026-04-01&endDate=2026-04-30', { headers })
+
+    expect(attendanceResponse.status).toBe(403)
+    expect(scheduleResponse.status).toBe(403)
+    expect(eventResponse.status).toBe(403)
+  })
+
+  it('근무 일정 변경 mock은 날짜·시간·요일 입력을 검증한다', async () => {
+    const headers = { Authorization: 'Bearer mock-token-3', 'Content-Type': 'application/json' }
+    const scheduleResponse = await fetch('/api/v1/work-schedules', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ dayOfWeek: 'FUNDAY', startTime: '99:00:00', endTime: '18:00:00' }),
+    })
+    const eventResponse = await fetch('/api/v1/work-schedule-events', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ date: '2026-02-30', eventType: 'WORKING', startTime: '09:00', endTime: '18:00' }),
+    })
+
+    expect(scheduleResponse.status).toBe(400)
+    expect(eventResponse.status).toBe(400)
+  })
+
   it('팀 일정 이벤트는 memberId의 실제 소속 팀으로 분류한다', async () => {
     const response = await fetch('/api/v1/work-schedule-events/team/1?startDate=2026-04-02&endDate=2026-04-02', {
       headers: { Authorization: 'Bearer mock-token-1' },

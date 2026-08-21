@@ -128,6 +128,12 @@ export const authHandlers = [
   http.post('/api/v1/auth/refresh', async ({ request }) => {
     const body = await request.json() as { refreshToken?: string }
     const refreshToken = body.refreshToken ?? ''
+    if (!/^refresh-\d+$/.test(refreshToken)) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '리프레시 토큰이 만료되었습니다', data: null },
+        { status: 401 },
+      )
+    }
     const userId = refreshToken.replace('refresh-', '')
     const member = mockUsers.find((user) => user.id === userId)
 

@@ -62,9 +62,94 @@ function getTeamIdByName(teamName: string | undefined) {
   return matched ? Number(matched[1]) : null
 }
 
+function isValidTeamId(teamId: number) {
+  return Number.isInteger(teamId) && teamId >= 1 && teamId <= 4
+}
+
 function canReadTeam(user: User, teamId: number) {
+  if (!isValidTeamId(teamId)) return false
   if (user.role === 'ADMIN') return true
-  return getTeamIdByName(user.team) === teamId
+  return user.role === 'TEAM_LEAD' && getTeamIdByName(user.team) === teamId
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
+}
+
+function isValidDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+function isValidTime(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const matched = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value)
+  if (!matched) return false
+  const [, hours, minutes, seconds = '00'] = matched
+  return Number(hours) <= 23 && Number(minutes) <= 59 && Number(seconds) <= 59
+}
+
+const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+]
+const WEEK_PATTERN_VALUES: WeekPattern[] = ['EVERY', 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'LAST']
+
+function isDayOfWeek(value: unknown): value is DayOfWeek {
+  return typeof value === 'string' && DAY_OF_WEEK_VALUES.includes(value as DayOfWeek)
+}
+
+function isWeekPattern(value: unknown): value is WeekPattern {
+  return typeof value === 'string' && WEEK_PATTERN_VALUES.includes(value as WeekPattern)
+}
+
+function invalidInputResponse() {
+  return HttpResponse.json(
+    { code: 'INVALID_INPUT', message: '요청 값이 유효하지 않습니다.', data: null },
+    { status: 400 },
+  )
+}
+
+function isValidDateRange(startDate: string | null, endDate: string | null) {
+  if (startDate !== null && !isValidDate(startDate)) return false
+  if (endDate !== null && !isValidDate(endDate)) return false
+  return !(startDate && endDate && startDate > endDate)
+}
+
+function isValidEventBody(value: unknown): value is {
+  date: string
+  eventType?: 'WORKING' | 'DAY_OFF'
+  startTime: string | null
+  endTime: string | null
+  endsNextDay?: boolean
+  reason?: string | null
+} {
+  if (!isRecord(value) || !isValidDate(value.date)) return false
+  const eventType = value.eventType ?? 'WORKING'
+  if (eventType !== 'WORKING' && eventType !== 'DAY_OFF') return false
+  if (!('startTime' in value) || !('endTime' in value)) return false
+  if (eventType === 'DAY_OFF') {
+    if (value.startTime !== null || value.endTime !== null) return false
+  } else if (!isValidTime(value.startTime) || !isValidTime(value.endTime)) {
+    return false
+  }
+  if ('endsNextDay' in value && typeof value.endsNextDay !== 'boolean') return false
+  if ('reason' in value && value.reason !== null && typeof value.reason !== 'string') return false
+  return true
+}
+
+function isValidWorkScheduleBody(value: unknown): value is {
+  dayOfWeek: DayOfWeek
+  startTime: string
+  endTime: string
+  weekPattern?: WeekPattern
+  endsNextDay?: boolean
+} {
+  if (!isRecord(value) || !isDayOfWeek(value.dayOfWeek)) return false
+  if (!isValidTime(value.startTime) || !isValidTime(value.endTime)) return false
+  if ('weekPattern' in value && value.weekPattern !== undefined && !isWeekPattern(value.weekPattern)) return false
+  if ('endsNextDay' in value && typeof value.endsNextDay !== 'boolean') return false
+  return true
 }
 
 function getRecordsForDate(date: string, user?: User) {
@@ -145,7 +230,8 @@ function getTeamNameById(teamId: number) {
   if (teamId === 1) return '1팀'
   if (teamId === 2) return '2팀'
   if (teamId === 3) return '3팀'
-  return '4팀'
+  if (teamId === 4) return '4팀'
+  return null
 }
 
 let workScheduleEvents: WorkScheduleEventItem[] = [
@@ -207,11 +293,17 @@ export const attendanceHandlers = [
     if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const date = url.searchParams.get('date') ?? getTodayStr()
-    const requestedTeamId = Number(url.searchParams.get('teamId'))
-    if (user.role === 'TEAM_LEAD' && requestedTeamId && !canReadTeam(user, requestedTeamId)) {
+    if (!isValidDate(date)) return invalidInputResponse()
+    const teamIdParam = url.searchParams.get('teamId')
+    const requestedTeamId = teamIdParam === null ? null : Number(teamIdParam)
+    if (requestedTeamId !== null && !canReadTeam(user, requestedTeamId)) {
       return forbiddenResponse()
     }
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getRecordsForDate(date, user) })
+    const records = getRecordsForDate(date, user)
+    const data = requestedTeamId === null
+      ? records
+      : records.filter((record) => getTeamIdByName(getTeamNameByMemberId(record.memberId)) === requestedTeamId)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
   http.get('/api/v1/attendances/me', ({ request }) => {
@@ -226,6 +318,7 @@ export const attendanceHandlers = [
     if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const date = url.searchParams.get('date') ?? getTodayStr()
+    if (!isValidDate(date)) return invalidInputResponse()
     const memberId = Number(user.id)
 
     const existingRecord = getRecordsForDate(date, user).find((record) => record.memberId === memberId)
@@ -305,8 +398,8 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const teamId = Number(params.teamId)
-    if (!Number.isInteger(teamId) || teamId <= 0 || !canReadTeam(user, teamId)) return forbiddenResponse()
     const teamName = getTeamNameById(teamId)
+    if (!teamName || !canReadTeam(user, teamId)) return forbiddenResponse()
 
     return HttpResponse.json({
       code: 'SUCCESS',
@@ -321,6 +414,7 @@ export const attendanceHandlers = [
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
 
     const filtered = filterWorkScheduleEventsByDate(
       workScheduleEvents.filter((item) => item.memberId === Number(user.id)),
@@ -336,10 +430,12 @@ export const attendanceHandlers = [
     const url = new URL(request.url)
     if (!user) return unauthorizedResponse()
     const teamId = Number(params.teamId)
-    if (!Number.isInteger(teamId) || teamId <= 0 || !canReadTeam(user, teamId)) return forbiddenResponse()
+    if (!isValidTeamId(teamId) || !canReadTeam(user, teamId)) return forbiddenResponse()
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
     const teamName = getTeamNameById(teamId)
+    if (!teamName) return forbiddenResponse()
     const filtered = filterWorkScheduleEventsByDate(
       workScheduleEvents.filter((item) => item.teamName === teamName),
       startDate,
@@ -356,6 +452,7 @@ export const attendanceHandlers = [
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
     const filtered = filterWorkScheduleEventsByDate(workScheduleEvents, startDate, endDate)
 
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
@@ -365,14 +462,8 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const memberId = Number(user.id)
-    const body = await request.json() as {
-      date: string
-      eventType?: 'WORKING' | 'DAY_OFF'
-      startTime: string | null
-      endTime: string | null
-      endsNextDay?: boolean
-      reason?: string | null
-    }
+    const body = await request.json() as unknown
+    if (!isValidEventBody(body)) return invalidInputResponse()
     const eventType = body.eventType ?? 'WORKING'
     const created: WorkScheduleEventItem = {
       id: Date.now(),
@@ -395,14 +486,9 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
-    const body = await request.json() as {
-      date: string
-      eventType?: 'WORKING' | 'DAY_OFF'
-      startTime: string | null
-      endTime: string | null
-      endsNextDay?: boolean
-      reason?: string | null
-    }
+    if (!Number.isInteger(eventId) || eventId <= 0) return invalidInputResponse()
+    const body = await request.json() as unknown
+    if (!isValidEventBody(body)) return invalidInputResponse()
     const existing = workScheduleEvents.find((item) => item.id === eventId)
 
     if (!existing) {
@@ -436,6 +522,7 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
+    if (!Number.isInteger(eventId) || eventId <= 0) return invalidInputResponse()
     const existing = workScheduleEvents.find((item) => item.id === eventId)
     if (!existing) return new HttpResponse(null, { status: 204 })
     const canDelete = user.role === 'ADMIN'
@@ -450,13 +537,8 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const memberId = Number(user.id)
-    const body = await request.json() as {
-      dayOfWeek: DayOfWeek
-      startTime: string
-      endTime: string
-      weekPattern?: WeekPattern
-      endsNextDay?: boolean
-    }
+    const body = await request.json() as unknown
+    if (!isValidWorkScheduleBody(body)) return invalidInputResponse()
     const currentSchedules = getWorkSchedulesForMember(memberId)
     const existing = currentSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
     let updated: WorkScheduleItem
@@ -488,7 +570,9 @@ export const attendanceHandlers = [
     const user = getAuthenticatedUser(request)
     if (!user) return unauthorizedResponse()
     const memberId = Number(user.id)
-    const dayOfWeek = String(params.dayOfWeek) as DayOfWeek
+    const dayOfWeekParam = String(params.dayOfWeek)
+    if (!isDayOfWeek(dayOfWeekParam)) return invalidInputResponse()
+    const dayOfWeek = dayOfWeekParam
     workSchedulesByMemberId[memberId] = getWorkSchedulesForMember(memberId)
       .filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
     syncMemberWorkSchedules(memberId)
