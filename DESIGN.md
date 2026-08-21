@@ -137,7 +137,7 @@ Before interaction findings:
 
 ### After
 
-After captures were regenerated on `2026-08-22` at implementation commit `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position.
+After captures were regenerated on `2026-08-22` against final HEAD `b9f0a236bfe321bb204cac4b50712da153cb3fb3` after the state-region fix at `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position. Each PNG carries a `capture-sha` metadata marker for the final verification pass.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
@@ -163,4 +163,4 @@ After verification checklist:
 - [x] Admin records show current mock data, priority ordering, search filtering, and a selectable detail panel.
 - [x] Member view shows one CTA, schedule chip, text timeline, personal records, and retry state.
 - [x] Keyboard focus, text status, contrast, touch target size, and mobile bottom clearance are checked in the browser.
-- [x] Fresh PNG signatures and dimensions were checked for all six After captures at the implementation SHA.
+- [x] Fresh PNG signatures, dimensions, and final verification metadata were checked for all six After captures.
