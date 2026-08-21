@@ -252,6 +252,24 @@ describe('useWorkSession', () => {
       expect(result.current.status).toBe('working')
       expect(result.current.clockIn).not.toBeNull()
     })
+
+    it('KST 자정 직후의 UTC 이전 날짜 timestamp도 오늘 상태로 복구한다', async () => {
+      server.use(
+        http.get('/api/v1/attendances/me', () =>
+          HttpResponse.json({ code: 'SERVER_ERROR', message: '서버 오류', data: null }, { status: 500 }),
+        ),
+      )
+      const kstEarlyMorning = new Date(`${getTodayStr()}T00:30:00+09:00`).toISOString()
+      localStorage.setItem('yanus-work-session', JSON.stringify({
+        status: 'working',
+        clockIn: kstEarlyMorning,
+      }))
+
+      const { result } = await mountHook()
+
+      expect(result.current.status).toBe('working')
+      expect(result.current.clockIn?.toISOString()).toBe(kstEarlyMorning)
+    })
   })
 
   describe('에러 처리', () => {
