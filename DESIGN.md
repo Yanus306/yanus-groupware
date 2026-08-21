@@ -137,24 +137,25 @@ Before interaction findings:
 
 ### After
 
-After captures were regenerated on `2026-08-22` against rendered implementation commit `ca3881ea20908846a24026ad221ea8f27de2c753`, after the state-region fix at `3867346a85093c3ca30d4699a6f9f6eecdf24656`. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position. Each PNG carries a `capture-source-sha` metadata marker for the rendered implementation; later commits only update DESIGN/evidence metadata.
+After captures were regenerated on `2026-08-22` against rendered implementation commit `4c8ec8f238a19c22ed95ac1201aa761bf16264f`, after the permission, race-safety, cache-isolation, touch-target, and date-range-label fixes. The captures use the same route, role, viewport, mock mode, and default scroll position as the Before set. Full-page image heights record the rendered scroll height; a second browser pass checked bottom clearance at the maximum scroll position. Each PNG carries a `capture-source-sha` metadata marker for the rendered implementation; later commits only update DESIGN/evidence metadata.
 
 | Capture | Role | Viewport | Objective evidence | File |
 | --- | --- | --- | --- | --- |
-| Admin desktop | ADMIN | `1280×900` | `scrollWidth=1280`; 3 current records rendered, with 2 `근무 중` records ordered before the completed record. | `.qa/issue-410/after/admin-1280.png` |
-| Admin narrow | ADMIN | `768×1024` | `scrollWidth=768`, full-page `scrollHeight=1027`; summary and record/detail regions remain in one readable column, with 44px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-768.png` |
-| Admin mobile | ADMIN | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1306`; no horizontal overflow, 2×2 summary grid, compact record rows, and 44px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-390.png` |
-| Team lead mobile | TEAM_LEAD | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1170`; only the team lead's `박팀장` record is rendered, with 52px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/team-lead-390.png` |
-| Member mobile | MEMBER | `390×844` | `scrollWidth=390`, full-page `scrollHeight=2233`; today status, one `퇴근하기` CTA, timeline, records, and schedule settings stack without horizontal overflow, with 52px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/member-390.png` |
-| Member desktop | MEMBER | `1280×900` | `scrollWidth=1280`, full-page `scrollHeight=1671`; today status and `08:30–17:30` schedule are first, followed by the text timeline, personal record, and settings sections. | `.qa/issue-410/after/member-1280.png` |
+| Admin desktop | ADMIN | `1280×900` | `scrollWidth=1280`, full-page `scrollHeight=900`; 3 current records rendered, with 2 `근무 중` records ordered before the completed record. | `.qa/issue-410/after/admin-1280.png` |
+| Admin narrow | ADMIN | `768×1024` | `scrollWidth=768`, full-page `scrollHeight=1034`; summary and record/detail regions remain in one readable column, with 59px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-768.png` |
+| Admin mobile | ADMIN | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1314`; no horizontal overflow, 2×2 summary grid, compact record rows, and 55px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/admin-390.png` |
+| Team lead mobile | TEAM_LEAD | `390×844` | `scrollWidth=390`, full-page `scrollHeight=1178`; only the team lead's `박팀장` record is rendered, with 63px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/team-lead-390.png` |
+| Member mobile | MEMBER | `390×844` | `scrollWidth=390`, full-page `scrollHeight=2241`; today status, one `퇴근하기` CTA, timeline, records, and schedule settings stack without horizontal overflow, with 63px clearance above fixed navigation at max scroll. | `.qa/issue-410/after/member-390.png` |
+| Member desktop | MEMBER | `1280×900` | `scrollWidth=1280`, full-page `scrollHeight=1675`; today status and `08:30–17:30` schedule are first, followed by the text timeline, personal record, and settings sections. | `.qa/issue-410/after/member-1280.png` |
 
 After interaction evidence:
 
 - Admin search for `박` reduced the record list to `박팀장`; clearing the search restored all 3 records.
 - Selecting `김리더 기록 상세 보기` opened a labelled detail panel with date, status, scheduled time, `09:02`, and `18:15`.
-- Member `퇴근하기` changed the status copy to `퇴근 완료` and disabled the CTA after the mock API response.
+- Admin `이번 주` changed the management description to `이번 주의 출석 현황` and the record heading to the selected `YYYY-MM-DD ~ YYYY-MM-DD 기록` range.
+- Member `퇴근하기` changed the timeline status copy to `퇴근 완료` and changed the CTA to disabled `오늘 출석 완료` after the mock API response.
 - Team lead login rendered only the own-team `박팀장` record; admin retained the full three-record view.
-- At maximum narrow/mobile scroll, the admin record region and member schedule section ended above the fixed navigation (`44px` and `52px` respectively).
+- At maximum narrow/mobile scroll, the admin record region and member schedule section ended above the fixed navigation (`59px`, `55px`, `63px`, and `63px` for admin narrow, admin mobile, team-lead mobile, and member mobile respectively).
 
 After verification checklist:
 
