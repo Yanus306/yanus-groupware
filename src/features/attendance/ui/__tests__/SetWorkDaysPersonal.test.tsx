@@ -62,7 +62,7 @@ describe('SetWorkDaysPersonal', () => {
   it('활성화된 요일(월-금)에 출근/퇴근 라벨이 표시된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      expect(screen.getByText(/근무 시간과 반복 주차를 한 번에 저장/)).toBeInTheDocument()
+      expect(screen.getByText('저장할 수 있습니다')).toBeInTheDocument()
       expect(screen.getByText('출근')).toBeInTheDocument()
       expect(screen.getByText('퇴근')).toBeInTheDocument()
       expect(screen.getByText('다음날 종료')).toBeInTheDocument()
