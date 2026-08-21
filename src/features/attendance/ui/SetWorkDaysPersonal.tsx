@@ -88,6 +88,8 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
                   key={day}
                   type="button"
                   role="tab"
+                  id={`work-schedule-tab-${index}`}
+                  aria-controls="work-schedule-day-panel"
                   aria-selected={selectedDayIndex === index}
                   className={`schedule-day-tab ${selectedDayIndex === index ? 'active' : ''}`}
                   onClick={() => setSelectedDayIndex(index)}
@@ -97,7 +99,13 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
               ))}
             </div>
 
-            <div className="day-card-head">
+            <div
+              id="work-schedule-day-panel"
+              className="day-card-head"
+              role="tabpanel"
+              aria-labelledby={`work-schedule-tab-${selectedDayIndex}`}
+              tabIndex={0}
+            >
               <div>
                 <span className="day-label">{selectedDayName}</span>
                 <span className={`day-status ${workDays[selectedDayIndex] ? 'active' : 'inactive'}`}>
@@ -109,6 +117,7 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
                 className={`toggle ${workDays[selectedDayIndex] ? 'on' : ''}`}
                 onClick={() => toggleDay(selectedDayIndex)}
                 aria-label={`${selectedDayName} 토글`}
+                aria-pressed={workDays[selectedDayIndex]}
               />
             </div>
 
@@ -116,16 +125,18 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
               <>
                 <div className="day-times">
                   <div className="time-field">
-                    <label>출근</label>
+                    <label htmlFor={`work-schedule-${selectedDayName}-start`}>출근</label>
                     <input
+                      id={`work-schedule-${selectedDayName}-start`}
                       type="time"
                       value={daySchedules[selectedDayIndex].checkInTime}
                       onChange={(e) => setDayTime(selectedDayIndex, 'checkInTime', e.target.value)}
                     />
                   </div>
                   <div className="time-field">
-                    <label>퇴근</label>
+                    <label htmlFor={`work-schedule-${selectedDayName}-end`}>퇴근</label>
                     <input
+                      id={`work-schedule-${selectedDayName}-end`}
                       type="time"
                       value={daySchedules[selectedDayIndex].checkOutTime}
                       onChange={(e) => setDayTime(selectedDayIndex, 'checkOutTime', e.target.value)}
