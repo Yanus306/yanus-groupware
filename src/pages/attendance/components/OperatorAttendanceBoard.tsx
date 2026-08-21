@@ -22,6 +22,7 @@ interface OperatorAttendanceBoardProps {
   onRetry: () => void
   memberSchedules: MemberWorkScheduleItem[]
   scheduleEvents: WorkScheduleEventItem[]
+  scheduleErrorMessage?: string | null
 }
 
 function sortRecords(records: AttendanceRecord[]): AttendanceRecord[] {
@@ -43,6 +44,7 @@ export function OperatorAttendanceBoard({
   onRetry,
   memberSchedules,
   scheduleEvents,
+  scheduleErrorMessage = null,
 }: OperatorAttendanceBoardProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -56,16 +58,22 @@ export function OperatorAttendanceBoard({
       (statusFilter === 'left' && record.status === 'LEFT')
     return matchesSearch && matchesStatus
   })
-  const selectedMemberSchedule = selectedRecord
-    ? memberSchedules.find((item) => item.memberId === selectedRecord.memberId)
+  const visibleSelectedRecord = selectedRecord && records.some((record) => record.id === selectedRecord.id)
+    ? selectedRecord
+    : null
+  const selectedMemberSchedule = visibleSelectedRecord
+    ? memberSchedules.find((item) => item.memberId === visibleSelectedRecord.memberId)
     : undefined
-  const selectedScheduleLabel = selectedRecord
+  const selectedScheduleLabel = visibleSelectedRecord
     ? formatWorkScheduleForDate(
       selectedMemberSchedule?.workSchedules ?? [],
-      scheduleEvents.filter((event) => event.memberId === selectedRecord.memberId),
-      selectedRecord.workDate,
+      scheduleEvents.filter((event) => event.memberId === visibleSelectedRecord.memberId),
+      visibleSelectedRecord.workDate,
     )
     : '휴무'
+
+  const hasSearchFilter = normalizedSearch.length > 0
+  const hasStatusFilter = statusFilter !== 'all'
 
   return (
     <section className="operator-board" aria-labelledby="operator-board-title">
@@ -131,6 +139,14 @@ export function OperatorAttendanceBoard({
         </div>
       </div>
 
+      {scheduleErrorMessage && (
+        <div className="operator-state operator-state-error" role="alert">
+          <AlertCircle size={20} aria-hidden="true" />
+          <strong>{scheduleErrorMessage}</strong>
+          <button type="button" onClick={onRetry}>다시 시도</button>
+        </div>
+      )}
+
       <div className="operator-content-grid">
         <div className="operator-records-panel">
           <div className="operator-panel-heading">
@@ -152,8 +168,20 @@ export function OperatorAttendanceBoard({
           ) : visibleRecords.length === 0 ? (
             <div className="operator-state">
               <CheckCircle2 size={20} aria-hidden="true" />
-              <strong>{searchTerm ? '검색 결과가 없습니다.' : '처리할 출석 기록이 없습니다'}</strong>
-              <span>{searchTerm ? '다른 멤버 이름으로 검색해 보세요.' : '선택한 날짜에 확인할 기록이 없습니다.'}</span>
+              <strong>
+                {hasSearchFilter
+                  ? '검색 결과가 없습니다.'
+                  : hasStatusFilter
+                    ? '선택한 상태의 기록이 없습니다.'
+                    : '처리할 출석 기록이 없습니다'}
+              </strong>
+              <span>
+                {hasSearchFilter
+                  ? '다른 멤버 이름으로 검색해 보세요.'
+                  : hasStatusFilter
+                    ? '다른 출석 상태를 선택해 보세요.'
+                    : '선택한 날짜에 확인할 기록이 없습니다.'}
+              </span>
             </div>
           ) : (
             <div className="operator-record-list" role="list">
@@ -188,23 +216,23 @@ export function OperatorAttendanceBoard({
           )}
         </div>
 
-        {selectedRecord && (
+        {visibleSelectedRecord && (
           <aside className="operator-detail-panel" aria-labelledby="operator-detail-title">
             <div className="operator-detail-heading">
               <div>
                 <p className="section-eyebrow">RECORD DETAIL</p>
-                <h3 id="operator-detail-title">{selectedRecord.memberName} 상세</h3>
+                <h3 id="operator-detail-title">{visibleSelectedRecord.memberName} 상세</h3>
               </div>
               <button type="button" className="operator-detail-close" aria-label="상세 닫기" onClick={() => setSelectedRecord(null)}>
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
             <dl className="operator-detail-list">
-              <div><dt>날짜</dt><dd>{selectedRecord.workDate}</dd></div>
-              <div><dt>상태</dt><dd>{getRecordStatusLabel(selectedRecord.status)}</dd></div>
+              <div><dt>날짜</dt><dd>{visibleSelectedRecord.workDate}</dd></div>
+              <div><dt>상태</dt><dd>{getRecordStatusLabel(visibleSelectedRecord.status)}</dd></div>
               <div><dt>예정 시간</dt><dd>{selectedScheduleLabel}</dd></div>
-              <div><dt>출근</dt><dd>{getTimeLabel(selectedRecord.checkInTime)}</dd></div>
-              <div><dt>퇴근</dt><dd>{getTimeLabel(selectedRecord.checkOutTime)}</dd></div>
+              <div><dt>출근</dt><dd>{getTimeLabel(visibleSelectedRecord.checkInTime)}</dd></div>
+              <div><dt>퇴근</dt><dd>{getTimeLabel(visibleSelectedRecord.checkOutTime)}</dd></div>
             </dl>
             <div className="operator-detail-note">
               <Clock3 size={16} aria-hidden="true" />

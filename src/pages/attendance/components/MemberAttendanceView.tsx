@@ -119,7 +119,9 @@ export function MemberAttendanceView({
           </div>
           <span className="section-count">{records.length}건</span>
         </div>
-        {records.length === 0 ? (
+        {isLoading ? (
+          <div className="member-empty-state" role="status">출석 기록을 불러오는 중입니다.</div>
+        ) : records.length === 0 ? (
           <div className="member-empty-state">아직 출퇴근 기록이 없습니다.</div>
         ) : (
           <div className="member-history-list" role="list">
