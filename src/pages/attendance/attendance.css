@@ -7,6 +7,13 @@
   font-weight: 600;
 }
 
+.attendance-page h1,
+.attendance-page h2,
+.attendance-page h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
 .attendance-header {
   display: flex;
   align-items: flex-start;

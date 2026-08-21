@@ -19,6 +19,8 @@
 .set-work-days-personal h3 {
   margin: 0 0 var(--space-1);
   font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1.3;
 }
 

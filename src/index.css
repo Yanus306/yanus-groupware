@@ -70,7 +70,7 @@
   --page-max-regular: 1200px;
   --page-max-wide: 1480px;
   --page-max-ultra: 1760px;
-  --page-shell-padding: clamp(20px, 2vw, 36px);
+  --page-shell-padding: clamp(20px, 2.5vw, 32px);
   --panel-width-md: clamp(280px, 20vw, 340px);
   --panel-width-lg: clamp(300px, 24vw, 380px);
 

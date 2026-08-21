@@ -72,7 +72,7 @@ export function SetWorkDaysPersonal({ onSaved, hideHeader = false }: SetWorkDays
 
       <div className="schedule-summary">
         <span className="summary-chip">활성 요일 {workDays.filter(Boolean).length}일</span>
-        <p>반복 근무는 여기서 요일별로 정리하고, 특정 날짜 예외 일정은 우측 캘린더에서 바로 추가할 수 있습니다.</p>
+        <p>반복 근무를 요일별로 정리하고, 근무 시간과 반복 주차를 한 번에 저장할 수 있습니다.</p>
       </div>
 
       {isLoading ? (
