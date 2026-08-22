@@ -35,11 +35,10 @@ describe('createGoogleAnalyticsClient', () => {
       'id=G-TEST123',
     )
     expect(window.dataLayer).toHaveLength(2)
-    expect(Array.from(window.dataLayer?.[1] ?? [])).toEqual([
-      'config',
-      'G-TEST123',
-      { send_page_view: false },
-    ])
+    const configCommand = window.dataLayer?.[1]
+    expect(configCommand?.[0]).toBe('config')
+    expect(configCommand?.[1]).toBe('G-TEST123')
+    expect(configCommand?.[2]).toEqual({ send_page_view: false })
   })
 
   it('Given a configured client, When the same route is reported twice, Then it sends one page view per route', () => {
