@@ -109,39 +109,39 @@
 
 .nav-item:hover {
   color: var(--text-primary);
-  background: var(--nav-hover);
   background: var(--surface) !important;
 }
 
 .nav-item.active {
   color: var(--text-primary);
-  box-shadow: inset 2px 0 var(--color-warning);
-  background: var(--surface) !important;
+  box-shadow: inset 2px 0 var(--nav-active-indicator);
+  background: var(--surface-tint) !important;
   border-color: transparent;
 }
 
 .nav-item.active svg {
-  color: var(--color-warning);
+  color: var(--nav-active-icon);
 }
 
 .admin-nav-item {
   margin-top: 8px;
   border-top: 1px solid var(--border-color);
   padding-top: 14px;
-  color: var(--color-warning) !important;
-  opacity: 0.85;
+  color: var(--text-secondary) !important;
 }
 
 .admin-nav-item:hover {
-  opacity: 1;
   background: var(--surface) !important;
-  color: var(--color-warning) !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-nav-item.active {
-  opacity: 1;
-  background: var(--surface) !important;
+  background: var(--surface-tint) !important;
   color: var(--text-primary) !important;
+}
+
+.admin-nav-item.active svg {
+  color: var(--nav-active-icon);
 }
 
 .main-content {
