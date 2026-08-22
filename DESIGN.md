@@ -264,3 +264,42 @@ The post-merge navigation polish was captured against source commit `fbf6ee2` af
 | --- | --- | --- | --- |
 | Home sidebar | `1280×900` | Active `홈` uses primary blue rail/icon and `scrollWidth=1280`. | `.qa/issue-410/after/nav-active-blue-1280.png` |
 | Home bottom navigation | `390×844` | Active `홈` uses primary blue rail/icon and `scrollWidth=390`; no horizontal overflow. | `.qa/issue-410/after/nav-active-blue-390.png` |
+
+## Before / After evidence — #414
+
+The app-wide baseline was captured from `develop` at `f35affdb5a30a9c05b25e9b22d92742b13abc1ef`
+before Issue #414 style edits. The After set was captured on `2026-08-22` from rendered source
+`f0203cfe6f32264905baddde5b0fdd22d4f815a2`. Both sets use Chromium, `VITE_USE_MOCK=true`,
+dark theme, full-page screenshots, and the same `390×844`, `768×1024`, and `1280×900` viewports.
+The After set uses the admin fixture for authenticated general routes, the team-lead fixture for
+`/team-management`, and no auth fixture for the public routes.
+
+### Before
+
+| Scope | Coverage | Objective evidence | File |
+| --- | --- | --- | --- |
+| Authenticated shell | 10 routes × 3 viewports | Existing shell and route CSS used mixed glass/gradient surfaces, large functional radii, and route-specific spacing. | `.qa/issue-414/before/metadata.json` |
+| Public auth | 3 routes × 3 viewports | Login, register, and email verification shared the legacy decorative auth treatment. | `.qa/issue-414/before/login-desktop.png`, `.qa/issue-414/before/register-desktop.png`, `.qa/issue-414/before/verify-email-desktop.png` |
+| Protected team management | 1 route × 3 viewports | Admin fixture redirected `/team-management` to `/`, so the team-lead surface had no valid baseline capture. | `.qa/issue-414/before/team-management-mobile.png` |
+| Whole matrix | 42 captures | `scrollWidth` matched the viewport in the recorded baseline, but the evidence exposed route redirect coverage and inconsistent surface language. | `.qa/issue-414/before/metadata.json` |
+
+### After
+
+| Scope | Coverage | Objective evidence | File |
+| --- | --- | --- | --- |
+| Authenticated shell | 10 routes × 3 viewports | Sidebar active state is blue, surfaces use token borders and 6px functional radii, and mobile uses the fixed bottom bar with content clearance. | `.qa/issue-414/after/home-desktop.png`, `.qa/issue-414/after/home-mobile.png` |
+| Chat, calendar, schedules | 3 routes × 3 viewports | Toolbars, selected rows, FullCalendar controls, message surfaces, and schedule legends use shared blue/info, warning, success, and error states. | `.qa/issue-414/after/chat-desktop.png`, `.qa/issue-414/after/calendar-desktop.png`, `.qa/issue-414/after/work-schedules-mobile.png` |
+| Operations and data pages | 4 routes × 3 viewports | Attendance, members, team management, and admin tables use compact bordered rows, readable empty states, and semantic status colors. | `.qa/issue-414/after/attendance-desktop.png`, `.qa/issue-414/after/members-desktop.png`, `.qa/issue-414/after/team-management-desktop.png`, `.qa/issue-414/after/admin-mobile.png` |
+| Drive and AI | 2 routes × 3 viewports | File lists, upload controls, AI messages, suggestions, and code-friendly surfaces no longer depend on purple gradients or blur. | `.qa/issue-414/after/drive-mobile.png`, `.qa/issue-414/after/ai-desktop.png` |
+| My Page and public auth | 4 routes × 3 viewports | Settings sections, form controls, login, register, and email verification use the same surface and focus language. | `.qa/issue-414/after/my-page-mobile.png`, `.qa/issue-414/after/login-desktop.png`, `.qa/issue-414/after/register-desktop.png`, `.qa/issue-414/after/verify-email-mobile.png` |
+| Whole matrix | 42 captures | All 14 requested routes rendered at the requested path; all 42 captures recorded `scrollWidth` equal to the viewport width. | `.qa/issue-414/after/metadata.json` |
+
+After verification checklist:
+
+- [x] All 14 routes render at `390px`, `768px`, and `1280px`.
+- [x] `scrollWidth` does not exceed the viewport in any of the 42 After captures.
+- [x] `/team-management` is captured with the team-lead fixture and no longer redirects to `/`.
+- [x] Navigation selection uses primary blue; warning yellow remains reserved for caution/status.
+- [x] Auth backgrounds, cards, fields, buttons, and public feedback states use the shared surface layer.
+- [x] Explicit light theme was checked on home, calendar, and login at `1280×900`; all kept the viewport width.
+- [x] Fresh PNG files, dimensions, route paths, roles, and scroll metrics are recorded in After metadata.
