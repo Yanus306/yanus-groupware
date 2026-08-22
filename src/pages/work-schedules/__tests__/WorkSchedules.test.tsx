@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 const mockGetAllWorkSchedules = vi.fn()
 const mockGetTeamWorkSchedules = vi.fn()
+const mockGetMyWorkSchedule = vi.fn()
 const mockGetWorkScheduleEvents = vi.fn()
 const mockGetTeamWorkScheduleEvents = vi.fn()
 const mockGetAllWorkScheduleEvents = vi.fn()
@@ -79,6 +80,7 @@ vi.mock('../../../features/attendance/ui', () => ({
 vi.mock('../../../shared/api/attendanceApi', () => ({
   getAllWorkSchedules: (...args: unknown[]) => mockGetAllWorkSchedules(...args),
   getTeamWorkSchedules: (...args: unknown[]) => mockGetTeamWorkSchedules(...args),
+  getMyWorkSchedule: (...args: unknown[]) => mockGetMyWorkSchedule(...args),
   getWorkScheduleEvents: (...args: unknown[]) => mockGetWorkScheduleEvents(...args),
   getTeamWorkScheduleEvents: (...args: unknown[]) => mockGetTeamWorkScheduleEvents(...args),
   getAllWorkScheduleEvents: (...args: unknown[]) => mockGetAllWorkScheduleEvents(...args),
@@ -128,6 +130,9 @@ describe('WorkSchedules 페이지', () => {
         teamName: '1팀',
         workSchedules: [{ id: 2, dayOfWeek: 'TUESDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' }],
       },
+    ])
+    mockGetMyWorkSchedule.mockResolvedValue([
+      { id: 21, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
     ])
     mockGetWorkScheduleEvents.mockResolvedValue([
       {
@@ -236,7 +241,7 @@ describe('WorkSchedules 페이지', () => {
     })
   })
 
-  it('일반 멤버는 우리 팀과 개인 필터만 본다', async () => {
+  it('일반 멤버는 개인 필터만 본다', async () => {
     mockState = {
       currentUser: { id: '2', name: '팀원', role: 'MEMBER', team: '1팀' },
       users: [
@@ -249,13 +254,15 @@ describe('WorkSchedules 페이지', () => {
     render(<WorkSchedules />)
 
     expect(screen.queryByRole('button', { name: '전체' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '우리 팀' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '우리 팀' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '개인' })).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(mockGetTeamWorkSchedules).toHaveBeenCalled()
-      expect(mockGetTeamWorkScheduleEvents).toHaveBeenCalledWith(1, expect.any(String), expect.any(String))
+      expect(mockGetWorkScheduleEvents).toHaveBeenCalledWith(expect.any(String), expect.any(String))
+      expect(mockGetMyWorkSchedule).toHaveBeenCalled()
     })
+    expect(mockGetTeamWorkSchedules).not.toHaveBeenCalled()
+    expect(mockGetTeamWorkScheduleEvents).not.toHaveBeenCalled()
   })
 
   it('DAY_OFF 날짜별 이벤트는 같은 날짜의 반복 일정을 가리고 캘린더에서는 숨긴다', async () => {

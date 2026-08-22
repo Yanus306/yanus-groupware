@@ -1,24 +1,42 @@
 import { baseClient } from './baseClient'
+import { ApiError } from './baseClient'
+import { parseDateString, toDateString } from '../lib/date'
 
 export interface AttendanceRecord {
   id: number
   memberId: number
   memberName: string
   workDate: string
-  checkInTime: string
+  checkInTime: string | null
   checkOutTime: string | null
   status: 'WORKING' | 'LEFT'
+}
+
+function encodeDateQuery(value: string) {
+  const parsed = parseDateString(value)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(parsed.getTime()) || toDateString(parsed) !== value) {
+    throw new ApiError(400, '유효하지 않은 날짜입니다', 'INVALID_DATE')
+  }
+  return encodeURIComponent(value)
+}
+
+function encodeTeamQuery(teamId: number | null | undefined) {
+  if (teamId === null || teamId === undefined) return ''
+  if (!Number.isInteger(teamId) || teamId <= 0) {
+    throw new ApiError(400, '유효하지 않은 팀입니다', 'INVALID_TEAM')
+  }
+  return `&teamId=${teamId}`
 }
 
 // OpenAPI 스펙 기준: /api/v1/attendances/me 는 query param 없음
 export const getMyAttendance = () =>
   baseClient.get<AttendanceRecord[]>('/api/v1/attendances/me')
 
-export const getAttendanceByDate = (date: string) =>
-  baseClient.get<AttendanceRecord[]>(`/api/v1/attendances?date=${date}`)
+export const getAttendanceByDate = (date: string, teamId?: number | null) =>
+  baseClient.get<AttendanceRecord[]>(`/api/v1/attendances?date=${encodeDateQuery(date)}${encodeTeamQuery(teamId)}`)
 
-export const getAttendanceByDates = async (dates: string[]) => {
-  const responses = await Promise.all(dates.map((date) => getAttendanceByDate(date)))
+export const getAttendanceByDates = async (dates: string[], teamId?: number | null) => {
+  const responses = await Promise.all(dates.map((date) => getAttendanceByDate(date, teamId)))
   return responses.flat()
 }
 
@@ -29,7 +47,7 @@ export const clockOut = () =>
   baseClient.post<AttendanceRecord>('/api/v1/attendances/check-out', {})
 
 export const resetMyAttendance = (date?: string) =>
-  baseClient.delete<null>(`/api/v1/attendances/me${date ? `?date=${date}` : ''}`)
+  baseClient.delete<null>(`/api/v1/attendances/me${date ? `?date=${encodeDateQuery(date)}` : ''}`)
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
 export type WeekPattern = 'EVERY' | 'FIRST' | 'SECOND' | 'THIRD' | 'FOURTH' | 'LAST'
@@ -118,15 +136,19 @@ export const getTeamWorkSchedules = (teamId: number) =>
     .then((items) => items.map(normalizeMemberWorkSchedule))
 
 export const getWorkScheduleEvents = (startDate: string, endDate: string) =>
-  baseClient.get<WorkScheduleEventItem[]>(`/api/v1/work-schedule-events?startDate=${startDate}&endDate=${endDate}`)
+  baseClient.get<WorkScheduleEventItem[]>(
+    `/api/v1/work-schedule-events?startDate=${encodeDateQuery(startDate)}&endDate=${encodeDateQuery(endDate)}`,
+  )
 
 export const getTeamWorkScheduleEvents = (teamId: number, startDate: string, endDate: string) =>
   baseClient.get<WorkScheduleEventItem[]>(
-    `/api/v1/work-schedule-events/team/${teamId}?startDate=${startDate}&endDate=${endDate}`,
+    `/api/v1/work-schedule-events/team/${teamId}?startDate=${encodeDateQuery(startDate)}&endDate=${encodeDateQuery(endDate)}`,
   )
 
 export const getAllWorkScheduleEvents = (startDate: string, endDate: string) =>
-  baseClient.get<WorkScheduleEventItem[]>(`/api/v1/work-schedule-events/all?startDate=${startDate}&endDate=${endDate}`)
+  baseClient.get<WorkScheduleEventItem[]>(
+    `/api/v1/work-schedule-events/all?startDate=${encodeDateQuery(startDate)}&endDate=${encodeDateQuery(endDate)}`,
+  )
 
 export const createWorkScheduleEvent = (body: WorkScheduleEventPayload) =>
   baseClient.post<WorkScheduleEventItem>('/api/v1/work-schedule-events', body)

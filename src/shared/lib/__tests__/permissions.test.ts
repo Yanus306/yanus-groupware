@@ -12,6 +12,7 @@ import {
   canChangeMemberTeamFor,
   canManageTeams,
   canViewManagedAttendance,
+  canViewTeamWorkSchedules,
 } from '../permissions'
 
 const admin = { id: '1', role: 'ADMIN' as const, team: '1팀' }
@@ -79,5 +80,8 @@ describe('permissions', () => {
     expect(canViewManagedAttendance(admin)).toBe(true)
     expect(canViewManagedAttendance(teamLead)).toBe(true)
     expect(canViewManagedAttendance(member)).toBe(false)
+    expect(canViewTeamWorkSchedules(admin)).toBe(true)
+    expect(canViewTeamWorkSchedules(teamLead)).toBe(true)
+    expect(canViewTeamWorkSchedules(member)).toBe(false)
   })
 })
