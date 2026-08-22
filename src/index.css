@@ -67,6 +67,8 @@
   --ring-color: rgba(47, 129, 247, 0.45);
   --nav-hover: var(--surface);
   --nav-active: var(--surface);
+  --nav-active-indicator: var(--color-primary);
+  --nav-active-icon: var(--color-primary);
   --page-max-regular: 1200px;
   --page-max-wide: 1480px;
   --page-max-ultra: 1760px;
