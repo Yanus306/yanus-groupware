@@ -1,0 +1,639 @@
+{
+  "capturedAt": "2026-08-22T02:46:41.542Z",
+  "source": "issue-414-after",
+  "sourceCommit": "753febc17546ca4bdd7c3525f53e43fc719f7de1",
+  "viewports": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 900
+    }
+  ],
+  "routes": [
+    {
+      "name": "home",
+      "path": "/",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "chat",
+      "path": "/chat",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "calendar",
+      "path": "/calendar",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "attendance",
+      "path": "/attendance",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "work-schedules",
+      "path": "/work-schedules",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "drive",
+      "path": "/drive",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "ai",
+      "path": "/ai",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "members",
+      "path": "/members",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "my-page",
+      "path": "/my-page",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "team-management",
+      "path": "/team-management",
+      "token": "mock-token-2"
+    },
+    {
+      "name": "admin",
+      "path": "/admin",
+      "token": "mock-token-1"
+    },
+    {
+      "name": "login",
+      "path": "/login"
+    },
+    {
+      "name": "register",
+      "path": "/register"
+    },
+    {
+      "name": "verify-email",
+      "path": "/verify-email"
+    }
+  ],
+  "results": [
+    {
+      "name": "home",
+      "requestedPath": "/",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/",
+      "scrollWidth": 390,
+      "scrollHeight": 1661,
+      "bodyText": "WORKSPACE\n\n홈\n09:13\n오늘은 휴무입니다\n오늘 근무가 종료되어 예정 시간과 함께 비교할 수 있습니다.\n휴무일에도 출근 기록이 있습니다\n\n오늘은 휴무일로 설정되어 있지만 실제 출퇴근 기록이 남아 있습니다.\n\n출근은 220.69 대역 IP에서만 가능합니다.\n오전 9:02 - 오후 6:15\n출근 내역 초기화\n오늘 일정\n\n오늘 등록된 일정이 없습니다\n\n캘린더 보기\n# General\n김\n김리더\n모두 좋은 아침입니다!\n오전 10:45\n박\n박팀장\n좋은 아침이에요 :)\n오전 10:55\n채팅 열기\n오늘 할 일\n주간 회의 안건 정리\n높음\n10:00 오전 까지\n완료 처리\n정산 시트 점검\n높음\n8:00 오후 까지\n완료됨\n출퇴근 누락자 확인\n보통\n6:30 오후 까지\n완료 처리",
+      "durationMs": 1857
+    },
+    {
+      "name": "chat",
+      "requestedPath": "/chat",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/chat",
+      "scrollWidth": 390,
+      "scrollHeight": 985,
+      "bodyText": "WORKSPACE\n\n채팅\n대화 목록\n\n대화할 채널이나 대상을 먼저 선택한 뒤 대화방으로 들어갑니다.\n\n채널\n# 전체 공지\n안녕하세요!\n# 디자인팀\n디자인 피드백 부탁드려요\n# 개발팀\nPR 리뷰 요청드립니다\n개인 대화\n최\n최개발\n1팀\n• 자리 비움\n박\n박팀장\n2팀\n• 자리 비움\n이\n이멤버\n3팀\n• 자리 비움",
+      "durationMs": 1744
+    },
+    {
+      "name": "calendar",
+      "requestedPath": "/calendar",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/calendar",
+      "scrollWidth": 390,
+      "scrollHeight": 1424,
+      "bodyText": "WORKSPACE\n\n캘린더\n오늘\n2026년 8월\n월\n주\n일\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\t\n30일\n\t\n31일\n\t\n1일\n\n\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n\t\n6일\n\t\n7일\n\t\n8일\n\n\n9일\n\t\n10일\n\t\n11일\n\t\n12일\n\t\n13일\n\t\n14일\n\t\n15일\n\n\n16일\n\t\n17일\n\t\n18일\n\t\n19일\n\t\n20일\n\t\n21일\n\t\n22일\n오전 10시\n주간 회의 안건 정리\n오후 6:30\n출퇴근 누락자 확인\n\n\n23일\n오후 2시\n신입 팀 공지 업로드\n\t\n24일\n\t\n25일\n\t\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\n\n30일\n\t\n31일\n\t\n1일\n\t\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n내 할일\n팀 할일\n일정\n할일\n마감 시간\n:\n마감 날짜\n중요도\n높음\n보통\n낮음\n추가\n오늘의 할일\n주간 회의 안건 정리",
+      "durationMs": 1833
+    },
+    {
+      "name": "attendance",
+      "requestedPath": "/attendance",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/attendance",
+      "scrollWidth": 390,
+      "scrollHeight": 1367,
+      "bodyText": "WORKSPACE\n\n출퇴근\n\nATTENDANCE · 2026-08-22\n\n출석 관리\n\n오늘의 출석 현황과 확인이 필요한 기록을 한 곳에서 관리합니다.\n\nCSV 내보내기\n2026-08-22\n오늘\n이번 주\n날짜 선택\n전체 기록\n3\n2026-08-22\n처리 필요\n2\n근무 중 기록\n근무 중\n2\n현재 진행 중\n퇴근 완료\n1\n완료 기록\n\nOPERATIONS FIRST\n\n처리 필요\n2건이 먼저 표시됩니다.\n멤버 검색\n전체\n근무 중\n퇴근 완료\n\nATTENDANCE RECORDS\n\n2026-08-22 기록\n3명\n박\n박팀장\n2026-08-22\n근무 중\n이\n이멤버\n2026-08-22\n근무 중\n김\n김리더\n2026-08-22\n퇴근 완료",
+      "durationMs": 1771
+    },
+    {
+      "name": "work-schedules",
+      "requestedPath": "/work-schedules",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/work-schedules",
+      "scrollWidth": 390,
+      "scrollHeight": 2558,
+      "bodyText": "WORKSPACE\n\n근무 일정\n\n반복 근무와 날짜별 근무 일정을 같은 캘린더에서 보고 바로 관리할 수 있습니다.\n\n날짜 클릭으로 개별 일정을 추가하고, 역할 범위에 따라 다른 사람 일정도 함께 확인합니다.\n근무 일정 캘린더\n\n날짜를 눌러 개인 근무 일정을 추가하고, 역할 범위에 따라 다른 사람 근무 일정도 함께 확인합니다.\n\n전체\n팀별\n개인\n내 반복 일정\n공유 반복 일정\n날짜별 추가 일정\n팀 공유 일정\n날짜별 일정 추가\n오늘\n2026년 8월\n월\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n08:30\n이멤버\n09:00\n김리더\n10:00\n박팀장\n\t\n28일\n09:00\n김리더\n\t\n29일\n08:30\n이멤버\n\t\n30일\n09:00\n김리더\n10:00\n박팀장\n\t\n31일\n08:30\n이멤버\n09:00\n김리더\n22:00\n최개발\n\t\n1일",
+      "durationMs": 1804
+    },
+    {
+      "name": "drive",
+      "requestedPath": "/drive",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/drive",
+      "scrollWidth": 390,
+      "scrollHeight": 2014,
+      "bodyText": "WORKSPACE\n\n드라이브\n\nSHARED LIBRARY\n\n모든 멤버가 함께 쓰는 공용 문서함입니다. 업로드한 파일은 팀 전체가 바로 확인할 수 있습니다.\n\n전체 멤버 공유\n공용 파일 업로드\n총 파일\n3개\n사용 용량\n1.2 MB\n최근 업로드\n3월 18일 오후 8:00\n팀 공유 라이브러리\n빠른 공유 업로드\n\n회의록, 산출물, 참고 자료를 올리면 일반 멤버를 포함한 팀 전체가 바로 같은 파일을 확인합니다.\n\n새 공유 파일 추가\n현재 사용자\n김리더\n\n일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.\n\n업로드 참여자\n3명\n대표 업로더\n이멤버\n파일 라이브러리\n\n이름, 업로더, 업로드 시점을 함께 보여줘서 바로 찾을 수 있게 정리했습니다.\n\n회의록_0318.docx\n이멤버\n3월 18일 오후 8:00\n50 KB\n디자인 시안 v2.fig\n박",
+      "durationMs": 1775
+    },
+    {
+      "name": "ai",
+      "requestedPath": "/ai",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/ai",
+      "scrollWidth": 390,
+      "scrollHeight": 964,
+      "bodyText": "WORKSPACE\n\nAI\n\n공유 문서를 바탕으로 답변하는 팀 어시스턴트입니다.\n\n안녕하세요! 저는 yANUs AI입니다. 파일 드라이브에 공유된 문서를 바탕으로 질문에 답변해 드립니다. 무엇을 도와드릴까요?\n\n추천 질문\n\n오늘 일정 요약해줘\n공유된 파일 목록 알려줘\n프로젝트 진행 상황 정리해줘",
+      "durationMs": 1762
+    },
+    {
+      "name": "members",
+      "requestedPath": "/members",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/members",
+      "scrollWidth": 390,
+      "scrollHeight": 1732,
+      "bodyText": "WORKSPACE\n\n멤버\n\n멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.\n\n관리자 전용\n멤버 초대\n팀\n전체 팀\n1팀\n2팀\n3팀\n역할\n전체 역할\n관리자\n팀장\n멤버\n전체 멤버 4명\n멤버 목록\n\n활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다.\n\n프로필\t팀\t역할\t상태\t관리\n\n김\n김리더\n\t1팀\t\n관리자\t\n활성\n\t\n관리 불가\n\n\n최\n최개발\n\t1팀\t멤버\t\n활성화\n\t\n\n\n박\n박팀장\n\t2팀\t팀장\t\n활성화\n\t\n\n\n이\n이멤버\n\t3팀\t멤버\t\n활성화\n\t\n팀별 멤버 수\n\n비활성 멤버는 집계에서 제외됩니다.\n\n1팀\n2\n2팀\n1\n3팀\n1\n역할 분포\n\n현재 활성 멤버 기준으로 역할 비중을 보여줍니다.\n\n관리자 1\n팀장 1\n멤버 2",
+      "durationMs": 1759
+    },
+    {
+      "name": "my-page",
+      "requestedPath": "/my-page",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/my-page",
+      "scrollWidth": 390,
+      "scrollHeight": 1513,
+      "bodyText": "WORKSPACE\n\n마이페이지\n\nMY PAGE\n\n프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.\n\n다크 모드 사용 중\n선택한 테마는 브라우저에 저장되어 다음 방문에도 유지됩니다.\n프로필\n알림\n테마\n정산\n보안\n\nPROFILE\n\n내 계정과 소속 정보를 정리합니다.\n\n표시 이름, 역할, 팀 정보를 확인하고 개인 프로필을 안전하게 관리할 수 있습니다.\n\n계정 기본 정보\n프로필 정보\n김\n\n김리더\n\nADMIN · 1팀\n\n표시 이름\n역할\n팀\n저장",
+      "durationMs": 1818
+    },
+    {
+      "name": "team-management",
+      "requestedPath": "/team-management",
+      "role": "TEAM_LEAD",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/team-management",
+      "scrollWidth": 390,
+      "scrollHeight": 863,
+      "bodyText": "WORKSPACE\n\n팀 관리\n\n팀장은 같은 팀 멤버를 확인하고 팀 이동만 관리할 수 있습니다.\n\n2팀 멤버 1명\n팀 멤버 목록\n\n팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다.\n\n역할 변경, 상태 변경, 퇴출은 관리자만 가능합니다.\n\n이름\t이메일\t현재 팀\t역할\t상태\t팀 변경\n\n\n표시할 멤버가 없습니다.\n\n검색 조건을 바꾸거나 멤버 상태를 다시 확인해 주세요.",
+      "durationMs": 1800
+    },
+    {
+      "name": "admin",
+      "requestedPath": "/admin",
+      "role": "ADMIN",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/admin",
+      "scrollWidth": 390,
+      "scrollHeight": 3783,
+      "bodyText": "WORKSPACE\n\n관리자\n\n출근 현황과 멤버 상태를 한 곳에서 관리합니다.\n\nCSV 내보내기\n출근 현황\n멤버 관리\n팀 관리\n감사 로그\n지각비 정산\n운영 설정\n활성 멤버\n4명\n\n현재 운영 중인 전체 인원\n\n활성 팀\n3개\n\n근무 일정을 관리 중인 팀 수\n\n오늘 기록\n3건\n\n출근 또는 퇴근 기록이 남은 인원\n\n오늘 미기록\n1명\n\n확인 필요한 인원, 퇴근 1명 완료\n\n팀원 출근 현황\n2026-08-22\n2\n근무 중\n1\n퇴근\n2\n미출근\n박\n박팀장\n2팀\n근무 중\n09:45 ~\n이\n이멤버\n3팀\n근무 중\n09:00 ~\nOPERATIONS\n출퇴근 예외 처리\n\n총무와 팀장이 오늘 운영 이슈를 한 화면에서 보고, 메모와 처리 상태를 바로 남길 수 있습니다.\n\n오늘 미퇴근자 일괄 처리 (1)\n처리 대기\n3건\n\n2026-08-22 기준으로 아직 판단이 필요한 예외",
+      "durationMs": 1833
+    },
+    {
+      "name": "login",
+      "requestedPath": "/login",
+      "role": "PUBLIC",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/login",
+      "scrollWidth": 390,
+      "scrollHeight": 844,
+      "bodyText": "yANUs\n동아리 그룹웨어\n이메일\n비밀번호\n로그인\n아직 계정이 없으신가요? 회원가입",
+      "durationMs": 1718
+    },
+    {
+      "name": "register",
+      "requestedPath": "/register",
+      "role": "PUBLIC",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/register",
+      "scrollWidth": 390,
+      "scrollHeight": 924,
+      "bodyText": "yANUs\n새 계정을 만들어 시작해 보세요\n이름\n이메일\n팀\n회원가입 시 모든 신규 사용자는 신입 팀으로 자동 배정됩니다.\n비밀번호\n비밀번호 확인\n회원가입\n이미 계정이 있으신가요? 로그인",
+      "durationMs": 1734
+    },
+    {
+      "name": "verify-email",
+      "requestedPath": "/verify-email",
+      "role": "PUBLIC",
+      "viewport": "mobile",
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "path": "/verify-email",
+      "scrollWidth": 390,
+      "scrollHeight": 1044,
+      "bodyText": "yANUs\n이메일 인증\n이메일을 확인해 주세요\n\n회원가입이 거의 끝났습니다.\n메일로 받은 인증 코드를 입력해야 로그인할 수 있습니다.\n\n인증 코드\n인증 확인\n메일을 받지 못하셨나요?\n\n아래 이메일로 인증 코드를 다시 받을 수 있습니다.\n\n이메일\n인증 메일 다시 보내기\n이미 인증을 마치셨나요? 로그인",
+      "durationMs": 1738
+    },
+    {
+      "name": "home",
+      "requestedPath": "/",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/",
+      "scrollWidth": 768,
+      "scrollHeight": 1648,
+      "bodyText": "WORKSPACE\n\n홈\n09:13\n오늘은 휴무입니다\n오늘 근무가 종료되어 예정 시간과 함께 비교할 수 있습니다.\n휴무일에도 출근 기록이 있습니다\n\n오늘은 휴무일로 설정되어 있지만 실제 출퇴근 기록이 남아 있습니다.\n\n출근은 220.69 대역 IP에서만 가능합니다.\n오전 9:02 - 오후 6:15\n출근 내역 초기화\n오늘 일정\n\n오늘 등록된 일정이 없습니다\n\n캘린더 보기\n# General\n김\n김리더\n모두 좋은 아침입니다!\n오전 10:45\n박\n박팀장\n좋은 아침이에요 :)\n오전 10:55\n채팅 열기\n오늘 할 일\n주간 회의 안건 정리\n높음\n10:00 오전 까지\n완료 처리\n정산 시트 점검\n높음\n8:00 오후 까지\n완료됨\n출퇴근 누락자 확인\n보통\n6:30 오후 까지\n완료 처리",
+      "durationMs": 1802
+    },
+    {
+      "name": "chat",
+      "requestedPath": "/chat",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/chat",
+      "scrollWidth": 768,
+      "scrollHeight": 1124,
+      "bodyText": "WORKSPACE\n\n채팅\n대화 목록\n\n대화할 채널이나 대상을 먼저 선택한 뒤 대화방으로 들어갑니다.\n\n채널\n# 전체 공지\n안녕하세요!\n# 디자인팀\n디자인 피드백 부탁드려요\n# 개발팀\nPR 리뷰 요청드립니다\n개인 대화\n최\n최개발\n1팀\n• 자리 비움\n박\n박팀장\n2팀\n• 자리 비움\n이\n이멤버\n3팀\n• 자리 비움",
+      "durationMs": 1768
+    },
+    {
+      "name": "calendar",
+      "requestedPath": "/calendar",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/calendar",
+      "scrollWidth": 768,
+      "scrollHeight": 1709,
+      "bodyText": "WORKSPACE\n\n캘린더\n오늘\n2026년 8월\n월\n주\n일\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\t\n30일\n\t\n31일\n\t\n1일\n\n\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n\t\n6일\n\t\n7일\n\t\n8일\n\n\n9일\n\t\n10일\n\t\n11일\n\t\n12일\n\t\n13일\n\t\n14일\n\t\n15일\n\n\n16일\n\t\n17일\n\t\n18일\n\t\n19일\n\t\n20일\n\t\n21일\n\t\n22일\n오전 10시\n주간 회의 안건 정리\n오후 6:30\n출퇴근 누락자 확인\n\n\n23일\n오후 2시\n신입 팀 공지 업로드\n\t\n24일\n\t\n25일\n\t\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\n\n30일\n\t\n31일\n\t\n1일\n\t\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n내 할일\n팀 할일\n일정\n할일\n마감 시간\n:\n마감 날짜\n중요도\n높음\n보통\n낮음\n추가\n오늘의 할일\n주간 회의 안건 정리",
+      "durationMs": 1846
+    },
+    {
+      "name": "attendance",
+      "requestedPath": "/attendance",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/attendance",
+      "scrollWidth": 768,
+      "scrollHeight": 1087,
+      "bodyText": "WORKSPACE\n\n출퇴근\n\nATTENDANCE · 2026-08-22\n\n출석 관리\n\n오늘의 출석 현황과 확인이 필요한 기록을 한 곳에서 관리합니다.\n\nCSV 내보내기\n2026-08-22\n오늘\n이번 주\n날짜 선택\n전체 기록\n3\n2026-08-22\n처리 필요\n2\n근무 중 기록\n근무 중\n2\n현재 진행 중\n퇴근 완료\n1\n완료 기록\n\nOPERATIONS FIRST\n\n처리 필요\n2건이 먼저 표시됩니다.\n멤버 검색\n전체\n근무 중\n퇴근 완료\n\nATTENDANCE RECORDS\n\n2026-08-22 기록\n3명\n박\n박팀장\n2026-08-22\n출근\n09:45\n퇴근\n미기록\n근무 중\n이\n이멤버\n2026-08-22\n출근\n09:00\n퇴근\n미기록\n근무 중\n김\n김리더\n2026-08-22\n출근\n09:02\n퇴근\n18:15\n퇴근 완료",
+      "durationMs": 1782
+    },
+    {
+      "name": "work-schedules",
+      "requestedPath": "/work-schedules",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/work-schedules",
+      "scrollWidth": 768,
+      "scrollHeight": 2240,
+      "bodyText": "WORKSPACE\n\n근무 일정\n\n반복 근무와 날짜별 근무 일정을 같은 캘린더에서 보고 바로 관리할 수 있습니다.\n\n날짜 클릭으로 개별 일정을 추가하고, 역할 범위에 따라 다른 사람 일정도 함께 확인합니다.\n근무 일정 캘린더\n\n날짜를 눌러 개인 근무 일정을 추가하고, 역할 범위에 따라 다른 사람 근무 일정도 함께 확인합니다.\n\n전체\n팀별\n개인\n내 반복 일정\n공유 반복 일정\n날짜별 추가 일정\n팀 공유 일정\n날짜별 일정 추가\n오늘\n2026년 8월\n월\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n08:30\n이멤버\n09:00\n김리더\n10:00\n박팀장\n\t\n28일\n09:00\n김리더\n\t\n29일\n08:30\n이멤버\n\t\n30일\n09:00\n김리더\n10:00\n박팀장\n\t\n31일\n08:30\n이멤버\n09:00\n김리더\n22:00\n최개발\n\t\n1일",
+      "durationMs": 1795
+    },
+    {
+      "name": "drive",
+      "requestedPath": "/drive",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/drive",
+      "scrollWidth": 768,
+      "scrollHeight": 1498,
+      "bodyText": "WORKSPACE\n\n드라이브\n\nSHARED LIBRARY\n\n모든 멤버가 함께 쓰는 공용 문서함입니다. 업로드한 파일은 팀 전체가 바로 확인할 수 있습니다.\n\n전체 멤버 공유\n공용 파일 업로드\n총 파일\n3개\n사용 용량\n1.2 MB\n최근 업로드\n3월 18일 오후 8:00\n팀 공유 라이브러리\n빠른 공유 업로드\n\n회의록, 산출물, 참고 자료를 올리면 일반 멤버를 포함한 팀 전체가 바로 같은 파일을 확인합니다.\n\n새 공유 파일 추가\n현재 사용자\n김리더\n\n일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.\n\n업로드 참여자\n3명\n대표 업로더\n이멤버\n파일 라이브러리\n\n이름, 업로더, 업로드 시점을 함께 보여줘서 바로 찾을 수 있게 정리했습니다.\n\n회의록_0318.docx\n이멤버\n3월 18일 오후 8:00\n50 KB\n디자인 시안 v2.fig\n박",
+      "durationMs": 1791
+    },
+    {
+      "name": "ai",
+      "requestedPath": "/ai",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/ai",
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "bodyText": "WORKSPACE\n\nAI\n\n공유 문서를 바탕으로 답변하는 팀 어시스턴트입니다.\n\n안녕하세요! 저는 yANUs AI입니다. 파일 드라이브에 공유된 문서를 바탕으로 질문에 답변해 드립니다. 무엇을 도와드릴까요?\n\n추천 질문\n\n오늘 일정 요약해줘\n공유된 파일 목록 알려줘\n프로젝트 진행 상황 정리해줘",
+      "durationMs": 1776
+    },
+    {
+      "name": "members",
+      "requestedPath": "/members",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/members",
+      "scrollWidth": 768,
+      "scrollHeight": 1702,
+      "bodyText": "WORKSPACE\n\n멤버\n\n멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.\n\n관리자 전용\n멤버 초대\n팀\n전체 팀\n1팀\n2팀\n3팀\n역할\n전체 역할\n관리자\n팀장\n멤버\n전체 멤버 4명\n멤버 목록\n\n활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다.\n\n프로필\t팀\t역할\t상태\t관리\n\n김\n김리더\n\t1팀\t\n관리자\t\n활성\n\t\n관리 불가\n\n\n최\n최개발\n\t1팀\t멤버\t\n활성화\n\t\n\n\n박\n박팀장\n\t2팀\t팀장\t\n활성화\n\t\n\n\n이\n이멤버\n\t3팀\t멤버\t\n활성화\n\t\n팀별 멤버 수\n\n비활성 멤버는 집계에서 제외됩니다.\n\n1팀\n2\n2팀\n1\n3팀\n1\n역할 분포\n\n현재 활성 멤버 기준으로 역할 비중을 보여줍니다.\n\n관리자 1\n팀장 1\n멤버 2",
+      "durationMs": 1833
+    },
+    {
+      "name": "my-page",
+      "requestedPath": "/my-page",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/my-page",
+      "scrollWidth": 768,
+      "scrollHeight": 1333,
+      "bodyText": "WORKSPACE\n\n마이페이지\n\nMY PAGE\n\n프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.\n\n다크 모드 사용 중\n선택한 테마는 브라우저에 저장되어 다음 방문에도 유지됩니다.\n프로필\n알림\n테마\n정산\n보안\n\nPROFILE\n\n내 계정과 소속 정보를 정리합니다.\n\n표시 이름, 역할, 팀 정보를 확인하고 개인 프로필을 안전하게 관리할 수 있습니다.\n\n계정 기본 정보\n프로필 정보\n김\n\n김리더\n\nADMIN · 1팀\n\n표시 이름\n역할\n팀\n저장",
+      "durationMs": 1785
+    },
+    {
+      "name": "team-management",
+      "requestedPath": "/team-management",
+      "role": "TEAM_LEAD",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/team-management",
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "bodyText": "WORKSPACE\n\n팀 관리\n\n팀장은 같은 팀 멤버를 확인하고 팀 이동만 관리할 수 있습니다.\n\n2팀 멤버 1명\n팀 멤버 목록\n\n팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다.\n\n역할 변경, 상태 변경, 퇴출은 관리자만 가능합니다.\n\n이름\t이메일\t현재 팀\t역할\t상태\t팀 변경\n\n\n표시할 멤버가 없습니다.\n\n검색 조건을 바꾸거나 멤버 상태를 다시 확인해 주세요.",
+      "durationMs": 1781
+    },
+    {
+      "name": "admin",
+      "requestedPath": "/admin",
+      "role": "ADMIN",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/admin",
+      "scrollWidth": 768,
+      "scrollHeight": 3157,
+      "bodyText": "WORKSPACE\n\n관리자\n\n출근 현황과 멤버 상태를 한 곳에서 관리합니다.\n\nCSV 내보내기\n출근 현황\n멤버 관리\n팀 관리\n감사 로그\n지각비 정산\n운영 설정\n활성 멤버\n4명\n\n현재 운영 중인 전체 인원\n\n활성 팀\n3개\n\n근무 일정을 관리 중인 팀 수\n\n오늘 기록\n3건\n\n출근 또는 퇴근 기록이 남은 인원\n\n오늘 미기록\n1명\n\n확인 필요한 인원, 퇴근 1명 완료\n\n팀원 출근 현황\n2026-08-22\n2\n근무 중\n1\n퇴근\n2\n미출근\n박\n박팀장\n2팀\n근무 중\n09:45 ~\n이\n이멤버\n3팀\n근무 중\n09:00 ~\nOPERATIONS\n출퇴근 예외 처리\n\n총무와 팀장이 오늘 운영 이슈를 한 화면에서 보고, 메모와 처리 상태를 바로 남길 수 있습니다.\n\n오늘 미퇴근자 일괄 처리 (1)\n처리 대기\n3건\n\n2026-08-22 기준으로 아직 판단이 필요한 예외",
+      "durationMs": 1898
+    },
+    {
+      "name": "login",
+      "requestedPath": "/login",
+      "role": "PUBLIC",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/login",
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "bodyText": "yANUs\n동아리 그룹웨어\n이메일\n비밀번호\n로그인\n아직 계정이 없으신가요? 회원가입",
+      "durationMs": 1748
+    },
+    {
+      "name": "register",
+      "requestedPath": "/register",
+      "role": "PUBLIC",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/register",
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "bodyText": "yANUs\n새 계정을 만들어 시작해 보세요\n이름\n이메일\n팀\n회원가입 시 모든 신규 사용자는 신입 팀으로 자동 배정됩니다.\n비밀번호\n비밀번호 확인\n회원가입\n이미 계정이 있으신가요? 로그인",
+      "durationMs": 1737
+    },
+    {
+      "name": "verify-email",
+      "requestedPath": "/verify-email",
+      "role": "PUBLIC",
+      "viewport": "tablet",
+      "viewportWidth": 768,
+      "viewportHeight": 1024,
+      "path": "/verify-email",
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "bodyText": "yANUs\n이메일 인증\n이메일을 확인해 주세요\n\n회원가입이 거의 끝났습니다.\n메일로 받은 인증 코드를 입력해야 로그인할 수 있습니다.\n\n인증 코드\n인증 확인\n메일을 받지 못하셨나요?\n\n아래 이메일로 인증 코드를 다시 받을 수 있습니다.\n\n이메일\n인증 메일 다시 보내기\n이미 인증을 마치셨나요? 로그인",
+      "durationMs": 1745
+    },
+    {
+      "name": "home",
+      "requestedPath": "/",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/",
+      "scrollWidth": 1280,
+      "scrollHeight": 903,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n홈\n09:13\n오늘은 휴무입니다\n오늘 근무가 종료되어 예정 시간과 함께 비교할 수 있습니다.\n휴무일에도 출근 기록이 있습니다\n\n오늘은 휴무일로 설정되어 있지만 실제 출퇴근 기록이 남아 있습니다.\n\n출근은 220.69 대역 IP에서만 가능합니다.\n오전 9:02 - 오후 6:15\n출근 내역 초기화\n오늘 일정\n\n오늘 등록된 일정이 없습니다\n\n캘린더 보기\n# General\n김\n김리더\n모두 좋은 아침입니다!\n오전 10:46\n박\n박팀장\n좋은 아침이에요 :)\n오전 10:56\n채팅 열기\n오늘 할 일\n주간 회의 안건 정리\n높음\n10:00 오전 까지\n완료 처리\n정산 시트 점검\n높음\n8:00 오후 까지\n완료됨\n출퇴근 누락자 확인\n",
+      "durationMs": 1819
+    },
+    {
+      "name": "chat",
+      "requestedPath": "/chat",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/chat",
+      "scrollWidth": 1280,
+      "scrollHeight": 900,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n채팅\n대화 목록\n\n대화할 채널이나 대상을 먼저 선택한 뒤 대화방으로 들어갑니다.\n\n채널\n# 전체 공지\n안녕하세요!\n# 디자인팀\n디자인 피드백 부탁드려요\n# 개발팀\nPR 리뷰 요청드립니다\n개인 대화\n최\n최개발\n1팀\n• 자리 비움\n박\n박팀장\n2팀\n• 자리 비움\n이\n이멤버\n3팀\n• 자리 비움\n# 전체 공지\n23명 참여 중\n⋮\n김\n김리더\n오전 10:46\n\n모두 좋은 아침입니다!\n\n박\n박팀장\n오전 10:56\n\n좋은 아침이에요 :)\n\n보내기",
+      "durationMs": 1778
+    },
+    {
+      "name": "calendar",
+      "requestedPath": "/calendar",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/calendar",
+      "scrollWidth": 1280,
+      "scrollHeight": 951,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n캘린더\n오늘\n2026년 8월\n월\n주\n일\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\t\n30일\n\t\n31일\n\t\n1일\n\n\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n\t\n6일\n\t\n7일\n\t\n8일\n\n\n9일\n\t\n10일\n\t\n11일\n\t\n12일\n\t\n13일\n\t\n14일\n\t\n15일\n\n\n16일\n\t\n17일\n\t\n18일\n\t\n19일\n\t\n20일\n\t\n21일\n\t\n22일\n오전 10시\n주간 회의 안건 정리\n오후 6:30\n출퇴근 누락자 확인\n\n\n23일\n오후 2시\n신입 팀 공지 업로드\n\t\n24일\n\t\n25일\n\t\n26일\n\t\n27일\n\t\n28일\n\t\n29일\n\n\n30일\n\t\n31일\n\t\n1일\n\t\n2일\n\t\n3일\n\t\n4일\n\t\n5일\n",
+      "durationMs": 1857
+    },
+    {
+      "name": "attendance",
+      "requestedPath": "/attendance",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/attendance",
+      "scrollWidth": 1280,
+      "scrollHeight": 904,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n출퇴근\n\nATTENDANCE · 2026-08-22\n\n출석 관리\n\n오늘의 출석 현황과 확인이 필요한 기록을 한 곳에서 관리합니다.\n\nCSV 내보내기\n2026-08-22\n오늘\n이번 주\n날짜 선택\n전체 기록\n3\n2026-08-22\n처리 필요\n2\n근무 중 기록\n근무 중\n2\n현재 진행 중\n퇴근 완료\n1\n완료 기록\n\nOPERATIONS FIRST\n\n처리 필요\n2건이 먼저 표시됩니다.\n멤버 검색\n전체\n근무 중\n퇴근 완료\n\nATTENDANCE RECORDS\n\n2026-08-22 기록\n3명\n박\n박팀장\n2026-08-22\n출근\n09:45\n퇴근\n미기록\n근무 중\n이\n이멤버\n2026-08-22\n출근\n09:00\n퇴근\n미기록\n근무 중\n",
+      "durationMs": 1832
+    },
+    {
+      "name": "work-schedules",
+      "requestedPath": "/work-schedules",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/work-schedules",
+      "scrollWidth": 1280,
+      "scrollHeight": 2129,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n근무 일정\n\n반복 근무와 날짜별 근무 일정을 같은 캘린더에서 보고 바로 관리할 수 있습니다.\n\n날짜 클릭으로 개별 일정을 추가하고, 역할 범위에 따라 다른 사람 일정도 함께 확인합니다.\n근무 일정 캘린더\n\n날짜를 눌러 개인 근무 일정을 추가하고, 역할 범위에 따라 다른 사람 근무 일정도 함께 확인합니다.\n\n전체\n팀별\n개인\n내 반복 일정\n공유 반복 일정\n날짜별 추가 일정\n팀 공유 일정\n날짜별 일정 추가\n오늘\n2026년 8월\n월\n목록\n일\n\t\n월\n\t\n화\n\t\n수\n\t\n목\n\t\n금\n\t\n토\n\n\n26일\n\t\n27일\n08:30\n이멤버\n09:00\n김리더\n10:00\n박팀장\n\t\n28일\n09:00\n김리더\n\t\n29일\n08:30\n이멤버\n\t\n",
+      "durationMs": 1852
+    },
+    {
+      "name": "drive",
+      "requestedPath": "/drive",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/drive",
+      "scrollWidth": 1280,
+      "scrollHeight": 911,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n드라이브\n\nSHARED LIBRARY\n\n모든 멤버가 함께 쓰는 공용 문서함입니다. 업로드한 파일은 팀 전체가 바로 확인할 수 있습니다.\n\n전체 멤버 공유\n공용 파일 업로드\n총 파일\n3개\n사용 용량\n1.2 MB\n최근 업로드\n3월 18일 오후 8:00\n팀 공유 라이브러리\n빠른 공유 업로드\n\n회의록, 산출물, 참고 자료를 올리면 일반 멤버를 포함한 팀 전체가 바로 같은 파일을 확인합니다.\n\n새 공유 파일 추가\n현재 사용자\n김리더\n\n일반 멤버, 팀장, 관리자 모두 같은 공유 드라이브를 사용합니다.\n\n업로드 참여자\n3명\n대표 업로더\n이멤버\n파일 라이브러리\n\n이름, 업로더, 업로드 시점을 함께 보여줘서 바로 찾을 수 있게",
+      "durationMs": 1787
+    },
+    {
+      "name": "ai",
+      "requestedPath": "/ai",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/ai",
+      "scrollWidth": 1280,
+      "scrollHeight": 900,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\nAI\n\n공유 문서를 바탕으로 답변하는 팀 어시스턴트입니다.\n\n안녕하세요! 저는 yANUs AI입니다. 파일 드라이브에 공유된 문서를 바탕으로 질문에 답변해 드립니다. 무엇을 도와드릴까요?\n\n추천 질문\n\n오늘 일정 요약해줘\n공유된 파일 목록 알려줘\n프로젝트 진행 상황 정리해줘",
+      "durationMs": 1771
+    },
+    {
+      "name": "members",
+      "requestedPath": "/members",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/members",
+      "scrollWidth": 1280,
+      "scrollHeight": 1550,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n멤버\n\n멤버 상태와 역할을 한 곳에서 확인하고 관리합니다.\n\n관리자 전용\n멤버 초대\n팀\n전체 팀\n1팀\n2팀\n3팀\n역할\n전체 역할\n관리자\n팀장\n멤버\n전체 멤버 4명\n멤버 목록\n\n활성 멤버를 팀과 역할 기준으로 빠르게 확인할 수 있습니다.\n\n프로필\t팀\t역할\t상태\t관리\n\n김\n김리더\n\t1팀\t\n관리자\t\n활성\n\t\n관리 불가\n\n\n최\n최개발\n\t1팀\t멤버\t\n활성화\n\t\n\n\n박\n박팀장\n\t2팀\t팀장\t\n활성화\n\t\n\n\n이\n이멤버\n\t3팀\t멤버\t\n활성화\n\t\n팀별 멤버 수\n\n비활성 멤버는 집계에서 제외됩니다.\n\n1팀\n2\n2팀\n1\n3팀\n1\n역할 분포\n\n현재 활성 멤버 기준으로 역할 비중을 보여줍니다.\n\n관리자 1\n팀장 1\n멤버 2",
+      "durationMs": 1865
+    },
+    {
+      "name": "my-page",
+      "requestedPath": "/my-page",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/my-page",
+      "scrollWidth": 1280,
+      "scrollHeight": 1047,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n마이페이지\n\nMY PAGE\n\n프로필, 알림, 테마, 정산, 보안 정보를 한 곳에서 관리하세요.\n\n다크 모드 사용 중\n선택한 테마는 브라우저에 저장되어 다음 방문에도 유지됩니다.\n프로필\n알림\n테마\n정산\n보안\n\nPROFILE\n\n내 계정과 소속 정보를 정리합니다.\n\n표시 이름, 역할, 팀 정보를 확인하고 개인 프로필을 안전하게 관리할 수 있습니다.\n\n계정 기본 정보\n프로필 정보\n김\n\n김리더\n\nADMIN · 1팀\n\n표시 이름\n역할\n팀\n저장",
+      "durationMs": 1816
+    },
+    {
+      "name": "team-management",
+      "requestedPath": "/team-management",
+      "role": "TEAM_LEAD",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/team-management",
+      "scrollWidth": 1280,
+      "scrollHeight": 900,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n팀 관리\n박\n박팀장\nTEAM_LEAD\n로그아웃\n\nWORKSPACE\n\n팀 관리\n\n팀장은 같은 팀 멤버를 확인하고 팀 이동만 관리할 수 있습니다.\n\n2팀 멤버 1명\n팀 멤버 목록\n\n팀장은 같은 팀의 활성 일반 멤버만 다른 팀으로 이동할 수 있습니다.\n\n역할 변경, 상태 변경, 퇴출은 관리자만 가능합니다.\n\n이름\t이메일\t현재 팀\t역할\t상태\t팀 변경\n\n\n표시할 멤버가 없습니다.\n\n검색 조건을 바꾸거나 멤버 상태를 다시 확인해 주세요.",
+      "durationMs": 1777
+    },
+    {
+      "name": "admin",
+      "requestedPath": "/admin",
+      "role": "ADMIN",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/admin",
+      "scrollWidth": 1280,
+      "scrollHeight": 2089,
+      "bodyText": "yANUs\n홈\n채팅\n캘린더\n멤버\n출퇴근\n근무 일정\n드라이브\nAI\n마이페이지\n관리자\n김\n김리더\nADMIN\n로그아웃\n\nWORKSPACE\n\n관리자\n\n출근 현황과 멤버 상태를 한 곳에서 관리합니다.\n\nCSV 내보내기\n출근 현황\n멤버 관리\n팀 관리\n감사 로그\n지각비 정산\n운영 설정\n활성 멤버\n4명\n\n현재 운영 중인 전체 인원\n\n활성 팀\n3개\n\n근무 일정을 관리 중인 팀 수\n\n오늘 기록\n3건\n\n출근 또는 퇴근 기록이 남은 인원\n\n오늘 미기록\n1명\n\n확인 필요한 인원, 퇴근 1명 완료\n\n팀원 출근 현황\n2026-08-22\n2\n근무 중\n1\n퇴근\n2\n미출근\n박\n박팀장\n2팀\n근무 중\n09:45 ~\n이\n이멤버\n3팀\n근무 중\n09:00 ~\nOPERATIONS\n출퇴근 예외 처리\n\n총무와 팀장이 오늘 운영 이슈를 한 화면에서 보고, 메모와 처리 상태를 바로 남길 수 ",
+      "durationMs": 1889
+    },
+    {
+      "name": "login",
+      "requestedPath": "/login",
+      "role": "PUBLIC",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/login",
+      "scrollWidth": 1280,
+      "scrollHeight": 900,
+      "bodyText": "yANUs\n동아리 그룹웨어\n이메일\n비밀번호\n로그인\n아직 계정이 없으신가요? 회원가입",
+      "durationMs": 1760
+    },
+    {
+      "name": "register",
+      "requestedPath": "/register",
+      "role": "PUBLIC",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/register",
+      "scrollWidth": 1280,
+      "scrollHeight": 992,
+      "bodyText": "yANUs\n새 계정을 만들어 시작해 보세요\n이름\n이메일\n팀\n회원가입 시 모든 신규 사용자는 신입 팀으로 자동 배정됩니다.\n비밀번호\n비밀번호 확인\n회원가입\n이미 계정이 있으신가요? 로그인",
+      "durationMs": 1758
+    },
+    {
+      "name": "verify-email",
+      "requestedPath": "/verify-email",
+      "role": "PUBLIC",
+      "viewport": "desktop",
+      "viewportWidth": 1280,
+      "viewportHeight": 900,
+      "path": "/verify-email",
+      "scrollWidth": 1280,
+      "scrollHeight": 1058,
+      "bodyText": "yANUs\n이메일 인증\n이메일을 확인해 주세요\n\n회원가입이 거의 끝났습니다.\n메일로 받은 인증 코드를 입력해야 로그인할 수 있습니다.\n\n인증 코드\n인증 확인\n메일을 받지 못하셨나요?\n\n아래 이메일로 인증 코드를 다시 받을 수 있습니다.\n\n이메일\n인증 메일 다시 보내기\n이미 인증을 마치셨나요? 로그인",
+      "durationMs": 1778
+    }
+  ]
+}
