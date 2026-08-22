@@ -919,6 +919,7 @@ body {
 
 @media (max-width: 768px) {
   #root .main-content {
+    margin-bottom: 120px;
     padding-inline: 14px;
   }
 
