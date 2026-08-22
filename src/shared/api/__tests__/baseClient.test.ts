@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { baseClient } from '../baseClient'
+import { ATTENDANCE_STORAGE_KEYS, getUserAttendanceStorageKey } from '../../lib/attendanceStorage'
 
 const server = setupServer()
 
@@ -82,6 +83,10 @@ describe('baseClient', () => {
   it('refresh token도 만료되면 토큰을 정리하고 ApiError를 던진다', async () => {
     localStorage.setItem('accessToken', 'expired-access-token')
     localStorage.setItem('refreshToken', 'expired-refresh-token')
+    localStorage.setItem(
+      getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.session, '1')!,
+      JSON.stringify({ status: 'working' }),
+    )
 
     server.use(
       http.get('/test-refresh-expired', () =>
@@ -98,6 +103,8 @@ describe('baseClient', () => {
     })
     expect(localStorage.getItem('accessToken')).toBeNull()
     expect(localStorage.getItem('refreshToken')).toBeNull()
+    expect(getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.session, '1')).not.toBeNull()
+    expect(localStorage.getItem(getUserAttendanceStorageKey(ATTENDANCE_STORAGE_KEYS.session, '1')!)).toBeNull()
     expect(sessionStorage.getItem('yanus-session-expired-message')).toBe('세션이 만료되어 다시 로그인해 주세요')
   })
 

@@ -1,5 +1,20 @@
 import { parseDateString, toDateString } from './date'
-import type { WeekPattern } from '../api/attendanceApi'
+import type {
+  DayOfWeek,
+  WorkScheduleEventItem,
+  WorkScheduleItem,
+  WeekPattern,
+} from '../api/attendanceApi'
+
+const DAY_OF_WEEK_BY_INDEX: DayOfWeek[] = [
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+]
 
 function sliceClock(value: string | null | undefined) {
   if (!value) return '-'
@@ -46,6 +61,37 @@ export function formatScheduleRangeLabel({
 
 export function formatDateTimeClock(value: string | null | undefined) {
   return sliceClock(value)
+}
+
+export function formatWorkScheduleForDate(
+  schedules: WorkScheduleItem[],
+  events: WorkScheduleEventItem[],
+  date: string,
+) {
+  const dateEvent = events.find((event) => event.date === date)
+  if (dateEvent) {
+    if (dateEvent.eventType === 'DAY_OFF' || !dateEvent.startTime || !dateEvent.endTime) {
+      return '휴무'
+    }
+    return formatScheduleRangeLabel({
+      startTime: dateEvent.startTime,
+      endTime: dateEvent.endTime,
+      endsNextDay: dateEvent.endsNextDay,
+    })
+  }
+
+  const dayOfWeek = DAY_OF_WEEK_BY_INDEX[parseDateString(date).getDay()]
+  const dateValue = parseDateString(date)
+  const recurringSchedule = schedules.find((schedule) =>
+    schedule.dayOfWeek === dayOfWeek && matchesWeekPattern(dateValue, schedule.weekPattern),
+  )
+
+  if (!recurringSchedule) return '휴무'
+  return formatScheduleRangeLabel({
+    startTime: recurringSchedule.startTime,
+    endTime: recurringSchedule.endTime,
+    endsNextDay: recurringSchedule.endsNextDay,
+  })
 }
 
 function getOccurrencePattern(date: Date): Exclude<WeekPattern, 'EVERY' | 'LAST'> {
