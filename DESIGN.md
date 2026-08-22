@@ -269,7 +269,7 @@ The post-merge navigation polish was captured against source commit `fbf6ee2` af
 
 The app-wide baseline was captured from `develop` at `f35affdb5a30a9c05b25e9b22d92742b13abc1ef`
 before Issue #414 style edits. The After set was captured on `2026-08-22` from rendered source
-`f0203cfe6f32264905baddde5b0fdd22d4f815a2`. Both sets use Chromium, `VITE_USE_MOCK=true`,
+`753febc17546ca4bdd7c3525f53e43fc719f7de1`. Both sets use Chromium, `VITE_USE_MOCK=true`,
 dark theme, full-page screenshots, and the same `390×844`, `768×1024`, and `1280×900` viewports.
 The After set uses the admin fixture for authenticated general routes, the team-lead fixture for
 `/team-management`, and no auth fixture for the public routes.
