@@ -35,7 +35,7 @@ Elevation is expressed through background color layering rather than shadows. Th
 - **Lists**: Repository and file lists use full-width rows with 8px 16px padding, #30363D bottom border (1px). Hover highlights row to #161B22. Selected/active rows get a 2px left border in #F78166 (orange accent).
 - **Checkboxes**: 16x16px, #0D1117 background, 1px solid #30363D border, 3px radius. Checked state fills #2F81F7 with white checkmark SVG. Used prominently in task lists within issues and PRs.
 - **Tooltips**: #21262D background, #C9D1D9 text, 6px radius, 6px 10px padding, 12px font. Arrow-tipped, positioned above by default. 200ms delay on hover. Max-width 250px.
-- **Navigation**: Top nav is #161B22 with 1px bottom border #21262D, 64px height. Tab navigation uses underline-style active indicator — 2px bottom border in #F78166 (orange) for active tab, #8B949E text for inactive. Sidebar nav uses #0D1117 background with hover highlight rows.
+- **Navigation**: Top nav is #161B22 with 1px bottom border #21262D, 64px height. Tab navigation uses underline-style active indicator — 2px bottom border in #F78166 (orange) for active tab, #8B949E text for inactive. Sidebar nav uses #0D1117 background with hover highlight rows; the active item uses the primary blue (`#2F81F7`) for its 2px left rail and icon, with a restrained primary surface tint. Warning yellow is reserved for pending, draft, and caution states, not navigation selection.
 - **Search**: Prominent top-bar search with #0D1117 background, #30363D border, 6px radius. Activated state expands to full-width overlay with typeahead suggestions on #161B22 dropdown. Search shortcut / displayed as a muted kbd badge.
 
 ## Spacing
