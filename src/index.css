@@ -774,6 +774,62 @@ body {
   background: var(--state-info-bg);
 }
 
+#root :is(.member-avatar, .team-member-avatar) {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--border-color));
+  background: var(--surface-popover);
+  color: var(--color-primary);
+}
+
+#root :is(.member-team-tag, .team-tag, .team-chip) {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--border-color));
+  border-radius: var(--radius-xs);
+  background: var(--state-info-bg);
+  color: var(--text-primary);
+}
+
+#root :is(.member-role-tag.ADMIN, .role-tag.ADMIN, .role-pill.ADMIN) {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--border-color));
+  background: var(--state-info-bg);
+  color: var(--color-primary);
+}
+
+#root :is(.member-role-tag.TEAM_LEAD, .role-tag.TEAM_LEAD, .role-pill.TEAM_LEAD) {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--border-color));
+  background: var(--state-info-bg);
+  color: var(--color-primary);
+}
+
+#root :is(.member-role-tag.MEMBER, .role-tag.MEMBER, .role-pill.MEMBER) {
+  background: var(--surface-popover);
+  color: var(--text-secondary);
+}
+
+#root .bar {
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  background: var(--color-primary);
+}
+
+#root .legend-chip {
+  border-radius: var(--radius-xs);
+}
+
+#root .legend-chip.recurring-own,
+#root .legend-chip.recurring-team,
+#root .quick-add-btn {
+  background: var(--state-info-bg);
+  color: var(--color-primary);
+}
+
+#root .legend-chip.date-own {
+  background: var(--state-warning-bg);
+  color: var(--color-warning);
+}
+
+#root .legend-chip.date-team {
+  background: var(--state-success-bg);
+  color: var(--color-success);
+}
+
 #root :is(.settings-nav, .settings-content) {
   border-radius: var(--radius-sm);
 }
