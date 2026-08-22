@@ -63,6 +63,96 @@ Elevation is expressed through background color layering rather than shadows. Th
 - Don't animate transitions longer than 150ms — the interface should feel instant
 - Don't use the primary blue (#2F81F7) for large background fills — reserve it for interactive elements and links
 
+## Issue #414 — App-wide redesign
+
+Issue #414 extends the Octo Code contract from the attendance surface to every route. The
+redesign is a visual and interaction-system refactor: existing API calls, permission guards,
+state ownership, route semantics, and user-visible data remain unchanged.
+
+### Route inventory
+
+Authenticated routes share one application shell:
+
+`/` dashboard, `/chat` chat, `/calendar` calendar and tasks, `/attendance` attendance,
+`/work-schedules` work schedules, `/drive` drive, `/ai` AI chat, `/members` members,
+`/my-page` profile/settings, `/team-management` team management, and `/admin` administration.
+
+Public routes use the same tokens without the authenticated shell:
+
+`/login`, `/register`, and `/verify-email`.
+
+### Shared surface contract
+
+- **App shell**: a 200px desktop sidebar, a 64px topbar, and a fixed bottom navigation at
+  narrow widths. The content region is capped at 1280px with `20–32px` gutters and always
+  reserves bottom-bar clearance on touch layouts.
+- **Page header**: one eyebrow, one Korean page title, one concise description, and a right-side
+  action group. Header actions never compete with the page title on mobile.
+- **Surface**: cards, tables, lists, forms, drawers, and modals use `#161B22`, a 1px
+  `#30363D` border, a maximum 6px radius, and layered backgrounds instead of blur or decorative
+  gradients.
+- **Controls**: primary actions use Mona Blue or Growth Green only when the action is a merge/
+  success operation. Secondary controls are bordered and transparent. Inputs are 36px high on
+  desktop and at least 44px high for touch-critical actions.
+- **Data display**: dense information uses border-separated rows, compact metadata, and explicit
+  empty/loading/error states in the same region as the data. Tables scroll inside their surface;
+  the page itself never gains horizontal overflow.
+- **Feedback**: every status includes text plus an icon, border, or layout cue. `#D29922` is
+  reserved for pending, draft, and caution feedback; it is never used to indicate navigation
+  selection. Errors use `#F85149`, success uses `#3FB950`, and informational selection uses
+  `#2F81F7`.
+- **Overlays**: popovers use `#1C2128`, modals use `#21262D`, and the backdrop uses the Octo
+  overlay token. Functional overlays keep the 6px radius and provide labelled close/focus paths.
+
+### Page family rules
+
+- **Dashboard** prioritizes the current attendance action, then schedule, chat, and tasks in a
+  compact grid. Empty cards explain what the user can do next.
+- **Chat, calendar, and work schedules** keep their existing interaction models, but use shared
+  toolbars, bordered panels, blue selection, and compact rows. FullCalendar's DOM remains a
+  vendor boundary and inherits the same tokens.
+- **Attendance, members, team management, and admin** use the same table, search, filter,
+  status-badge, modal, and responsive row language. Role guards and data scope are unchanged.
+- **Drive and AI chat** use repository-like lists and code-friendly message surfaces. Markdown
+  and code retain JetBrains Mono; conversational bubbles do not use purple gradients.
+- **My Page** uses a narrow readable form column with section dividers, explicit save feedback,
+  and a separate danger zone.
+- **Auth routes** use the base background, a bordered 6px form surface, restrained branding,
+  and one primary action. Decorative glass, blur, and full-page purple gradients are removed.
+
+### Responsive, theme, and accessibility rules
+
+- Reference widths are `390px`, `768px`, and `1280px`. At each width, `scrollWidth` must not
+  exceed the viewport width and all dense data must remain readable without clipped CJK text.
+- Mobile layouts collapse by priority, not by shrinking every control. Tables become scrollable
+  regions or labelled rows, and fixed navigation always has at least `56px` of content clearance.
+- Dark mode remains the default. The explicit `data-theme="light"` preference maps every surface,
+  border, text, state, and input token to a readable light alias; the system preference does not
+  silently override the user's stored theme.
+- Korean headings use `text-wrap: pretty` where supported, body copy uses a readable line-height,
+  and no page relies on color alone. Every interactive element keeps a visible `:focus-visible`
+  ring and a minimum 36px target (44px for primary touch actions).
+- Motion is limited to 120ms state transitions. `prefers-reduced-motion: reduce` disables
+  non-essential transitions and animated decoration.
+
+### Implementation boundary and accepted debt
+
+The app-wide layer owns tokens, shell geometry, shared surface language, state colors, responsive
+guards, and cross-route visual overrides. Existing page CSS owns only route-specific composition
+and vendor integration. API, Context, route guard, mock, and permission changes are out of scope.
+The remaining FullCalendar vendor markup and existing bundle chunk-size warning are recorded as
+accepted debt unless they block a route or accessibility condition.
+
+### Before / After evidence contract
+
+Before captures are taken from the same mock-authenticated route matrix before Issue #414 style
+changes. After captures use the same route, role, viewport, browser, theme, and scroll conditions.
+Each capture records the rendered commit SHA, viewport, `scrollWidth`, full-page `scrollHeight`,
+and the visible state. The evidence set covers all 14 routes at `390×844`, `768×1024`, and
+`1280×900`; protected `/team-management` is captured with a team-lead fixture and `/admin` with
+an admin fixture. Representative screenshots are inspected at every breakpoint, with focused
+interaction checks for auth, navigation, tables, filters, modals, forms, and feedback states.
+
 ## Issue #410 — 출석 운영 화면
 
 ### Information architecture
