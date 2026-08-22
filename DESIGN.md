@@ -165,3 +165,12 @@ After verification checklist:
 - [x] Member view shows one CTA, schedule chip, text timeline, personal records, and retry state.
 - [x] Keyboard focus, text status, contrast, touch target size, and mobile bottom clearance are checked in the browser.
 - [x] Fresh PNG signatures, dimensions, and final verification metadata were checked for all six After captures.
+
+### Navigation active-state follow-up
+
+The post-merge navigation polish was captured against source commit `fbf6ee2` after replacing the warning-yellow active rail/icon with the Octo primary blue token. The active item uses `rgba(47, 129, 247, 0.12)` as its surface tint, `#2F81F7` for the 2px left rail and icon, and keeps warning yellow reserved for caution states.
+
+| Capture | Viewport | Objective evidence | File |
+| --- | --- | --- | --- |
+| Home sidebar | `1280×900` | Active `홈` uses primary blue rail/icon and `scrollWidth=1280`. | `.qa/issue-410/after/nav-active-blue-1280.png` |
+| Home bottom navigation | `390×844` | Active `홈` uses primary blue rail/icon and `scrollWidth=390`; no horizontal overflow. | `.qa/issue-410/after/nav-active-blue-390.png` |
