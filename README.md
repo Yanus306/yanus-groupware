@@ -191,6 +191,9 @@ VITE_AI_API_URL=<your-ollama-api-url>
 
 # 사용할 AI 모델명
 VITE_AI_API_MODEL=llama3.1
+
+# Google Analytics 4 Measurement ID
+VITE_GA_MEASUREMENT_ID=G-JGZ8JFGKPW
 ```
 
 > **백엔드 API 연동**  
