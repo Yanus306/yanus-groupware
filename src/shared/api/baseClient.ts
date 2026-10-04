@@ -6,6 +6,7 @@ import {
   markSessionExpired,
   storeAuthTokens,
 } from '../lib/authStorage'
+import { clearAttendanceStorage } from '../lib/attendanceStorage'
 
 export class ApiError extends Error {
   status: number
@@ -25,6 +26,7 @@ function getAuthHeaders(): Record<string, string> {
 
 function handleUnauthorized(message = '세션이 만료되어 다시 로그인해 주세요') {
   clearAuthTokens()
+  clearAttendanceStorage()
   markSessionExpired(message)
   window.location.href = '/login'
 }
@@ -134,6 +136,7 @@ async function request<T>(path: string, options: RequestInit = {}, canRetry = tr
       }
       handleUnauthorized(refreshed.message)
     }
+    if (res.status === 401) clearAttendanceStorage()
     throw new ApiError(res.status, message, code)
   }
 
@@ -172,6 +175,7 @@ async function requestBlob(path: string, canRetry = true): Promise<Blob> {
       }
       handleUnauthorized(refreshed.message)
     }
+    clearAttendanceStorage()
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
   if (!res.ok) throw new ApiError(res.status, `다운로드 실패: ${res.status}`)
@@ -193,6 +197,7 @@ async function requestUpload<T>(path: string, formData: FormData, canRetry = tru
       }
       handleUnauthorized(refreshed.message)
     }
+    clearAttendanceStorage()
     throw new ApiError(401, '인증이 필요합니다', 'UNAUTHORIZED')
   }
   if (!res.ok) {

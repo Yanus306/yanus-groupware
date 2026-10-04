@@ -8,6 +8,7 @@ import { getTeams } from '../../../shared/api/teamsApi'
 import type { TeamResponse } from '../../../shared/api/teamsApi'
 import { FALLBACK_TEAMS, cacheTeams, getCachedTeams, sortTeams, sortUsersByTeamAndName } from '../../../shared/lib/team'
 import { canAccessAdmin, canAccessTeamManagement } from '../../../shared/lib/permissions'
+import { clearAttendanceStorage } from '../../../shared/lib/attendanceStorage'
 
 export type { UserRole, Team, User, UserStatus } from '../../../entities/user/model/types'
 
@@ -33,16 +34,22 @@ const AppContext = createContext<{
   logout: () => void
 } | null>(null)
 
-export function AppProvider({ children }: { children: ReactNode }) {
+interface AppProviderProps {
+  children?: ReactNode
+  initialUser?: User
+}
+
+export function AppProvider({ children, initialUser }: AppProviderProps) {
   const [state, setState] = useState<AppState>({
-    currentUser: null,
+    currentUser: initialUser ?? null,
     users: [],
     teams: FALLBACK_TEAMS,
   })
-  const [isInitializing, setIsInitializing] = useState(true)
+  const [isInitializing, setIsInitializing] = useState(!initialUser)
   const [isBootstrapping, setIsBootstrapping] = useState(false)
 
   const loadUser = useCallback((user: User) => {
+    clearAttendanceStorage()
     setState((prev) => ({ ...prev, currentUser: user }))
   }, [])
 
@@ -62,6 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return user
     } catch {
       clearAuthTokens()
+      clearAttendanceStorage()
       setState((prev) => ({ ...prev, currentUser: null }))
       return null
     }
@@ -101,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearAuthTokens()
+    clearAttendanceStorage()
     setState({ currentUser: null, users: [], teams: FALLBACK_TEAMS })
     setIsBootstrapping(false)
   }, [])

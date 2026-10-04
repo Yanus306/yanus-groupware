@@ -12,6 +12,7 @@ import type {
   AttendanceSettlement,
   AttendanceSettlementPaymentStatus,
 } from '../../../api/attendanceSettlementApi'
+import { getTodayStr, toDateString } from '../../../lib/date'
 import { getAuthMockUserByAuthorization } from './auth'
 
 type MockTaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
@@ -30,8 +31,10 @@ interface MockTask {
   memberNames?: string[] | null
 }
 
-const today = new Date().toISOString().slice(0, 10)
-const tomorrow = new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().slice(0, 10)
+const today = getTodayStr()
+const tomorrowDate = new Date(`${today}T12:00:00`)
+tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+const tomorrow = toDateString(tomorrowDate)
 
 let nextTaskId = 5
 let nextLeaveId = 4
@@ -345,7 +348,7 @@ function createSettlement(yearMonth: string, memberId: number): AttendanceSettle
 }
 
 function getCurrentUserId(authorization: string | null) {
-  return Number(getAuthMockUserByAuthorization(authorization).id)
+  return Number(getAuthMockUserByAuthorization(authorization)?.id ?? 0)
 }
 
 function filterTasksByRange(tasks: MockTask[], startDate: string | null, endDate: string | null) {
@@ -511,6 +514,12 @@ export const operationsHandlers = [
   http.post('/api/v1/leaves', async ({ request }) => {
     const body = await request.json() as { category: Leave['category']; detail: string; date: string }
     const currentUser = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (!currentUser) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
     const newLeave: Leave = {
       id: nextLeaveId++,
       memberId: Number(currentUser.id),
@@ -698,6 +707,12 @@ export const operationsHandlers = [
       paymentStatus: AttendanceSettlementPaymentStatus
     }
     const currentUser = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (!currentUser) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
 
     mockSettlementPayments.set(`${body.yearMonth}:${body.targetMemberId}`, {
       paymentStatus: body.paymentStatus,

@@ -12,6 +12,7 @@ const server = setupServer(...driveHandlers)
 beforeAll(() => server.listen())
 beforeEach(() => {
   localStorage.clear()
+  localStorage.setItem('accessToken', 'mock-token-1')
   resetDriveMockData()
 })
 afterEach(() => server.resetHandlers())

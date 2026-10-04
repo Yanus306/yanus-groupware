@@ -17,6 +17,7 @@ import {
   getAllWorkSchedules,
   getTeamWorkScheduleEvents,
   getTeamWorkSchedules,
+  getMyWorkSchedule,
   getWorkScheduleEvents,
   updateWorkScheduleEvent,
   type MemberWorkScheduleItem,
@@ -279,6 +280,7 @@ export function WorkSchedules() {
   const canViewTeam = canViewTeamWorkSchedules(currentUser)
   const currentUserId = currentUser?.id ?? ''
   const currentTeamName = currentUser?.team ?? ''
+  const activeScope: CalendarScope = !canViewAll && !canViewTeam ? 'person' : scope
 
   const activeUsers = useMemo(
     () => sortUsersByTeamAndName(state.users.filter((member) => (member.status ?? 'ACTIVE') === 'ACTIVE')),
@@ -318,8 +320,8 @@ export function WorkSchedules() {
   }, [refreshMembers, refreshTeams, state.teams.length, state.users.length])
 
   useEffect(() => {
-    setScope(canViewAll ? 'all' : 'team')
-  }, [canViewAll, currentUserId])
+    setScope(canViewAll ? 'all' : canViewTeam ? 'team' : 'person')
+  }, [canViewAll, canViewTeam, currentUserId])
 
   useEffect(() => {
     if (visibleTeams.length === 0) {
@@ -347,13 +349,13 @@ export function WorkSchedules() {
   )
 
   const filteredDateEvents = useMemo(() => {
-    if (scope === 'all' && canViewAll) return dateEvents
-    if (scope === 'team') {
+    if (activeScope === 'all' && canViewAll) return dateEvents
+    if (activeScope === 'team') {
       const teamName = selectedTeam?.name ?? currentTeamName
       return dateEvents.filter((item) => item.teamName === teamName)
     }
     return dateEvents.filter((item) => String(item.memberId) === selectedMemberId)
-  }, [canViewAll, currentTeamName, dateEvents, scope, selectedMemberId, selectedTeam])
+  }, [activeScope, canViewAll, currentTeamName, dateEvents, selectedMemberId, selectedTeam])
 
   const loadCalendarData = useCallback(async () => {
     if (!currentUser) {
@@ -367,26 +369,26 @@ export function WorkSchedules() {
     setIsLoading(true)
     try {
       const loadDateEvents = async () => {
-        if (scope === 'all' && canViewAll) {
+        if (activeScope === 'all' && canViewAll) {
           return getAllWorkScheduleEvents(calendarRange.start, calendarRange.end)
         }
 
-        if (scope === 'team') {
+        if (activeScope === 'team') {
           const teamId = selectedTeam?.id ?? currentTeam?.id ?? null
           if (!teamId) return []
           return getTeamWorkScheduleEvents(teamId, calendarRange.start, calendarRange.end)
         }
 
-        if (scope === 'person' && selectedMemberId === currentUserId) {
+        if (activeScope === 'person' && selectedMemberId === currentUserId) {
           return getWorkScheduleEvents(calendarRange.start, calendarRange.end)
         }
 
-        if (scope === 'person' && canViewAll) {
+        if (activeScope === 'person' && canViewAll) {
           const allEvents = await getAllWorkScheduleEvents(calendarRange.start, calendarRange.end)
           return allEvents.filter((item) => String(item.memberId) === selectedMemberId)
         }
 
-        if (scope === 'person' && canViewTeam) {
+        if (activeScope === 'person' && canViewTeam) {
           const selectedMember = selectableMembers.find((member) => member.id === selectedMemberId)
           const teamName = selectedMember?.team ?? currentTeamName
           const teamId = allTeams.find((team) => team.name === teamName)?.id ?? currentTeam?.id ?? null
@@ -401,25 +403,37 @@ export function WorkSchedules() {
       const [events, schedules] = await Promise.all([
         loadDateEvents(),
         (async () => {
-          if (scope === 'all' && canViewAll) {
+          if (activeScope === 'all' && canViewAll) {
             return getAllWorkSchedules()
           }
 
           const teamId =
-            scope === 'team'
+            activeScope === 'team'
               ? (selectedTeam?.id ?? currentTeam?.id ?? null)
               : canViewAll
                 ? null
                 : (currentTeam?.id ?? null)
 
-          if (scope === 'person' && canViewAll) {
+          if (activeScope === 'person' && !canViewAll && !canViewTeam) {
+            const workSchedules = await getMyWorkSchedule()
+            return currentUser
+              ? [{
+                  memberId: Number(currentUser.id),
+                  memberName: currentUser.name,
+                  teamName: currentUser.team ?? '',
+                  workSchedules,
+                }]
+              : []
+          }
+
+          if (activeScope === 'person' && canViewAll) {
             const all = await getAllWorkSchedules()
             return all.filter((item) => String(item.memberId) === selectedMemberId)
           }
 
           if (teamId) {
             const teamSchedules = await getTeamWorkSchedules(teamId)
-            return scope === 'person'
+            return activeScope === 'person'
               ? teamSchedules.filter((item) => String(item.memberId) === selectedMemberId)
               : teamSchedules
           }
@@ -448,7 +462,7 @@ export function WorkSchedules() {
     currentTeamName,
     currentUser,
     currentUserId,
-    scope,
+    activeScope,
     selectableMembers,
     selectedMemberId,
     selectedTeam,
@@ -668,7 +682,7 @@ export function WorkSchedules() {
               {canViewAll && (
                 <button
                   type="button"
-                  className={`scope-chip ${scope === 'all' ? 'active' : ''}`}
+                  className={`scope-chip ${activeScope === 'all' ? 'active' : ''}`}
                   onClick={() => setScope('all')}
                 >
                   <Users size={14} />
@@ -678,7 +692,7 @@ export function WorkSchedules() {
               {canViewTeam && (
                 <button
                   type="button"
-                  className={`scope-chip ${scope === 'team' ? 'active' : ''}`}
+                  className={`scope-chip ${activeScope === 'team' ? 'active' : ''}`}
                   onClick={() => setScope('team')}
                 >
                   <CalendarDays size={14} />
@@ -687,7 +701,7 @@ export function WorkSchedules() {
               )}
               <button
                 type="button"
-                className={`scope-chip ${scope === 'person' ? 'active' : ''}`}
+                className={`scope-chip ${activeScope === 'person' ? 'active' : ''}`}
                 onClick={() => setScope('person')}
               >
                 <UserRound size={14} />
@@ -696,7 +710,7 @@ export function WorkSchedules() {
             </div>
 
             <div className="work-schedules-selectors">
-              {scope === 'team' && canViewAll && visibleTeams.length > 0 && (
+              {activeScope === 'team' && canViewAll && visibleTeams.length > 0 && (
                 <label className="work-schedules-select">
                   <span>조회 팀</span>
                   <select
@@ -712,7 +726,7 @@ export function WorkSchedules() {
                 </label>
               )}
 
-              {scope === 'person' && selectableMembers.length > 0 && (
+              {activeScope === 'person' && selectableMembers.length > 0 && (
                 <label className="work-schedules-select">
                   <span>조회 멤버</span>
                   <select

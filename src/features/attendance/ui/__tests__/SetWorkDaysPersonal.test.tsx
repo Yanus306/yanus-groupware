@@ -20,6 +20,9 @@ const server = setupServer(
       ],
     }),
   ),
+  http.get('/api/v1/work-schedule-events', () =>
+    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: [] }),
+  ),
   http.put('/api/v1/work-schedules', async ({ request }) => {
     const body = await request.json() as Record<string, string>
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: { id: Date.now(), ...body } })
@@ -33,7 +36,18 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-const wrapper = ({ children }: { children: ReactNode }) => <AppProvider>{children}</AppProvider>
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <AppProvider initialUser={{
+    id: '1',
+    name: '김리더',
+    email: 'admin@yanus.kr',
+    team: '1팀',
+    role: 'ADMIN',
+    status: 'ACTIVE',
+  }}>
+    {children}
+  </AppProvider>
+)
 
 describe('SetWorkDaysPersonal', () => {
   it('저장된 스케줄이 없으면 처음에는 모든 요일이 휴무 상태다', async () => {
@@ -62,7 +76,7 @@ describe('SetWorkDaysPersonal', () => {
   it('활성화된 요일(월-금)에 출근/퇴근 라벨이 표시된다', async () => {
     render(<SetWorkDaysPersonal />, { wrapper })
     await waitFor(() => {
-      expect(screen.getByText(/특정 날짜 예외 일정은 우측 캘린더/)).toBeInTheDocument()
+      expect(screen.getByText('저장할 수 있습니다')).toBeInTheDocument()
       expect(screen.getByText('출근')).toBeInTheDocument()
       expect(screen.getByText('퇴근')).toBeInTheDocument()
       expect(screen.getByText('다음날 종료')).toBeInTheDocument()

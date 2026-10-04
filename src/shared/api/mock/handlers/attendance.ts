@@ -1,69 +1,219 @@
 import { http, HttpResponse } from 'msw'
 import type {
+  AttendanceRecord,
   DayOfWeek,
   MemberWorkScheduleItem,
   WeekPattern,
   WorkScheduleEventItem,
   WorkScheduleItem,
 } from '../../attendanceApi'
+import type { User } from '../../../../entities/user/model/types'
+import { getAuthMockUserByAuthorization } from './auth'
+import { getTodayStr } from '../../../lib/date'
 
-function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+const today = getTodayStr()
 
-// 로그인한 유저(memberId=1)의 오늘 출퇴근 기록 상태 (mock 런타임 내 유지)
-let myRecord: {
-  id: number; memberId: number; memberName: string
-  workDate: string; checkInTime: string; checkOutTime: string | null; status: 'WORKING' | 'LEFT'
-} | null = null
-
-// 근무 일정 mock 데이터
-let workSchedules: WorkScheduleItem[] = [
-  { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
-  { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
-  { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
+const mockRecords: AttendanceRecord[] = [
+  { id: 1, memberId: 1, memberName: '김리더', workDate: today, checkInTime: `${today}T09:02:00`, checkOutTime: `${today}T18:15:00`, status: 'LEFT' },
+  { id: 2, memberId: 2, memberName: '박팀장', workDate: today, checkInTime: `${today}T09:45:00`, checkOutTime: null, status: 'WORKING' },
+  { id: 3, memberId: 3, memberName: '이멤버', workDate: today, checkInTime: `${today}T09:00:00`, checkOutTime: null, status: 'WORKING' },
 ]
 
-let memberWorkSchedules: MemberWorkScheduleItem[] = [
-  {
-    memberId: 1,
-    memberName: '김리더',
-    teamName: '1팀',
-      workSchedules: [
+const memberNames: Record<number, string> = {
+  1: '김리더',
+  2: '박팀장',
+  3: '이멤버',
+  4: '최개발',
+}
+
+const memberTeams: Record<number, string> = {
+  1: '1팀',
+  2: '2팀',
+  3: '3팀',
+  4: '1팀',
+}
+
+let myRecordsByMemberId: Record<number, AttendanceRecord | null> = {}
+
+function getAuthenticatedUser(request: Request) {
+  return getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+}
+
+function unauthorizedResponse() {
+  return HttpResponse.json(
+    { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+    { status: 401 },
+  )
+}
+
+function forbiddenResponse() {
+  return HttpResponse.json(
+    { code: 'FORBIDDEN', message: '접근 권한이 없습니다', data: null },
+    { status: 403 },
+  )
+}
+
+function getTeamNameByMemberId(memberId: number) {
+  return memberTeams[memberId] ?? '4팀'
+}
+
+function getTeamIdByName(teamName: string | undefined) {
+  const matched = /^([1-4])팀$/.exec(teamName ?? '')
+  return matched ? Number(matched[1]) : null
+}
+
+function isValidTeamId(teamId: number) {
+  return Number.isInteger(teamId) && teamId >= 1 && teamId <= 4
+}
+
+function canReadTeam(user: User, teamId: number) {
+  if (!isValidTeamId(teamId)) return false
+  if (user.role === 'ADMIN') return true
+  return user.role === 'TEAM_LEAD' && getTeamIdByName(user.team) === teamId
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
+}
+
+function isValidDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+function isValidTime(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const matched = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value)
+  if (!matched) return false
+  const [, hours, minutes, seconds = '00'] = matched
+  return Number(hours) <= 23 && Number(minutes) <= 59 && Number(seconds) <= 59
+}
+
+const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+]
+const WEEK_PATTERN_VALUES: WeekPattern[] = ['EVERY', 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'LAST']
+
+function isDayOfWeek(value: unknown): value is DayOfWeek {
+  return typeof value === 'string' && DAY_OF_WEEK_VALUES.includes(value as DayOfWeek)
+}
+
+function isWeekPattern(value: unknown): value is WeekPattern {
+  return typeof value === 'string' && WEEK_PATTERN_VALUES.includes(value as WeekPattern)
+}
+
+function invalidInputResponse() {
+  return HttpResponse.json(
+    { code: 'INVALID_INPUT', message: '요청 값이 유효하지 않습니다.', data: null },
+    { status: 400 },
+  )
+}
+
+function isValidDateRange(startDate: string | null, endDate: string | null) {
+  if (startDate !== null && !isValidDate(startDate)) return false
+  if (endDate !== null && !isValidDate(endDate)) return false
+  return !(startDate && endDate && startDate > endDate)
+}
+
+function isValidEventBody(value: unknown): value is {
+  date: string
+  eventType?: 'WORKING' | 'DAY_OFF'
+  startTime: string | null
+  endTime: string | null
+  endsNextDay?: boolean
+  reason?: string | null
+} {
+  if (!isRecord(value) || !isValidDate(value.date)) return false
+  const eventType = value.eventType ?? 'WORKING'
+  if (eventType !== 'WORKING' && eventType !== 'DAY_OFF') return false
+  if (!('startTime' in value) || !('endTime' in value)) return false
+  if (eventType === 'DAY_OFF') {
+    if (value.startTime !== null || value.endTime !== null) return false
+  } else if (!isValidTime(value.startTime) || !isValidTime(value.endTime)) {
+    return false
+  }
+  if ('endsNextDay' in value && typeof value.endsNextDay !== 'boolean') return false
+  if ('reason' in value && value.reason !== null && typeof value.reason !== 'string') return false
+  return true
+}
+
+function isValidWorkScheduleBody(value: unknown): value is {
+  dayOfWeek: DayOfWeek
+  startTime: string
+  endTime: string
+  weekPattern?: WeekPattern
+  endsNextDay?: boolean
+} {
+  if (!isRecord(value) || !isDayOfWeek(value.dayOfWeek)) return false
+  if (!isValidTime(value.startTime) || !isValidTime(value.endTime)) return false
+  if ('weekPattern' in value && value.weekPattern !== undefined && !isWeekPattern(value.weekPattern)) return false
+  if ('endsNextDay' in value && typeof value.endsNextDay !== 'boolean') return false
+  return true
+}
+
+function getRecordsForDate(date: string, user?: User) {
+  const records = mockRecords.filter((record) => record.workDate === date)
+  const overrides = Object.entries(myRecordsByMemberId)
+    .map(([memberId, record]) => ({ memberId: Number(memberId), record }))
+  const overriddenMemberIds = new Set(overrides.map(({ memberId }) => memberId))
+  const visibleRecords = records.filter((record) => !overriddenMemberIds.has(record.memberId))
+  const dynamicRecords = overrides
+    .map(({ record }) => record)
+    .filter((record): record is AttendanceRecord => record?.workDate === date)
+  const allRecords = [...visibleRecords, ...dynamicRecords]
+
+  if (!user) return allRecords
+  if (user.role === 'ADMIN') return allRecords
+  if (user.role === 'TEAM_LEAD') return allRecords.filter((record) => getTeamNameByMemberId(record.memberId) === user.team)
+  return allRecords.filter((record) => record.memberId === Number(user.id))
+}
+
+function createWorkSchedulesByMemberId(): Record<number, WorkScheduleItem[]> {
+  return {
+    1: [
       { id: 1, dayOfWeek: 'MONDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
       { id: 2, dayOfWeek: 'TUESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
       { id: 3, dayOfWeek: 'WEDNESDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'SECOND' },
+      { id: 4, dayOfWeek: 'THURSDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'EVERY' },
+      { id: 5, dayOfWeek: 'FRIDAY', startTime: '09:00:00', endTime: '18:00:00', weekPattern: 'LAST' },
     ],
-  },
-  {
-    memberId: 2,
-    memberName: '박팀장',
-    teamName: '2팀',
-      workSchedules: [
-      { id: 4, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
-      { id: 5, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
+    2: [
+      { id: 6, dayOfWeek: 'MONDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
+      { id: 7, dayOfWeek: 'THURSDAY', startTime: '10:00:00', endTime: '19:00:00', weekPattern: 'EVERY' },
     ],
-  },
-  {
-    memberId: 4,
-    memberName: '최개발',
-    teamName: '1팀',
-      workSchedules: [
-      { id: 6, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
+    3: [
+      { id: 8, dayOfWeek: 'MONDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
+      { id: 9, dayOfWeek: 'WEDNESDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
+      { id: 10, dayOfWeek: 'FRIDAY', startTime: '08:30:00', endTime: '17:30:00', weekPattern: 'EVERY' },
     ],
-  },
-]
+    4: [
+      { id: 11, dayOfWeek: 'FRIDAY', startTime: '22:00:00', endTime: '06:00:00', weekPattern: 'LAST', endsNextDay: true },
+    ],
+  }
+}
 
-function syncMyMemberWorkSchedules() {
+let workSchedulesByMemberId = createWorkSchedulesByMemberId()
+
+function getWorkSchedulesForMember(memberId: number) {
+  return workSchedulesByMemberId[memberId] ?? []
+}
+
+function createMemberWorkSchedules(): MemberWorkScheduleItem[] {
+  return [
+    { memberId: 1, memberName: '김리더', teamName: '1팀', workSchedules: getWorkSchedulesForMember(1) },
+    { memberId: 2, memberName: '박팀장', teamName: '2팀', workSchedules: getWorkSchedulesForMember(2) },
+    { memberId: 3, memberName: '이멤버', teamName: '3팀', workSchedules: getWorkSchedulesForMember(3) },
+    { memberId: 4, memberName: '최개발', teamName: '1팀', workSchedules: getWorkSchedulesForMember(4) },
+  ]
+}
+
+let memberWorkSchedules = createMemberWorkSchedules()
+
+function syncMemberWorkSchedules(memberId: number) {
   memberWorkSchedules = memberWorkSchedules.map((item) =>
-    item.memberId === 1
-      ? {
-          ...item,
-          workSchedules,
-        }
+    item.memberId === memberId
+      ? { ...item, workSchedules: getWorkSchedulesForMember(memberId) }
       : item,
   )
 }
@@ -80,7 +230,8 @@ function getTeamNameById(teamId: number) {
   if (teamId === 1) return '1팀'
   if (teamId === 2) return '2팀'
   if (teamId === 3) return '3팀'
-  return '4팀'
+  if (teamId === 4) return '4팀'
+  return null
 }
 
 let workScheduleEvents: WorkScheduleEventItem[] = [
@@ -108,86 +259,147 @@ let workScheduleEvents: WorkScheduleEventItem[] = [
 ]
 
 export function resetAttendanceMockData() {
-  myRecord = null
+  myRecordsByMemberId = {}
+  workSchedulesByMemberId = createWorkSchedulesByMemberId()
+  memberWorkSchedules = createMemberWorkSchedules()
+  workScheduleEvents = [
+    {
+      id: 101,
+      date: '2026-03-31',
+      eventType: 'WORKING',
+      startTime: '13:00:00',
+      endTime: '18:00:00',
+      memberId: 1,
+      memberName: '김리더',
+      teamName: '1팀',
+    },
+    {
+      id: 102,
+      date: '2026-04-02',
+      eventType: 'WORKING',
+      startTime: '22:00:00',
+      endTime: '06:00:00',
+      endsNextDay: true,
+      memberId: 4,
+      memberName: '최개발',
+      teamName: '1팀',
+    },
+  ]
 }
 
 export const attendanceHandlers = [
   http.get('/api/v1/attendances', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
-    const date = url.searchParams.get('date') ?? todayStr()
-    const records = myRecord && myRecord.workDate === date ? [myRecord] : []
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: records })
+    const date = url.searchParams.get('date') ?? getTodayStr()
+    if (!isValidDate(date)) return invalidInputResponse()
+    const teamIdParam = url.searchParams.get('teamId')
+    const requestedTeamId = teamIdParam === null ? null : Number(teamIdParam)
+    if (requestedTeamId !== null && !canReadTeam(user, requestedTeamId)) {
+      return forbiddenResponse()
+    }
+    const records = getRecordsForDate(date, user)
+    const data = requestedTeamId === null
+      ? records
+      : records.filter((record) => getTeamIdByName(getTeamNameByMemberId(record.memberId)) === requestedTeamId)
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
-  http.get('/api/v1/attendances/me', () => {
-    const data = myRecord ? [myRecord] : []
+  http.get('/api/v1/attendances/me', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const data = getRecordsForDate(getTodayStr(), user).filter((record) => record.memberId === Number(user.id))
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data })
   }),
 
   http.delete('/api/v1/attendances/me', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
-    const date = url.searchParams.get('date') ?? todayStr()
+    const date = url.searchParams.get('date') ?? getTodayStr()
+    if (!isValidDate(date)) return invalidInputResponse()
+    const memberId = Number(user.id)
 
-    if (!myRecord || myRecord.workDate !== date) {
+    const existingRecord = getRecordsForDate(date, user).find((record) => record.memberId === memberId)
+    if (!existingRecord) {
       return HttpResponse.json(
         { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
         { status: 400 },
       )
     }
 
-    myRecord = null
+    myRecordsByMemberId[memberId] = null
     return new HttpResponse(null, { status: 200 })
   }),
 
-  http.post('/api/v1/attendances/check-in', () => {
-    const today = todayStr()
-    if (myRecord && myRecord.workDate === today) {
+  http.post('/api/v1/attendances/check-in', ({ request }) => {
+    const today = getTodayStr()
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const existingRecord = getRecordsForDate(today, user).find((record) => record.memberId === memberId)
+    if (existingRecord) {
       return HttpResponse.json(
         { code: 'ALREADY_CHECKED_IN', message: '이미 출근 처리되었습니다.', data: null },
         { status: 409 },
       )
     }
-    myRecord = {
+    myRecordsByMemberId[memberId] = {
       id: Date.now(),
-      memberId: 1,
-      memberName: '김리더',
+      memberId,
+      memberName: memberNames[memberId] ?? '김리더',
       workDate: today,
       checkInTime: new Date().toISOString(),
       checkOutTime: null,
       status: 'WORKING',
     }
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecordsByMemberId[memberId] })
   }),
 
-  http.post('/api/v1/attendances/check-out', () => {
-    const today = todayStr()
-    if (!myRecord || myRecord.workDate !== today) {
+  http.post('/api/v1/attendances/check-out', ({ request }) => {
+    const today = getTodayStr()
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const existingRecord = myRecordsByMemberId[memberId]?.memberId === memberId
+      ? myRecordsByMemberId[memberId]
+      : getRecordsForDate(today, user).find((record) => record.memberId === memberId)
+    if (!existingRecord) {
       return HttpResponse.json(
         { code: 'NOT_CHECKED_IN', message: '출근 기록이 없습니다.', data: null },
         { status: 400 },
       )
     }
-    if (myRecord.status === 'LEFT') {
+    if (existingRecord.status === 'LEFT') {
       return HttpResponse.json(
         { code: 'ALREADY_CHECKED_OUT', message: '이미 퇴근 처리되었습니다.', data: null },
         { status: 400 },
       )
     }
-    myRecord = { ...myRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
-    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecord })
+    myRecordsByMemberId[memberId] = { ...existingRecord, checkOutTime: new Date().toISOString(), status: 'LEFT' }
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: myRecordsByMemberId[memberId] })
   }),
 
-  http.get('/api/v1/work-schedules/me', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: workSchedules }),
-  ),
+  http.get('/api/v1/work-schedules/me', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: getWorkSchedulesForMember(Number(user.id)) })
+  }),
 
-  http.get('/api/v1/work-schedules/all', () =>
-    HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: memberWorkSchedules }),
-  ),
+  http.get('/api/v1/work-schedules/all', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    if (user.role !== 'ADMIN') return forbiddenResponse()
+    return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: memberWorkSchedules })
+  }),
 
-  http.get('/api/v1/work-schedules/team/:teamId', ({ params }) => {
+  http.get('/api/v1/work-schedules/team/:teamId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const teamId = Number(params.teamId)
     const teamName = getTeamNameById(teamId)
+    if (!teamName || !canReadTeam(user, teamId)) return forbiddenResponse()
 
     return HttpResponse.json({
       code: 'SUCCESS',
@@ -197,12 +409,15 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
 
     const filtered = filterWorkScheduleEventsByDate(
-      workScheduleEvents.filter((item) => item.memberId === 1),
+      workScheduleEvents.filter((item) => item.memberId === Number(user.id)),
       startDate,
       endDate,
     )
@@ -211,10 +426,16 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events/team/:teamId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
     const url = new URL(request.url)
+    if (!user) return unauthorizedResponse()
+    const teamId = Number(params.teamId)
+    if (!isValidTeamId(teamId) || !canReadTeam(user, teamId)) return forbiddenResponse()
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
-    const teamName = getTeamNameById(Number(params.teamId))
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
+    const teamName = getTeamNameById(teamId)
+    if (!teamName) return forbiddenResponse()
     const filtered = filterWorkScheduleEventsByDate(
       workScheduleEvents.filter((item) => item.teamName === teamName),
       startDate,
@@ -225,23 +446,24 @@ export const attendanceHandlers = [
   }),
 
   http.get('/api/v1/work-schedule-events/all', ({ request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    if (user.role !== 'ADMIN') return forbiddenResponse()
     const url = new URL(request.url)
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
+    if (!isValidDateRange(startDate, endDate)) return invalidInputResponse()
     const filtered = filterWorkScheduleEventsByDate(workScheduleEvents, startDate, endDate)
 
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: filtered })
   }),
 
   http.post('/api/v1/work-schedule-events', async ({ request }) => {
-    const body = await request.json() as {
-      date: string
-      eventType?: 'WORKING' | 'DAY_OFF'
-      startTime: string | null
-      endTime: string | null
-      endsNextDay?: boolean
-      reason?: string | null
-    }
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const body = await request.json() as unknown
+    if (!isValidEventBody(body)) return invalidInputResponse()
     const eventType = body.eventType ?? 'WORKING'
     const created: WorkScheduleEventItem = {
       id: Date.now(),
@@ -251,9 +473,9 @@ export const attendanceHandlers = [
       endTime: eventType === 'DAY_OFF' ? null : body.endTime,
       endsNextDay: eventType === 'DAY_OFF' ? false : Boolean(body.endsNextDay),
       reason: body.reason ?? null,
-      memberId: 1,
-      memberName: '김리더',
-      teamName: '1팀',
+      memberId,
+      memberName: memberNames[memberId] ?? '김리더',
+      teamName: getTeamNameByMemberId(memberId),
     }
 
     workScheduleEvents = [...workScheduleEvents, created]
@@ -261,15 +483,12 @@ export const attendanceHandlers = [
   }),
 
   http.put('/api/v1/work-schedule-events/:eventId', async ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
-    const body = await request.json() as {
-      date: string
-      eventType?: 'WORKING' | 'DAY_OFF'
-      startTime: string | null
-      endTime: string | null
-      endsNextDay?: boolean
-      reason?: string | null
-    }
+    if (!Number.isInteger(eventId) || eventId <= 0) return invalidInputResponse()
+    const body = await request.json() as unknown
+    if (!isValidEventBody(body)) return invalidInputResponse()
     const existing = workScheduleEvents.find((item) => item.id === eventId)
 
     if (!existing) {
@@ -278,6 +497,11 @@ export const attendanceHandlers = [
         { status: 404 },
       )
     }
+
+    const canEdit = user.role === 'ADMIN'
+      || (user.role === 'TEAM_LEAD' && existing.teamName === user.team)
+      || existing.memberId === Number(user.id)
+    if (!canEdit) return forbiddenResponse()
 
     const eventType = body.eventType ?? 'WORKING'
     const updated: WorkScheduleEventItem = {
@@ -294,21 +518,29 @@ export const attendanceHandlers = [
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
 
-  http.delete('/api/v1/work-schedule-events/:eventId', ({ params }) => {
+  http.delete('/api/v1/work-schedule-events/:eventId', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
     const eventId = Number(params.eventId)
+    if (!Number.isInteger(eventId) || eventId <= 0) return invalidInputResponse()
+    const existing = workScheduleEvents.find((item) => item.id === eventId)
+    if (!existing) return new HttpResponse(null, { status: 204 })
+    const canDelete = user.role === 'ADMIN'
+      || (user.role === 'TEAM_LEAD' && existing.teamName === user.team)
+      || existing.memberId === Number(user.id)
+    if (!canDelete) return forbiddenResponse()
     workScheduleEvents = workScheduleEvents.filter((item) => item.id !== eventId)
     return new HttpResponse(null, { status: 200 })
   }),
 
   http.put('/api/v1/work-schedules', async ({ request }) => {
-    const body = await request.json() as {
-      dayOfWeek: DayOfWeek
-      startTime: string
-      endTime: string
-      weekPattern?: WeekPattern
-      endsNextDay?: boolean
-    }
-    const existing = workSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const body = await request.json() as unknown
+    if (!isValidWorkScheduleBody(body)) return invalidInputResponse()
+    const currentSchedules = getWorkSchedulesForMember(memberId)
+    const existing = currentSchedules.find((s) => s.dayOfWeek === body.dayOfWeek)
     let updated: WorkScheduleItem
     if (existing) {
       updated = {
@@ -318,7 +550,7 @@ export const attendanceHandlers = [
         weekPattern: body.weekPattern ?? existing.weekPattern ?? 'EVERY',
         endsNextDay: Boolean(body.endsNextDay),
       }
-      workSchedules = workSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
+      workSchedulesByMemberId[memberId] = currentSchedules.map((s) => s.dayOfWeek === body.dayOfWeek ? updated : s)
     } else {
       updated = {
         id: Date.now(),
@@ -328,16 +560,22 @@ export const attendanceHandlers = [
         weekPattern: body.weekPattern ?? 'EVERY',
         endsNextDay: Boolean(body.endsNextDay),
       }
-      workSchedules = [...workSchedules, updated]
+      workSchedulesByMemberId[memberId] = [...currentSchedules, updated]
     }
-    syncMyMemberWorkSchedules()
+    syncMemberWorkSchedules(memberId)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: updated })
   }),
 
-  http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params }) => {
-    const dayOfWeek = String(params.dayOfWeek) as DayOfWeek
-    workSchedules = workSchedules.filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
-    syncMyMemberWorkSchedules()
+  http.delete('/api/v1/work-schedules/:dayOfWeek', ({ params, request }) => {
+    const user = getAuthenticatedUser(request)
+    if (!user) return unauthorizedResponse()
+    const memberId = Number(user.id)
+    const dayOfWeekParam = String(params.dayOfWeek)
+    if (!isDayOfWeek(dayOfWeekParam)) return invalidInputResponse()
+    const dayOfWeek = dayOfWeekParam
+    workSchedulesByMemberId[memberId] = getWorkSchedulesForMember(memberId)
+      .filter((schedule) => schedule.dayOfWeek !== dayOfWeek)
+    syncMemberWorkSchedules(memberId)
     return HttpResponse.json({ code: 'SUCCESS', message: 'ok', data: null })
   }),
 ]

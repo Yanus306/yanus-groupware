@@ -16,8 +16,8 @@ function formatParts(date: Date, timeZone = KOREA_TIMEZONE) {
   }, {})
 }
 
-export function getTodayStr(): string {
-  const parts = formatParts(new Date())
+export function getTodayStr(date = new Date()): string {
+  const parts = formatParts(date)
   return `${parts.year}-${parts.month}-${parts.day}`
 }
 

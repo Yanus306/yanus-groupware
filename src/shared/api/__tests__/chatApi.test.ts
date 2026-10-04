@@ -12,8 +12,8 @@ afterAll(() => server.close())
 describe('chatApi', () => {
   it('getChannels() 채널 목록을 반환한다', async () => {
     const channels = await getChannels()
-    expect(channels).toHaveLength(3)
-    expect(channels[0]).toMatchObject({ id: '1', name: 'General' })
+    expect(channels).toHaveLength(5)
+    expect(channels[0]).toMatchObject({ id: '1', name: 'General', type: 'GENERAL' })
   })
 
   it('getMessages() 채널 메시지 목록을 반환한다', async () => {

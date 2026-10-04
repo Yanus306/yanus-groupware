@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { GoogleAnalytics } from '../features/analytics/ui/GoogleAnalytics'
 import { Layout } from '../widgets/Layout'
 import { PrivateRoute } from '../shared/ui/PrivateRoute'
 import { AdminRoute } from '../shared/ui/AdminRoute'
@@ -23,6 +24,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <AnalyticsObserver />
+      <GoogleAnalytics />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

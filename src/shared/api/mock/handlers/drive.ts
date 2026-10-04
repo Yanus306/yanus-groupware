@@ -35,6 +35,12 @@ export const driveHandlers = [
 
   http.post('/api/v1/drive/upload', async ({ request }) => {
     const uploader = getAuthMockUserByAuthorization(request.headers.get('Authorization'))
+    if (!uploader) {
+      return HttpResponse.json(
+        { code: 'UNAUTHORIZED', message: '인증이 필요합니다', data: null },
+        { status: 401 },
+      )
+    }
     if (uploader.team === DEFAULT_SIGNUP_TEAM_NAME) {
       return HttpResponse.json(
         { code: 'FORBIDDEN', message: '신입 팀은 파일을 업로드할 수 없습니다', data: null },

@@ -64,6 +64,9 @@
 .clock-ring-svg {
   position: absolute;
   inset: 0;
+  /* 링 SVG(170px)가 컨테이너(160/144px)보다 크므로 margin:auto로 항상 중앙 정렬해
+     내부 원(.clock-inner)과 동심원이 되도록 한다. inset:0만으로는 좌상단에 붙어 어긋남 */
+  margin: auto;
 }
 
 .clock-inner {
