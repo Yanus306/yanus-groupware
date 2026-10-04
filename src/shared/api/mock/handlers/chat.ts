@@ -1,9 +1,11 @@
 import { http, HttpResponse } from 'msw'
 
 const mockChannels = [
-  { id: '1', name: 'General', lastMessage: '안녕하세요!' },
-  { id: '2', name: 'Design Team', lastMessage: '디자인 피드백 부탁드려요' },
-  { id: '3', name: 'Dev Team', lastMessage: 'PR 리뷰 요청드립니다' },
+  { id: '1', name: 'General', type: 'GENERAL', memberCount: 23, lastMessage: '안녕하세요!' },
+  { id: '2', name: 'Design Team', type: 'TEAM', memberCount: 6, lastMessage: '디자인 피드백 부탁드려요' },
+  { id: '3', name: 'Dev Team', type: 'TEAM', memberCount: 8, lastMessage: 'PR 리뷰 요청드립니다' },
+  { id: '4', name: 'Marketing Team', type: 'TEAM', memberCount: 5, lastMessage: '캠페인 일정 공유합니다' },
+  { id: '5', name: 'Product Team', type: 'TEAM', memberCount: 4, lastMessage: '로드맵 업데이트했어요' },
 ]
 
 const mockMessages: Record<string, { id: string; channelId: string; userId: string; userName: string; content: string; type: string; timestamp: string }[]> = {

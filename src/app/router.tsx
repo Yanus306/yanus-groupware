@@ -18,10 +18,12 @@ import { Members } from '../pages/members'
 import { Settings } from '../pages/settings'
 import { Admin } from '../pages/admin'
 import { TeamManagement } from '../pages/team-management'
+import { AnalyticsObserver } from './AnalyticsObserver'
 
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <AnalyticsObserver />
       <GoogleAnalytics />
       <Routes>
         <Route path="/login" element={<Login />} />

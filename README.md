@@ -30,6 +30,7 @@
 - 다크 테마 기본 적용
 - FSD(Feature-Sliced Design) 아키텍처 기반 구조화
 - Vercel Speed Insights로 실사용자 성능 지표 수집
+- PostHog로 페이지 방문과 로그인 사용자별 사용 흐름 수집
 
 ---
 
@@ -203,6 +204,28 @@ VITE_GA_MEASUREMENT_ID=G-JGZ8JFGKPW
 > **Mock 전략**  
 > `VITE_USE_MOCK=true`에서는 `auth`, `members`, `attendance`, `calendar`, `operations`, `chat`, `drive` 핸들러를 함께 등록합니다.
 > 이메일 인증이나 실서비스 백엔드에 묶이지 않고 관리자 출퇴근 예외 처리, 지각비 정산, 야간 근무 표시까지 로컬에서 점검할 수 있습니다.
+
+### PostHog
+
+[이슈 #420](https://github.com/Yanus306/yanus-groupware/issues/420)에서 제품 분석 연동을 관리합니다.
+[yANUs 프로젝트 설정](https://us.posthog.com/project/644476/settings/project-details)에서 공개 프로젝트 토큰을 확인합니다.
+
+```env
+VITE_POSTHOG_PROJECT_TOKEN=<public-project-token>
+VITE_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+- 토큰이 없으면 수집하지 않습니다. 개인 API 키를 `VITE_` 변수에 넣지 않습니다.
+- 기본적으로 프로덕션 빌드에서만 수집하며, `VITE_USE_MOCK=true` 환경에서는 비활성화합니다.
+- 로컬에서 실제 수신을 확인할 때만 `VITE_POSTHOG_ENABLED=true`를 지정합니다. `false`는 수집을 완전히 끕니다.
+- 페이지 경로가 바뀔 때 `$pageview`를 수집하고, 로그인 시 사용자 ID만 연결합니다. 로그아웃·계정 변경 시 이전 식별을 초기화합니다.
+- 허용한 SDK 기술 속성만 전송합니다. URL 쿼리·해시, referrer, 이메일·이름·채팅·문서 내용은 제외합니다. 자동 클릭 수집과 세션 녹화는 꺼져 있습니다.
+- `.env.production`에 yANUs 프로젝트의 공개 수집 토큰을 설정하여 배포 빌드에도 적용합니다. 다른 프로젝트를 사용할 때는 Vercel 환경 변수로 덮어씁니다. Vite 변수는 빌드 시 반영되므로 변경 후 새 빌드가 필요합니다.
+
+```bash
+# 로컬 수신 확인 (테스트 이벤트가 실제 프로젝트에 저장됨)
+VITE_POSTHOG_ENABLED=true npm run dev
+```
 
 ---
 
