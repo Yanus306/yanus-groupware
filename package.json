@@ -25,6 +25,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^12.35.0",
     "lucide-react": "^0.575.0",
+    "posthog-js": "^1.435.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
