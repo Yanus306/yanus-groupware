@@ -79,6 +79,6 @@ describe('VerifyEmail 페이지', () => {
       expect(mockResendVerificationEmail).toHaveBeenCalledWith('user@test.com')
     })
 
-    expect(await screen.findByText('인증 메일을 다시 보냈습니다. 메일함을 확인해 주세요')).toBeInTheDocument()
+    expect(await screen.findByText('인증 메일 재발송 요청을 접수했어요. 잠시 후 메일함을 확인해 주세요')).toBeInTheDocument()
   })
 })

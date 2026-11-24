@@ -74,7 +74,7 @@ export function VerifyEmail() {
     try {
       await resendVerificationEmail(trimmedEmail)
       setPendingVerificationEmail(trimmedEmail)
-      setResendMessage('인증 메일을 다시 보냈습니다. 메일함을 확인해 주세요')
+      setResendMessage('인증 메일 재발송 요청을 접수했어요. 잠시 후 메일함을 확인해 주세요')
     } catch (error) {
       setResendError(error instanceof Error ? error.message : '인증 메일 재전송에 실패했습니다')
     } finally {
@@ -123,7 +123,7 @@ export function VerifyEmail() {
 
           {email && verifyStatus !== 'success' && (
             <div className="verify-email-target">
-              <span>인증 메일을 보낸 주소</span>
+              <span>인증 메일을 받을 주소</span>
               <strong>{email}</strong>
             </div>
           )}
@@ -208,7 +208,7 @@ export function VerifyEmail() {
               onClick={handleResend}
               disabled={resending}
             >
-              {resending ? '전송 중...' : '인증 메일 다시 보내기'}
+              {resending ? '요청 중...' : '인증 메일 다시 보내기'}
             </button>
           </div>
         )}
